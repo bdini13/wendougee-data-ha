@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+
+# BLE captures and device-specific data
+captures/*
+!captures/.gitkeep
+*.pcap
+*.pcapng
+*.btsnoop
+*.log
+.env
+
+# Home Assistant local state
+config/
+.storage/

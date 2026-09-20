@@ -1,0 +1,14 @@
+{
+  "domain": "wendougee_data",
+  "name": "Wendougee DATA",
+  "bluetooth": [
+    {
+      "local_name": "WDG_DaTa_*"
+    }
+  ],
+  "codeowners": ["@bdini13"],
+  "documentation": "https://github.com/bdini13/wendougee-data-ha",
+  "iot_class": "local_push",
+  "requirements": [],
+  "version": "0.0.1"
+}
