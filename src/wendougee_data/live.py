@@ -27,15 +27,21 @@ class LiveReadError(RuntimeError):
 async def _discover_data_machine(timeout: float) -> Any:
     from bleak import BleakScanner
 
-    device = await BleakScanner.find_device_by_filter(
-        lambda candidate, advertisement: (
-            advertisement.local_name or candidate.name or ""
-        ).startswith(ADVERTISEMENT_PREFIX),
-        timeout=timeout,
-    )
-    if device is None:
+    discovered = await BleakScanner.discover(timeout=timeout, return_adv=True)
+    matches = [
+        device
+        for device, advertisement in discovered.values()
+        if (advertisement.local_name or device.name or "").startswith(
+            ADVERTISEMENT_PREFIX
+        )
+    ]
+    if not matches:
         raise LiveReadError("no WDG_Data_* advertisement found")
-    return device
+    if len(matches) > 1:
+        raise LiveReadError(
+            "multiple WDG_Data_* advertisements found; exact target selection required"
+        )
+    return matches[0]
 
 
 def _require_gatt_layout(client: Any) -> tuple[Any, Any]:
@@ -149,6 +155,26 @@ async def read_live_telemetry(
     ) as session:
         frame = await session.read(ReadOperation.TELEMETRY)
         return parse_telemetry_response(frame)
+
+
+async def read_live_baseline(
+    scan_timeout: float = 15.0,
+    response_timeout: float = 8.0,
+) -> dict[ReadOperation, bytes]:
+    """Read each fixed baseline operation once over one bounded session.
+
+    This function performs no decoding, persistence, retries, or control writes.
+    Callers must keep returned raw frames private until they receive a deliberate
+    identifier/privacy review.
+    """
+    device = await _discover_data_machine(scan_timeout)
+    frames: dict[ReadOperation, bytes] = {}
+    async with ReadSession(
+        _BleakReadTransport(device), timeout=response_timeout
+    ) as session:
+        for operation in ReadOperation:
+            frames[operation] = await session.read(operation)
+    return frames
 
 
 def main() -> None:

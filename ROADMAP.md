@@ -10,8 +10,9 @@ Last reviewed: 2026-09-20. The goal is a well-understood, local-first DATA S int
 - [x] Test fragmentation, malformed packets, timeouts, cancellation and stale/duplicate responses.
 - [x] Implement read-only HA discovery, confirmed setup, sensors, recovery and diagnostics.
 - [x] Build a self-contained ZIP and test it independently of the development checkout.
+- [x] Add a versioned private evidence envelope and approval-gated baseline reader.
 
-Evidence: 75 protocol/package tests plus 19 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
+Evidence: 90 protocol/package tests plus 19 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
 
 ## 2. Hardware validation — next gate
 

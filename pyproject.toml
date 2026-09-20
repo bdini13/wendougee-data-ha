@@ -20,6 +20,7 @@ dependencies = ["bleak>=1.1,<2"]
 
 [project.scripts]
 wendougee-read-telemetry = "wendougee_data.live:main"
+wendougee-evidence = "wendougee_data.evidence_cli:main"
 
 [project.optional-dependencies]
 test = [

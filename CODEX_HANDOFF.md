@@ -39,7 +39,7 @@ Read `research/LITALITE_CREMA_REVIEW.md` before borrowing any design. It records
 - Advertisement TX-power field is `+9 dBm`.
 - Raw nRF captures exist locally but are intentionally excluded from Git because they contain device-specific addresses.
 - A supervised direct connection on 2026-09-20 verified the expected service and both communication characteristics.
-- The documented 22-register telemetry request returned a CRC-valid response on the DATA S. The idle fixture decoded to brew `94.6 °C`, steam `27.2 °C`, no water alarm, and zero pressure/flow/volume. Physical-display comparison remains to be performed.
+- The documented 22-register telemetry request returned a CRC-valid response on the DATA S. The idle response decoded to brew `94.6 °C`, steam `27.2 °C`, no water alarm, and zero pressure/flow/volume. That frame was not retained as a fixture; physical-display comparison remains to be performed.
 
 ### Upstream protocol evidence
 
@@ -163,7 +163,7 @@ No production behavior without a failing test first.
 
 **Offline foundation update:** `reads.py`, `state.py`, and `session.py` provide allowlisted configuration/status reads, strict framing, typed decoders, and failure-quarantined serialized sessions. The standalone telemetry client uses that session through a tested fake-Bleak adapter. See `docs/OFFLINE_CORE.md`. Real fixtures and physical comparison remain pending.
 
-**HA implementation update:** `docs/HOME_ASSISTANT.md` describes the read-only integration and build. It uses shared Bluetooth, confirmed setup, one telemetry read per short polling session, nine measurement sensors, alarm/reachability sensors, failure recovery, cancellation cleanup and allowlisted diagnostics. Configuration/status commands are not enabled in HA. Verification: 75 independent protocol/package tests on Python 3.13 and 19 real HA framework tests on HA 2026.9.3 / Python 3.14, with simulated Bluetooth and network disabled. Build `scripts/build_integration.py` before HA tests; it generates the ignored `_protocol` copy from our own sources and `dist/wendougee_data.zip`. No machine or actual HA instance was accessed. Live validation and deployment need separate approval.
+**HA implementation update:** `docs/HOME_ASSISTANT.md` describes the read-only integration and build. It uses shared Bluetooth, confirmed setup, one telemetry read per short polling session, nine measurement sensors, alarm/reachability sensors, failure recovery, cancellation cleanup and allowlisted diagnostics. Configuration/status commands are not enabled in HA. Verification: 90 independent protocol/package tests on Python 3.13 and 19 real HA framework tests on HA 2026.9.3 / Python 3.14, with simulated Bluetooth and network disabled. Build `scripts/build_integration.py` before HA tests; it generates the ignored `_protocol` copy from our own sources and `dist/wendougee_data.zip`. The versioned private evidence envelope and approval-gated four-read baseline command are documented in `docs/EVIDENCE_COLLECTION.md`; neither has been run against the machine. No actual HA instance was accessed. Live validation and deployment need separate approval.
 
 Implement only the pure, read-only protocol slice:
 

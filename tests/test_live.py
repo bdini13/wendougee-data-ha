@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from wendougee_data.const import (
@@ -10,13 +11,16 @@ from wendougee_data.const import (
     MODBUS_CHARACTERISTIC_UUID,
     SERVICE_UUID,
 )
+from wendougee_data.crc import append_crc
 from wendougee_data.live import (
     LiveReadError,
     _BleakReadTransport,
+    _discover_data_machine,
     _require_gatt_layout,
+    read_live_baseline,
     read_live_telemetry,
 )
-from wendougee_data.reads import ReadOperation
+from wendougee_data.reads import ReadOperation, build_read_request
 from wendougee_data.session import ReadSession, SessionUnavailable
 
 from .test_telemetry import TELEMETRY_RESPONSE
@@ -54,6 +58,43 @@ class GattLayoutTests(unittest.TestCase):
     def test_rejects_characteristic_without_write_support(self) -> None:
         with self.assertRaisesRegex(LiveReadError, "write mode"):
             _require_gatt_layout(_Client({"notify"}))
+
+
+class DiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_requires_exactly_one_matching_machine(self):
+        other = SimpleNamespace(name="Other")
+        machine = SimpleNamespace(name="WDG_Data_test")
+        advertisement = SimpleNamespace(local_name=None)
+        with patch(
+            "bleak.BleakScanner.discover",
+            new=AsyncMock(
+                return_value={
+                    "other": (other, advertisement),
+                    "machine": (machine, advertisement),
+                }
+            ),
+        ):
+            self.assertIs(await _discover_data_machine(0.1), machine)
+
+    async def test_rejects_missing_or_ambiguous_machine(self):
+        advertisement = SimpleNamespace(local_name="WDG_Data_test")
+        machine = SimpleNamespace(name=None)
+        for discovered, message in [
+            ({}, "no WDG_Data"),
+            (
+                {"one": (machine, advertisement), "two": (machine, advertisement)},
+                "multiple WDG_Data",
+            ),
+        ]:
+            with (
+                self.subTest(message=message),
+                patch(
+                    "bleak.BleakScanner.discover",
+                    new=AsyncMock(return_value=discovered),
+                ),
+                self.assertRaisesRegex(LiveReadError, message),
+            ):
+                await _discover_data_machine(0.1)
 
 
 class FakeBleakClient(_Client):
@@ -156,6 +197,36 @@ class BleakTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(telemetry.brew_boiler_temperature_celsius, 93.6)
         self.assertEqual(self.client.sent, [bytes.fromhex("0103057c00160510")])
         self.assertEqual(self.client.write_responses, [False])
+
+    async def test_baseline_reads_each_allowlisted_operation_once(self):
+        replies = {
+            ReadOperation.TELEMETRY: TELEMETRY_RESPONSE,
+            ReadOperation.CONFIGURATION: append_crc(b"\x01\x03\x4a" + bytes(74)),
+            ReadOperation.WATER_ALARM_ENABLED: append_crc(b"\x01\x03\x02\x00\x01"),
+            ReadOperation.OPERATING_STATE: append_crc(b"\x01\x01\x03\x00\x00\x00"),
+        }
+
+        async def respond(characteristic, request, *, response):
+            self.client.sent.append(request)
+            self.client.write_responses.append(response)
+            operation = next(
+                item for item in ReadOperation if request == build_read_request(item)
+            )
+            self.client.notifications[characteristic](
+                characteristic, replies[operation]
+            )
+
+        self.client.write_gatt_char = respond
+        with patch(
+            "wendougee_data.live._discover_data_machine", new_callable=AsyncMock
+        ):
+            frames = await read_live_baseline()
+
+        self.assertEqual(frames, replies)
+        self.assertEqual(
+            self.client.sent,
+            [build_read_request(operation) for operation in ReadOperation],
+        )
 
     async def test_write_with_response_fallback(self):
         characteristic = self.client.services.get_characteristic(

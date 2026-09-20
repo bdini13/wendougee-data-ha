@@ -9,7 +9,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Development: AI assisted](https://img.shields.io/badge/development-AI--assisted-8A2BE2)](AI_DISCLOSURE.md)
 
-[Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
+[Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
 > **Experimental, not production-ready.** The Home Assistant integration is offline-tested but has not been deployed or validated against the physical machine. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
@@ -48,8 +48,9 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Local DATA S transport | Expected GATT service/characteristics and one CRC-valid idle telemetry reply observed |
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
+| Evidence collection | Versioned private envelope and approval-gated four-read baseline command; no live run yet |
 | HA integration | Implemented; actual HA framework with simulated Bluetooth |
-| Verification baseline | **94 local tests passing:** 75 protocol/package + 19 HA tests, as of 2026-09-20 |
+| Verification baseline | **109 local tests passing:** 90 protocol/package + 19 HA tests, as of 2026-09-20 |
 | Tested HA environment | Home Assistant 2026.9.3 / Python 3.14.7; no physical adapter/proxy compatibility claim |
 | Deployment / release | Not deployed; experimental manual ZIP build, not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
@@ -144,6 +145,7 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 | [HA guide](docs/HOME_ASSISTANT.md) | Entities, installation, polling and compatibility limits |
 | [Capability map](CAPABILITIES.md) | Known, implemented, conflicting and unknown functions |
 | [Validation plan](docs/VALIDATION_PLAN.md) | Efficient test batches and evidence requirements |
+| [Evidence collection](docs/EVIDENCE_COLLECTION.md) | Private fixture schema, capture scope and review boundary |
 | [Offline core](docs/OFFLINE_CORE.md) | Framing, session behavior and failure policy |
 | [Protocol reference](docs/protocol.md) | BLE/Modbus observations and candidates |
 | [Upstream inventory](research/UPSTREAM_SOURCES.md) | Pinned sources and license boundaries |

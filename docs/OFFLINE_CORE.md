@@ -10,7 +10,7 @@ Implemented 2026-09-20. All verification in this pass used synthetic byte fixtur
 - `state.py`: typed, immutable configuration and state. Boiler enable polarity and setting units are explicit. Unknown enum values stay unknown. All 37 configuration words and 24 status bits are retained in memory for private analysis; contradictory flags are not collapsed into a single apparently valid state.
 - `ReadSession`: injected transport, serialized requests, bounded setup/read/cleanup, immediate notification of disconnect while awaiting a response, no retries, and quarantine after errors/timeouts/in-flight cancellation.
 - Standalone Bleak adapter: waits for both subscriptions, wires disconnect callbacks, attempts cleanup after partial setup, and rejects any bytes outside the read allowlist.
-- Existing CLI: still sends **only one telemetry request** when explicitly invoked with its read flag. The new configuration/status operations are library APIs, not automatic additional CLI traffic. There is no scan or connection on import.
+- Existing telemetry CLI still sends **only one telemetry request** when explicitly invoked with its read flag. A separate evidence command can send each of the four fixed reads once, but only after an immediate typed confirmation; see [EVIDENCE_COLLECTION.md](EVIDENCE_COLLECTION.md). There is no scan or connection on import.
 
 The original telemetry parser and assembler remain available for compatibility. The live client now uses the stricter general read session; it does not use the old assembler for transport handling. No control API or HA entities were added.
 
@@ -26,7 +26,7 @@ Modbus RTU read replies do not echo the requested register address or contain tr
 
 ## Tests
 
-The suite contains 74 tests as of this pass, covering existing CRC/telemetry functionality plus:
+The protocol/package suite contains 90 tests at the current checkpoint, covering existing CRC/telemetry functionality plus:
 
 - known request frames and allowlist enforcement, including rejecting a control frame before transmission;
 - configuration scaling/polarity, unknown values, state conflicts and unknown flags;
@@ -41,7 +41,7 @@ Tests label their new fixtures synthetic. They do not recreate or claim to retai
 ## Still pending
 
 - Supported-permission, real Python/Bleak validation; no bypass of macOS privacy controls.
-- Sanitized real fixtures with model/firmware/app provenance and a versioned fixture envelope.
+- Sanitized real fixtures with model/firmware/app provenance; the versioned private envelope is implemented, but no real capture exists yet.
 - Physical confirmation of units, configuration meanings, status flags and natural unsolicited traffic.
 - A continuous-polling/reconnect policy and soak tests; the present session is a reusable primitive, not a completed long-running coordinator.
 - The HA shared-Bluetooth adapter, config flow, entities, availability handling and integration tests were completed in a subsequent offline pass; see [HOME_ASSISTANT.md](HOME_ASSISTANT.md). Real deployment and Bluetooth validation remain pending.
