@@ -1,4 +1,4 @@
-# Wendougee DATA · Home Assistant
+# Wendougee Data S · Home Assistant
 
 Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with the **Wendougee DATA S**, working toward a thoroughly documented protocol and carefully validated controls.
 
