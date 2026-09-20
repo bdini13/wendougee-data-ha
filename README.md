@@ -10,6 +10,8 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 - The Wendougee DATA S communicates with the official E-Bar app over Bluetooth Low Energy.
 - A DATA S has been observed advertising with a local name matching `WDG_Data_*`.
 - Nordic's nRF Sniffer for Bluetooth LE can capture its advertising traffic.
+- A supervised local test verified the expected custom service and both communication characteristics on the DATA S.
+- The documented function-03 telemetry request returned a CRC-valid 22-register response from the DATA S.
 
 ## Goals
 
@@ -34,9 +36,9 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 
 1. ✅ Detect DATA S advertisements
 2. ✅ Establish the safe telemetry request and register map from corroborated upstream work
-3. 🚧 Implement and test the read-only protocol library and standalone BLE client
+3. ✅ Implement and validate the read-only protocol library and standalone BLE client
 4. ⬜ Add Home Assistant config flow and entities
-5. ⬜ Validate against real hardware
+5. 🚧 Continue real-hardware validation against display values and operating states
 
 ## Development
 

@@ -9,6 +9,10 @@ This document separates locally observed facts from upstream findings. Raw captu
 - Advertising payload includes general-discoverable, BLE-only flags, complete local name, and a `+9 dBm` TX-power field.
 - Nordic nRF52840 + nRF Sniffer 4.1.1 successfully captures advertisements.
 - Initial over-the-air attempts did not reliably follow the data connection. Existing upstream work makes direct GATT validation the more efficient next step.
+- On 2026-09-20, a supervised direct CoreBluetooth test verified the expected custom service and both `2b10`/`2c10` characteristics on Bobby's DATA S.
+- The test subscribed to both characteristics and sent the documented telemetry request exactly once. The machine returned one CRC-valid, 49-byte function-03 response containing 22 registers.
+- The idle response decoded to brew boiler `94.6 °C`, steam boiler `27.2 °C`, no water-level alarm, and zero pressure, flow, volume, scale weight, and brew/pump time. These values were protocol-plausible but were not independently compared with the physical display during the headless session.
+- No control, provisioning, reset, boiler-setting, cleaning, valve, or brew command was sent.
 
 ## Upstream protocol consensus
 
@@ -64,7 +68,7 @@ Upstream maps the 1404+ block as follows:[1][20]
 | 1422 | Instantaneous flow | reported as raw mL/s; controlled confirmation remains desirable |
 | 1423 | Weight rate | divide by 10 for g/s |
 
-Safe fixture request:
+Safe request, now locally verified on the DATA S:
 
 ```text
 01 03 05 7C 00 16 05 10

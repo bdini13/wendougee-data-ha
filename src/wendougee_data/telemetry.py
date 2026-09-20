@@ -1,5 +1,7 @@
 """Decode the documented DATA S read-only telemetry register block."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from .crc import crc16_modbus
@@ -8,6 +10,7 @@ from .modbus import DEFAULT_SLAVE_ADDRESS, READ_HOLDING_REGISTERS
 TELEMETRY_START_REGISTER = 1404
 TELEMETRY_REGISTER_COUNT = 22
 TELEMETRY_BYTE_COUNT = TELEMETRY_REGISTER_COUNT * 2
+TELEMETRY_RESPONSE_LENGTH = TELEMETRY_BYTE_COUNT + 5
 
 
 @dataclass(frozen=True)
@@ -26,12 +29,27 @@ class Telemetry:
     weight_rate_grams_per_second: float
 
 
+class TelemetryResponseAssembler:
+    """Reassemble one fragmented telemetry response without accepting extras."""
+
+    def __init__(self) -> None:
+        self._buffer = bytearray()
+
+    def feed(self, fragment: bytes) -> Telemetry | None:
+        """Add one notification fragment and return telemetry when complete."""
+        self._buffer.extend(fragment)
+        if len(self._buffer) > TELEMETRY_RESPONSE_LENGTH:
+            raise ValueError("telemetry response is longer than one expected frame")
+        if len(self._buffer) < TELEMETRY_RESPONSE_LENGTH:
+            return None
+        return parse_telemetry_response(bytes(self._buffer))
+
+
 def parse_telemetry_response(frame: bytes) -> Telemetry:
     """Validate and decode a 22-register function-03 response."""
-    expected_frame_length = TELEMETRY_BYTE_COUNT + 5
-    if len(frame) != expected_frame_length:
+    if len(frame) != TELEMETRY_RESPONSE_LENGTH:
         raise ValueError(
-            f"telemetry response length must be {expected_frame_length} bytes"
+            f"telemetry response length must be {TELEMETRY_RESPONSE_LENGTH} bytes"
         )
     if frame[0] != DEFAULT_SLAVE_ADDRESS:
         raise ValueError("unexpected Modbus slave address")

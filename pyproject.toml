@@ -16,6 +16,10 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.13",
 ]
+dependencies = ["bleak>=1.1,<2"]
+
+[project.scripts]
+wendougee-read-telemetry = "wendougee_data.live:main"
 
 [project.optional-dependencies]
 test = [
@@ -39,4 +43,3 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
-

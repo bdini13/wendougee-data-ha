@@ -4,7 +4,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .venv/
+.venv313/
 *.egg-info/
+.live-tools/
 
 # Editors and OS
 .DS_Store

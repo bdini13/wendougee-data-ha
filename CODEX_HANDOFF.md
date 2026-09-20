@@ -36,6 +36,8 @@ Read `research/LITALITE_CREMA_REVIEW.md` before borrowing any design. It records
 - The BLE radio identifies as Espressif.
 - Advertisement TX-power field is `+9 dBm`.
 - Raw nRF captures exist locally but are intentionally excluded from Git because they contain device-specific addresses.
+- A supervised direct connection on 2026-09-20 verified the expected service and both communication characteristics.
+- The documented 22-register telemetry request returned a CRC-valid response on the DATA S. The idle fixture decoded to brew `94.6 °C`, steam `27.2 °C`, no water alarm, and zero pressure/flow/volume. Physical-display comparison remains to be performed.
 
 ### Upstream protocol evidence
 

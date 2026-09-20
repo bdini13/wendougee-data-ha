@@ -2,7 +2,11 @@
 
 import unittest
 
-from wendougee_data.telemetry import Telemetry, parse_telemetry_response
+from wendougee_data.telemetry import (
+    Telemetry,
+    TelemetryResponseAssembler,
+    parse_telemetry_response,
+)
 
 TELEMETRY_RESPONSE = bytes.fromhex(
     "01 03 2c "
@@ -45,6 +49,22 @@ class TelemetryResponseTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "byte count"):
             parse_telemetry_response(bytes(response))
+
+    def test_reassembles_fragmented_notifications(self) -> None:
+        assembler = TelemetryResponseAssembler()
+
+        self.assertIsNone(assembler.feed(TELEMETRY_RESPONSE[:17]))
+        self.assertIsNone(assembler.feed(TELEMETRY_RESPONSE[17:31]))
+        self.assertEqual(
+            assembler.feed(TELEMETRY_RESPONSE[31:]),
+            parse_telemetry_response(TELEMETRY_RESPONSE),
+        )
+
+    def test_rejects_more_than_one_response_frame(self) -> None:
+        assembler = TelemetryResponseAssembler()
+
+        with self.assertRaisesRegex(ValueError, "longer"):
+            assembler.feed(TELEMETRY_RESPONSE + TELEMETRY_RESPONSE)
 
 
 if __name__ == "__main__":
