@@ -7,7 +7,7 @@ This document records only behavior confirmed from real hardware or reproducible
 | Field | Confirmed value |
 |---|---|
 | Transport | Bluetooth Low Energy |
-| Observed local-name pattern | `WDG_DaTa_*` |
+| Observed local-name pattern | `WDG_Data_*` |
 | Tested machine | Wendougee DATA S |
 | Sniffer hardware | Nordic Semiconductor nRF52840 Dongle (PCA10059) |
 | Sniffer firmware | Nordic nRF Sniffer for Bluetooth LE 4.1.1 |
@@ -25,7 +25,7 @@ This document records only behavior confirmed from real hardware or reproducible
 
 1. Keep raw captures outside Git; `captures/` is ignored by default.
 2. Start the Nordic sniffer before opening the official E-Bar app.
-3. Select the `WDG_DaTa_*` advertiser.
+3. Select the `WDG_Data_*` advertiser.
 4. Record one action at a time and note exact timestamps.
 5. Sanitize Bluetooth addresses, pairing material, account data, and device identifiers before publishing evidence.
 

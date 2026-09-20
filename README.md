@@ -8,7 +8,7 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 ## Confirmed so far
 
 - The Wendougee DATA S communicates with the official E-Bar app over Bluetooth Low Energy.
-- A DATA S has been observed advertising with a local name matching `WDG_DaTa_*`.
+- A DATA S has been observed advertising with a local name matching `WDG_Data_*`.
 - Nordic's nRF Sniffer for Bluetooth LE can capture its advertising traffic.
 
 ## Goals

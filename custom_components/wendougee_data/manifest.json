@@ -3,7 +3,7 @@
   "name": "Wendougee DATA",
   "bluetooth": [
     {
-      "local_name": "WDG_DaTa_*"
+      "local_name": "WDG_Data_*"
     }
   ],
   "codeowners": ["@bdini13"],
