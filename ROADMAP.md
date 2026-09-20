@@ -55,4 +55,4 @@ Raw valves, PID/calibration, factory reset, bootloader and OTA remain research-o
 - [ ] Perform an independent code/safety review; review AI-assisted assumptions explicitly.
 - [ ] Publish a release only with accurate support and hardware-evidence claims.
 
-No dates are promised. Hardware access, protocol ambiguities and safety findings can change priorities. Use [the label catalog](.github/labels.json) to classify issues; applying it to GitHub is a separate repository-management step.
+No dates are promised. Hardware access, protocol ambiguities and safety findings can change priorities. Use [the label catalog](.github/labels.json) to classify issues; its 12 labels are available on [GitHub](https://github.com/bdini13/wendougee-data-ha/labels) as of 2026-09-20.

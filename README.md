@@ -149,7 +149,7 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 | [Upstream inventory](research/UPSTREAM_SOURCES.md) | Pinned sources and license boundaries |
 | [Contributor/agent handoff](CODEX_HANDOFF.md) | Implementation history and safety constraints |
 
-[Issue-label definitions](.github/labels.json) group work by area, evidence and risk—for example `area:protocol`, `area:home-assistant`, `needs:hardware-validation`, and `safety`. This is a checked-in catalog, **not an assertion that these labels have been applied to GitHub**. When reporting a bug, include software/firmware versions, expected versus observed behavior and sanitized diagnostics. Never post credentials or raw captures publicly.
+[Issue-label definitions](.github/labels.json) group work by area, evidence and risk—for example `area:protocol`, `area:home-assistant`, `needs:hardware-validation`, and `safety`. All 12 catalog labels were applied to the [GitHub repository](https://github.com/bdini13/wendougee-data-ha/labels) on 2026-09-20; existing labels were preserved. When reporting a bug, include software/firmware versions, expected versus observed behavior and sanitized diagnostics. Never post credentials or raw captures publicly.
 
 ## AI disclosure
 
