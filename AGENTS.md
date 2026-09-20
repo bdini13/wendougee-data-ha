@@ -9,6 +9,7 @@ Build a safe, local-first Home Assistant integration for Wendougee DATA-family e
 1. `CODEX_HANDOFF.md`
 2. `docs/protocol.md`
 3. `research/UPSTREAM_SOURCES.md`
+4. `research/LITALITE_CREMA_REVIEW.md`
 
 ## Non-negotiable rules
 

@@ -5,7 +5,7 @@ This document separates locally observed facts from upstream findings. Raw captu
 ## Local observations: DATA S
 
 - Advertising name pattern: `WDG_Data_*`.
-- BLE controller vendor resolves to Espressif.
+- The advertising address's OUI resolves to Espressif; this is an address-vendor observation, not proof of the machine's exact BLE chip or module.
 - Advertising payload includes general-discoverable, BLE-only flags, complete local name, and a `+9 dBm` TX-power field.
 - Nordic nRF52840 + nRF Sniffer 4.1.1 successfully captures advertisements.
 - Initial over-the-air attempts did not reliably follow the data connection. Existing upstream work makes direct GATT validation the more efficient next step.

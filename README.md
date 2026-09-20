@@ -25,6 +25,7 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 - `docs/protocol.md` — synthesized, sourced BLE protocol knowledge base
 - `CODEX_HANDOFF.md` — current implementation brief and safety boundaries
 - `research/UPSTREAM_SOURCES.md` — pinned inventory of related projects
+- `research/LITALITE_CREMA_REVIEW.md` — focused correctness, safety, testing, and licensing review
 - `captures/` — local packet captures (gitignored)
 
 ## Development status

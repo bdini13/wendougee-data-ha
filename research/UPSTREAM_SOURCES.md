@@ -8,7 +8,7 @@ The repositories below are cloned under `research/upstream/` on the Mac Codex wo
 |---|---|---|---|---|
 | `GeeFlow` | `drobekk/GeeFlow` | `2c41af3a908e92e4b5dac5a5c706c869245adc6a` | GPL-3.0 | Complete Kotlin Multiplatform controller tested on DATA S; BLE, Modbus, telemetry, profiles, settings, cleaning, and scale support.[4][5][6] |
 | `LitaLite` | `dallonby/LitaLite` | `3a26b7ec114ff03f228dd8cfc232b3885cd523cb` | No license detected | Detailed protocol notes and Python research scripts; live verification was primarily LITA-BA, with DATA-S compatibility still to confirm.[1][2] |
-| `Crema` | `dallonby/Crema` | `930879755a76cefef010c05a39485e09cf59b819` | No license detected | Swift/CoreBluetooth client and typed protocol implementation targeting LITA-BA/LITA-BR/DATA-S.[3] |
+| `Crema` | `dallonby/Crema` | `930879755a76cefef010c05a39485e09cf59b819` | No license detected | Swift/CoreBluetooth implementation targeting LITA-BA/LITA-BR/DATA-S; its constants state live verification was against LITA-BA, so use it as a cross-check rather than exact DATA-S proof.[3] |
 | `DecentEbar` | `akiskev/DecentEbar` | `f5f85fd42626ec26a50c10290d41bd0ef3fe9907` | PolyForm Noncommercial 1.0.0 | Android AccessibilityService automation of official E-Bar UI; useful for profile semantics and behavioral comparison, not as the BLE transport.[7] |
 
 ## Similar-machine and accessory references

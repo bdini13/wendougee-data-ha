@@ -21,10 +21,12 @@ Substantial exact-machine work already exists:
 
 1. **GeeFlow** is a Kotlin Multiplatform controller whose only real tested machine is the Wendougee DATA S. It already implements BLE discovery, Modbus framing, telemetry, profile execution, boiler settings, cleaning, smart-scale support, and safety warnings.[4][5][6]
 2. **LitaLite** documents static analysis of official Android app v3.1.0 plus live LITA-BA tests. It identifies the GATT UUIDs, Modbus RTU transport, register map, command frames, profile writes, telemetry, and FF55 side channel.[1][2]
-3. **Crema** is a native Swift client for LITA-BA/LITA-BR/DATA-S with transport abstractions, Modbus, FF55 handling, telemetry, profile logic, and tests.[3]
+3. **Crema** is a native Swift client that targets LITA-BA/LITA-BR/DATA-S with transport abstractions, Modbus, FF55 handling, telemetry, profile logic, and tests. Its comments trace live verification to LITA-BA, so it is not independent DATA-S hardware evidence.[3]
 4. **DecentEbar** automates the official Android E-Bar UI through AccessibilityService rather than replacing its BLE client; it is useful for UI/profile semantics and operational comparison.[7]
 
 The best path is a clean Python implementation based on independently verified protocol facts—not another blind packet-capture campaign.
+
+Read `research/LITALITE_CREMA_REVIEW.md` before borrowing any design. It records safety gaps, parser limitations, the failed Crema test invocation, and the licensing boundary.
 
 ## Confirmed transport baseline
 
