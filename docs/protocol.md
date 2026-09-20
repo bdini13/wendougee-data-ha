@@ -20,7 +20,7 @@ LitaLite reports a custom service and two communication characteristics discover
 | Modbus read/write/notify | `00010203-0405-0607-0809-0a0b0c0d2b10` |
 | FF55 event/status | `00010203-0405-0607-0809-0a0b0c0d2c10` |
 
-Upstream testing reports that direct GATT access did not require pairing, a PIN, or an application authentication exchange.[1] This must still be verified read-only against Bobby's DATA S.
+Upstream testing reports that direct GATT access did not require pairing, a PIN, or an application authentication exchange.[1] This must still be verified read-only against Bobby's DATA S. If confirmed, document that any nearby BLE central could potentially attempt control; do not expose automatic brew actions.
 
 ## Modbus RTU transport
 
@@ -80,7 +80,7 @@ The following are recorded for protocol completeness but must not be sent withou
 |---:|---|---|
 | 87 | holding register | active brew mode |
 | 150 | coil | brew-button press/release toggle |
-| 154 | coil | manual/raw valve path |
+| 154 | coil | **unresolved conflict:** described upstream as both a configured-shot trigger and a raw valve; do not use |
 | 155 | coil | cleaning cycle |
 | 157 | coil | free-variable brew path in GeeFlow; earlier LitaLite experiment found no obvious effect on one LITA-BA |
 

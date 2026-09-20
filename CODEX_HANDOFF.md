@@ -175,6 +175,8 @@ Do **not** connect to the machine or implement writes in this first task.
 5. Optional controls, one category at a time, each with interlocks and supervised physical validation.
 6. HACS validation, diagnostics redaction, documentation, and release hardening.
 
+For any later profile work, reject mode 4 and unverified slots/modes until DATA-S fixtures exist. Validate all numeric bounds and slot capacity, fail on the first response mismatch, read back the complete profile, and keep brew activation as a separate operation.
+
 ## Sources
 
 [1] https://github.com/dallonby/LitaLite/blob/main/PROTOCOL.md

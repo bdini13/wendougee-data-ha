@@ -23,6 +23,9 @@ Build a safe, local-first Home Assistant integration for Wendougee DATA-family e
 - Use Home Assistant's shared Bluetooth APIs in the integration; do not run an independent permanent Bleak scanner inside HA.
 - Keep the protocol/client layer independent of Home Assistant.
 - Preserve stable unique IDs and redact identifiers from diagnostics.
+- Reject mode 4, unverified profile slots/modes, and out-of-range profile values until independently validated on DATA S.
+- Future control transactions must fail closed: correlate every response, stop on any mismatch, verify complete readback, and keep activation as a separate action.
+- Do not import Crema's cloud/community backend into this local-first integration.
 
 ## First task
 

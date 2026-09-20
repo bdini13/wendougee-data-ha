@@ -34,6 +34,8 @@ Neither repository has a detectable license. Treat both as all-rights-reserved r
 - `press_coil.py` and `press_register.py` perform hardware writes immediately after connecting; they have no interactive confirmation, address allowlist, dry-run mode, emergency cleanup guarantee, or validation that the machine is attended and safely prepared.[22]
 - If `press_coil.py` is interrupted after the ON write but before the OFF write, the `KeyboardInterrupt` handler exits without a `finally` release. For a momentary-control protocol, that is an unacceptable pattern for production code.[22]
 - `send_profile.py --demo` is not a simulation: it writes the captured profile into a real quick-key slot. `--brew` is optional, but the profile mutation happens regardless. The name can mislead users into treating it as harmless.[23]
+- **P0:** `send_profile.py` accepts `real_mode=4` but compiles it through the ordinary header/stage layout. LitaLite's own protocol notes say free-variable-pressure mode uses eight 64-register datasets plus auxiliary writes, so mode 4 can produce an invalid executable profile and must be rejected.[1][23]
+- **P0:** profile transmission is fail-open. A timeout or invalid response prints a warning and the script continues through later writes and can start the brew; readback happens only after optional activation. Any production implementation must abort on the first mismatch and verify the complete profile before exposing a separate start action.[23]
 - `probe.py` accepts arbitrary hexadecimal writes. Its prose warns that writes change state, but the program does not enforce read-only function codes.
 
 ### Correctness and robustness warnings
@@ -45,6 +47,12 @@ Neither repository has a detectable license. Treat both as all-rights-reserved r
 - The repository has no automated test suite. The CRC self-test is useful but does not cover fragmented responses, exception frames, byte-count validation, timeouts, reconnects, or malformed notifications.[21]
 - Some protocol sections have stale/open-question wording after earlier sections claim live confirmation. Treat packet transcripts and current code cross-checks as stronger evidence than unchecked TODO lists.
 - Register 1422 flow scaling is explicitly an inference from physical sanity checking, not a controlled calibration. Preserve that uncertainty.[1][2]
+- `record_brew.py` labels register 1405 as `progress_pct`, despite the protocol and handoff identifying elapsed deciseconds. Consumers must expose elapsed seconds, not percentage.[1][2][29]
+- The FF55 Variant-B prose says length includes the checksum, while its examples show 12/10 payload bytes followed by a separate checksum. Treat length as payload-only until more fixtures confirm it.[1]
+- Coil 154 is described inconsistently as a configured-shot trigger and a raw valve. Do not expose it until a repeatable DATA-S experiment resolves the semantics.[1][2]
+- `parse_snoop.py` infers request versus response using a length heuristic that can misclassify an eight-byte request when the address high byte resembles a response byte count.[30]
+- Quick-key base 3048 breaks the apparent 512-register sequence (`2048`, `2560`, `3048`, `3560`) and lacks a live key-3 fixture. Verify it independently before writing.
+- The device reportedly accepts any nearby BLE central without pairing or application authentication. Document proximity-based unauthorized-control risk and never expose automatic brew actions.[1]
 
 ### Reusable facts, not reusable code
 
@@ -91,6 +99,8 @@ Do not port the scripts wholesale.
 - Reassembly parses the entire accumulated buffer as one frame. It does not extract multiple frames, discard a corrupt prefix, or recover after a poisoned buffer.[25]
 - Disconnection clears characteristics but does not immediately fail an in-flight request; callers wait until the timeout fires.[25]
 - The transport exposes unrestricted one-way Modbus and FF55 writes with no policy/safety layer.[25]
+- Writes use `withoutResponse` without checking negotiated maximum write length, `canSendWriteWithoutResponse`, or readiness callbacks. Burst writes—especially a start/abort pulse—may be dropped.[25]
+- The higher-level discovery helper can wait indefinitely because scan timeout changes state but does not finish the discovery stream.[25][39]
 
 ### Parser/model warnings
 
@@ -99,6 +109,18 @@ Do not port the scripts wholesale.
 - The FF55 parser accepts the declared payload portion but does not require the declared length to consume every byte before the checksum, allowing trailing bytes to be silently ignored.[26]
 - Crema's `LiveTelemetry` model omits water-level alarm, scale weight, and weight rate fields that GeeFlow's DATA-S parser maps from the same telemetry block.
 - Crema advertises DATA-S support, but its constants explicitly trace live verification to LITA-BA; do not treat it as independent DATA-S hardware confirmation.[3]
+
+### Safety, application, and backend warnings
+
+- **P0:** decoded or locally created profiles lack a hard validation boundary. Stage duration, pressure, flow, wait values, stage count, slot capacity, and numeric finiteness/ranges can reach register conversion and hardware writes unchecked; invalid values can trap or produce unreasonable setpoints.[31][32]
+- Profile application must be transactional: validate, write without activation, correlate every response, read back, then expose start as a distinct action. A mismatch must never continue to brew.
+- **P0 if the optional backend is deployed:** JWT signing falls back to `dev-secret-change-me`, tokens last 365 days, and Docker Compose preserves the fallback in production. Production startup must fail unless a strong explicit secret is present.[33][34]
+- App documentation says the bearer token is in Keychain, but the implementation stores it in `UserDefaults`.[35]
+- Changing the backend URL can send the existing bearer token to a new HTTP or HTTPS origin. Clear/re-authenticate on origin changes and require HTTPS except explicit localhost development.[36][37]
+- Profile JSON and request-body size need strict limits and a versioned schema before any shared profile can become executable.[40]
+- A verified `npm audit` of the reviewed backend lockfile reported **8 vulnerabilities: 3 high and 5 moderate**. The backend should not be part of the local-first Home Assistant scope.
+- The real BLE transport is Apple/CoreBluetooth-only. There is no Linux/Bleak transport suitable for Home Assistant.[3][25]
+- The macOS project disables hardened runtime and sandboxing, increasing risk for an app that stores identity tokens and imports files.[38]
 
 ### Reusable design ideas, not reusable code
 
@@ -121,6 +143,9 @@ For Python/Home Assistant, implement these patterns independently using Home Ass
 5. Begin with safe reads only.
 6. Add malformed-frame, exception-response, correlation, fragmentation, coalescing, timeout, disconnect, and reconnect tests before live use.
 7. Keep all writes behind a separate explicit capability layer that Home Assistant does not enable in the first release.
+8. Reject free-variable-pressure mode and every unverified slot/mode until exact DATA-S fixtures exist.
+9. Make future profile application fail-closed and transactional; start is always a separate operation after complete readback.
+10. Do not import Crema's OAuth/community backend into the local-first integration.
 
 ## Sources
 
@@ -135,3 +160,15 @@ For Python/Home Assistant, implement these patterns independently using Home Ass
 [26] https://github.com/dallonby/Crema/blob/main/Sources/CremaKit/FF55.swift
 [27] https://github.com/dallonby/Crema/blob/main/Tests/CremaKitTests/ModbusTests.swift
 [28] https://github.com/dallonby/Crema/blob/main/Package.swift
+[29] https://github.com/dallonby/LitaLite/blob/main/scripts/record_brew.py
+[30] https://github.com/dallonby/LitaLite/blob/main/scripts/parse_snoop.py
+[31] https://github.com/dallonby/Crema/blob/main/Sources/CremaKit/BrewProfile.swift
+[32] https://github.com/dallonby/Crema/blob/main/Sources/CremaKit/Sharing/ProfileShareCodec.swift
+[33] https://github.com/dallonby/Crema/blob/main/backend/src/auth/jwt.ts
+[34] https://github.com/dallonby/Crema/blob/main/backend/docker-compose.yml
+[35] https://github.com/dallonby/Crema/blob/main/Sources/CremaApp/Data/SignedInUser.swift
+[36] https://github.com/dallonby/Crema/blob/main/Sources/CremaApp/Views/Sharing/SettingsSheet.swift
+[37] https://github.com/dallonby/Crema/blob/main/Sources/CremaKit/Sharing/ShareAPIClient.swift
+[38] https://github.com/dallonby/Crema/blob/main/project.yml
+[39] https://github.com/dallonby/Crema/blob/main/Sources/CremaKit/MachineTransport.swift
+[40] https://github.com/dallonby/Crema/blob/main/backend/src/routes/profiles.ts
