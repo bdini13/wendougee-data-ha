@@ -1,0 +1,14 @@
+[
+  {"name": "area:protocol", "color": "1D76DB", "description": "BLE framing, register semantics and protocol library"},
+  {"name": "area:home-assistant", "color": "18BCF2", "description": "Discovery, entities, lifecycle and HA compatibility"},
+  {"name": "area:documentation", "color": "0075CA", "description": "Guides, capability map, evidence and attribution"},
+  {"name": "area:testing", "color": "5319E7", "description": "Fixtures, regression tests, CI and packaging checks"},
+  {"name": "type:bug", "color": "D73A4A", "description": "A reproducible defect in implemented behavior"},
+  {"name": "type:enhancement", "color": "A2EEEF", "description": "A proposed capability or usability improvement"},
+  {"name": "type:research", "color": "D4C5F9", "description": "Undocumented behavior or conflicting upstream evidence"},
+  {"name": "needs:hardware-validation", "color": "FBCA04", "description": "Requires explicitly approved exact-machine validation"},
+  {"name": "needs:independent-review", "color": "F9D0C4", "description": "Needs independent review of implementation or assumptions"},
+  {"name": "safety", "color": "B60205", "description": "Physical behavior, control gating or unsafe failure modes"},
+  {"name": "privacy", "color": "B60205", "description": "Identifiers, diagnostics, secrets or capture sanitization"},
+  {"name": "release", "color": "0E8A16", "description": "Compatibility, versioning, HACS and distributable packaging"}
+]

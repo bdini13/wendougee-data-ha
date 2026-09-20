@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
@@ -14,8 +15,9 @@ from .const import (
     MODBUS_CHARACTERISTIC_UUID,
     SERVICE_UUID,
 )
-from .modbus import build_read_holding_registers_request
-from .telemetry import Telemetry, TelemetryResponseAssembler
+from .reads import ReadOperation, build_read_request
+from .session import ReadSession
+from .telemetry import Telemetry, parse_telemetry_response
 
 
 class LiveReadError(RuntimeError):
@@ -65,54 +67,88 @@ async def inspect_live_machine(scan_timeout: float = 15.0) -> None:
         _require_gatt_layout(client)
 
 
+class _BleakReadTransport:
+    """Standalone adapter; HA must supply its own shared-Bluetooth transport.
+
+    Construction performs no I/O. Even this low-level adapter rejects command
+    bytes outside the four fixed read operations. No FF55 messages are sent.
+    """
+
+    def __init__(self, device: Any) -> None:
+        self._device = device
+        self._client: Any = None
+        self._modbus: Any = None
+        self._subscriptions: list[Any] = []
+
+    async def open(
+        self, on_data: Callable[[bytes], None], on_disconnect: Callable[[], None]
+    ) -> None:
+        """Connect the chosen device and await both notification subscriptions."""
+        from bleak import BleakClient
+
+        self._client = BleakClient(
+            self._device,
+            timeout=15.0,
+            disconnected_callback=lambda _client: on_disconnect(),
+        )
+        await self._client.connect()
+        self._modbus, event = _require_gatt_layout(self._client)
+        # Track attempted subscriptions too, so partial setup is cleaned up.
+        self._subscriptions.append(self._modbus)
+        await self._client.start_notify(
+            self._modbus, lambda _sender, data: on_data(bytes(data))
+        )
+        self._subscriptions.append(event)
+        await self._client.start_notify(event, lambda _sender, _data: None)
+
+    async def send(self, request: bytes) -> None:
+        """Enforce the read allowlist again at the last boundary before Bluetooth."""
+        if request not in {
+            build_read_request(operation) for operation in ReadOperation
+        }:
+            raise ValueError("request must be an allowlisted read")
+        if self._client is None or self._modbus is None:
+            raise LiveReadError("transport not ready")
+        await self._client.write_gatt_char(
+            self._modbus,
+            request,
+            response=("write-without-response" not in self._modbus.properties),
+        )
+
+    async def close(self) -> None:
+        """Attempt every cleanup step without letting unsubscribe block disconnect."""
+        if self._client is None:
+            return
+        cleanup_failed = False
+        try:
+            for characteristic in reversed(self._subscriptions):
+                if not self._client.is_connected:
+                    break
+                try:
+                    async with asyncio.timeout(2.0):
+                        await self._client.stop_notify(characteristic)
+                except Exception:
+                    cleanup_failed = True
+        finally:
+            self._subscriptions.clear()
+            # Also runs after cancellation or a partial connection failure.
+            async with asyncio.timeout(2.0):
+                await self._client.disconnect()
+        if cleanup_failed:
+            raise LiveReadError("notification cleanup failed; disconnect attempted")
+
+
 async def read_live_telemetry(
     scan_timeout: float = 15.0,
     response_timeout: float = 8.0,
 ) -> Telemetry:
     """Send only the documented function-03 read and return validated telemetry."""
-    from bleak import BleakClient
-
     device = await _discover_data_machine(scan_timeout)
-    async with BleakClient(device, timeout=15.0) as client:
-        modbus_characteristic, event_characteristic = _require_gatt_layout(client)
-
-        loop = asyncio.get_running_loop()
-        result: asyncio.Future[Telemetry] = loop.create_future()
-        assembler = TelemetryResponseAssembler()
-
-        def on_modbus_notification(_sender: Any, data: bytearray) -> None:
-            if result.done():
-                return
-            try:
-                telemetry = assembler.feed(bytes(data))
-            except ValueError as error:
-                result.set_exception(error)
-                return
-            if telemetry is not None:
-                result.set_result(telemetry)
-
-        def on_event_notification(_sender: Any, _data: bytearray) -> None:
-            return
-
-        await client.start_notify(modbus_characteristic, on_modbus_notification)
-        await client.start_notify(event_characteristic, on_event_notification)
-        try:
-            request = build_read_holding_registers_request(
-                start_address=1404,
-                count=22,
-            )
-            await client.write_gatt_char(
-                modbus_characteristic,
-                request,
-                response=(
-                    "write-without-response" not in modbus_characteristic.properties
-                ),
-            )
-            return await asyncio.wait_for(result, timeout=response_timeout)
-        finally:
-            if client.is_connected:
-                await client.stop_notify(event_characteristic)
-                await client.stop_notify(modbus_characteristic)
+    async with ReadSession(
+        _BleakReadTransport(device), timeout=response_timeout
+    ) as session:
+        frame = await session.read(ReadOperation.TELEMETRY)
+        return parse_telemetry_response(frame)
 
 
 def main() -> None:

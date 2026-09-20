@@ -5,6 +5,11 @@ __pycache__/
 .ruff_cache/
 .venv/
 .venv313/
+.venv-ha/
+dist/
+.coverage
+htmlcov/
+custom_components/wendougee_data/_protocol/
 *.egg-info/
 .live-tools/
 

@@ -24,9 +24,25 @@ jobs:
           python -m ruff check .
           python -m ruff format --check .
       - name: Compile Python
-        run: python -m compileall -q src custom_components tests
+        run: python -m compileall -q src custom_components tests scripts
       - name: Validate JSON
         run: |
           python -m json.tool custom_components/wendougee_data/manifest.json >/dev/null
           python -m json.tool custom_components/wendougee_data/strings.json >/dev/null
+          python -m json.tool custom_components/wendougee_data/translations/en.json >/dev/null
+          python -m json.tool .github/labels.json >/dev/null
           python -m json.tool hacs.json >/dev/null
+
+  home-assistant:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Install pinned Home Assistant test runtime
+        run: python -m pip install -r requirements-ha-test.txt
+      - name: Build self-contained integration
+        run: python scripts/build_integration.py
+      - name: Test Home Assistant with simulated Bluetooth and network disabled
+        run: python -m pytest -c pytest-ha.ini

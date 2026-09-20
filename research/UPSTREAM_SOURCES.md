@@ -2,6 +2,8 @@
 
 The repositories below are cloned under `research/upstream/` on the Mac Codex workspace. That directory is intentionally gitignored. Commit SHAs capture the reviewed snapshot; update deliberately and record the new SHA.
 
+The 2026-09-20 cross-source audit is recorded in [CAPABILITIES.md](../CAPABILITIES.md), with pinned file links, and [docs/VALIDATION_PLAN.md](../docs/VALIDATION_PLAN.md), with GeeFlow register/behavior findings and conflicts. Implemented upstream does not mean validated on the local DATA S.
+
 ## Exact Wendougee work
 
 | Local folder | Repository | Snapshot | License | Why it matters |

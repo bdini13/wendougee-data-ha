@@ -11,6 +11,8 @@ Build a local-first, cloud-independent Home Assistant integration for Wendougee 
 - Ignored private captures: `research/artifacts/private/captures/`
 - Public protocol synthesis: `docs/protocol.md`
 - Source inventory: `research/UPSTREAM_SOURCES.md`
+- Capability map and evidence levels: `CAPABILITIES.md`
+- Prioritized validation batches and unresolved conflicts: `docs/VALIDATION_PLAN.md`
 - GitHub: `https://github.com/bdini13/wendougee-data-ha`
 
 The Mac has the ChatGPT desktop app and existing Codex authentication state under `~/.codex/`, but the standalone `codex` CLI is not currently on `PATH`. The folder is ready to open as a Codex project; do not assume CLI availability.
@@ -156,6 +158,12 @@ Use strict RED → GREEN → REFACTOR:
 No production behavior without a failing test first.
 
 ## First Codex task
+
+**Status update, 2026-09-20:** the pure read-only slice below is complete and offline-tested. A later native CoreBluetooth helper obtained one idle telemetry response; the Python/Bleak live client is not hardware-validated. The HA implementation is now offline-tested as described below, not deployed. The source-first capability audit is now in `CAPABILITIES.md`; use `docs/VALIDATION_PLAN.md` for subsequent work rather than repeating the initial implementation or claiming all telemetry semantics are validated.
+
+**Offline foundation update:** `reads.py`, `state.py`, and `session.py` provide allowlisted configuration/status reads, strict framing, typed decoders, and failure-quarantined serialized sessions. The standalone telemetry client uses that session through a tested fake-Bleak adapter. See `docs/OFFLINE_CORE.md`. Real fixtures and physical comparison remain pending.
+
+**HA implementation update:** `docs/HOME_ASSISTANT.md` describes the read-only integration and build. It uses shared Bluetooth, confirmed setup, one telemetry read per short polling session, nine measurement sensors, alarm/reachability sensors, failure recovery, cancellation cleanup and allowlisted diagnostics. Configuration/status commands are not enabled in HA. Verification: 75 independent protocol/package tests on Python 3.13 and 19 real HA framework tests on HA 2026.9.3 / Python 3.14, with simulated Bluetooth and network disabled. Build `scripts/build_integration.py` before HA tests; it generates the ignored `_protocol` copy from our own sources and `dist/wendougee_data.zip`. No machine or actual HA instance was accessed. Live validation and deployment need separate approval.
 
 Implement only the pure, read-only protocol slice:
 

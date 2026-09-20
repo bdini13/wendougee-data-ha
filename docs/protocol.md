@@ -2,6 +2,8 @@
 
 This document separates locally observed facts from upstream findings. Raw captures and device-specific identifiers remain private and gitignored.
 
+For the broader feature inventory, evidence levels, control ambiguities and remaining work, see the [capability map](../CAPABILITIES.md) and [validation plan](VALIDATION_PLAN.md). Those documents pin the upstream revisions reviewed on 2026-09-20.
+
 ## Local observations: DATA S
 
 - Advertising name pattern: `WDG_Data_*`.
@@ -13,6 +15,7 @@ This document separates locally observed facts from upstream findings. Raw captu
 - The test subscribed to both characteristics and sent the documented telemetry request exactly once. The machine returned one CRC-valid, 49-byte function-03 response containing 22 registers.
 - The idle response decoded to brew boiler `94.6 °C`, steam boiler `27.2 °C`, no water-level alarm, and zero pressure, flow, volume, scale weight, and brew/pump time. These values were protocol-plausible but were not independently compared with the physical display during the headless session.
 - No control, provisioning, reset, boiler-setting, cleaning, valve, or brew command was sent.
+- This was a temporary native CoreBluetooth helper, not validation of the Python/Bleak CLI. No firmware version or sanitized response fixture was retained. The reported values are a session observation, not a reproducible fixture or calibration result.
 
 ## Upstream protocol consensus
 
@@ -24,7 +27,7 @@ LitaLite reports a custom service and two communication characteristics discover
 | Modbus read/write/notify | `00010203-0405-0607-0809-0a0b0c0d2b10` |
 | FF55 event/status | `00010203-0405-0607-0809-0a0b0c0d2c10` |
 
-Upstream testing reports that direct GATT access did not require pairing, a PIN, or an application authentication exchange.[1] This must still be verified read-only against Bobby's DATA S. If confirmed, document that any nearby BLE central could potentially attempt control; do not expose automatic brew actions.
+Upstream testing reports that direct GATT access did not require pairing, a PIN, or an application authentication exchange.[1] The local native read did not prompt for pairing, but this is not a comprehensive security test. Nearby BLE access may permit control; do not expose automatic brew actions.
 
 ## Modbus RTU transport
 
@@ -62,7 +65,7 @@ Upstream maps the 1404+ block as follows:[1][20]
 | 1408 | Steam-boiler temperature | divide by 10 for °C |
 | 1409 | Brew-boiler temperature | divide by 10 for °C |
 | 1410 | Pressure | divide by 10 for bar |
-| 1411 | Total dispensed volume | mL |
+| 1411 | Cumulative pumped volume | mL; not necessarily beverage yield |
 | 1412 | Scale weight | divide by 10 for g |
 | 1417 | Pump-active time | seconds |
 | 1422 | Instantaneous flow | reported as raw mL/s; controlled confirmation remains desirable |
@@ -75,6 +78,8 @@ Safe request, now locally verified on the DATA S:
 ```
 
 Interpretation: slave 1, read holding registers, start 1404 (`0x057C`), count 22, CRC `0x1005` transmitted low-byte first.[1]
+
+The one local response confirms framing and a plausible decode, not every unit. Register 1405's conversion still needs a stopwatch comparison (GeeFlow's parser retains the raw integer); flow and signed scale behavior also remain provisional. GeeFlow reads 20 registers from the same base, whereas our decoder expects 22; do not feed a 20-register response into the current fixed-length decoder.
 
 ## Known controls—documented, not approved for use
 
@@ -105,16 +110,18 @@ Potential uses include heartbeat state, smart-scale/grinder interaction, session
 - LitaLite's live validation was primarily against LITA-BA and lists DATA-S compatibility as a cross-model item to confirm.[2]
 - Crema targets LITA-BA, LITA-BR, and DATA-S in its public project description and constants.[3]
 
-Therefore, begin by verifying UUIDs and safe reads on Bobby's DATA S, not by assuming every LITA observation transfers unchanged.
+UUIDs and one telemetry read have now been observed on Bobby's DATA S. This does not establish configuration/control compatibility or transfer every LITA observation unchanged.
 
 ## Next evidence to collect
 
-1. Direct service discovery with the official app disconnected.
-2. Read-only subscribe and telemetry request.
-3. Save sanitized service/characteristic metadata and byte fixtures.
-4. Compare decoded temperatures/pressure/volume with the machine display.
-5. Repeat during one manually initiated shot; the client must not initiate it.
-6. Map alarms and boiler-state fields before exposing controls.
+1. Reproduce the read through our Python transport with supported permissions and the official app disconnected.
+2. Save sanitized service metadata and response fixtures with model/firmware/app provenance.
+3. Validate known configuration and operating-state reads in the same approved session.
+4. Compare decoded values with the display, stopwatch and scale during attended observation.
+5. Observe one manually initiated shot; the client must not initiate it.
+6. Resolve the capability map's conflicts before exposing the affected controls.
+
+See the [batched plan](VALIDATION_PLAN.md) for exact scope and acceptance criteria. No new hardware session was performed during the capability audit.
 
 ## Sources
 
