@@ -21,6 +21,8 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 
 ## Repository layout
 
+- `src/wendougee_data/` — independently implemented read-only protocol library
+- `tests/` — byte-fixture protocol tests that do not require hardware
 - `custom_components/wendougee_data/` — Home Assistant custom integration
 - `docs/protocol.md` — synthesized, sourced BLE protocol knowledge base
 - `CODEX_HANDOFF.md` — current implementation brief and safety boundaries
@@ -31,10 +33,21 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 ## Development status
 
 1. ✅ Detect DATA S advertisements
-2. 🚧 Capture and map official E-Bar app traffic
-3. ⬜ Implement and test a standalone BLE client
+2. ✅ Establish the safe telemetry request and register map from corroborated upstream work
+3. 🚧 Implement and test the read-only protocol library and standalone BLE client
 4. ⬜ Add Home Assistant config flow and entities
 5. ⬜ Validate against real hardware
+
+## Development
+
+Python 3.13 is required. Install the test tools and run the offline checks with:
+
+```sh
+python -m pip install -e ".[test]"
+python -m pytest
+python -m ruff check .
+python -m ruff format --check .
+```
 
 ## Privacy
 
