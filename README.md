@@ -22,7 +22,9 @@ A local-first Home Assistant custom integration for Wendougee DATA-series espres
 ## Repository layout
 
 - `custom_components/wendougee_data/` — Home Assistant custom integration
-- `docs/protocol.md` — confirmed BLE protocol findings
+- `docs/protocol.md` — synthesized, sourced BLE protocol knowledge base
+- `CODEX_HANDOFF.md` — current implementation brief and safety boundaries
+- `research/UPSTREAM_SOURCES.md` — pinned inventory of related projects
 - `captures/` — local packet captures (gitignored)
 
 ## Development status

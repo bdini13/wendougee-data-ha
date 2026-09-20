@@ -13,9 +13,12 @@ __pycache__/
 # BLE captures and device-specific data
 captures/*
 !captures/.gitkeep
+research/upstream/
+research/artifacts/private/
 *.pcap
 *.pcapng
 *.btsnoop
+*.apk
 *.log
 .env
 
