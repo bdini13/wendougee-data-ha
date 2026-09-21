@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_ADDRESS
 
 from .const import (
+    CONF_CAPTURE_BASELINE,
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
     MAX_POLL_INTERVAL,
@@ -18,6 +19,17 @@ from .const import (
 
 def _supported(info: bluetooth.BluetoothServiceInfoBleak) -> bool:
     return info.connectable and info.name.startswith("WDG_Data_")
+
+
+def _yaml_entry_data(hass, address: str) -> dict[str, Any]:
+    """Build the explicitly opted-in headless entry without hidden defaults."""
+    data: dict[str, Any] = {
+        CONF_ADDRESS: address,
+        "poll_interval": DEFAULT_POLL_INTERVAL,
+    }
+    if hass.data.get(DOMAIN, {}).get(CONF_CAPTURE_BASELINE) is True:
+        data[CONF_CAPTURE_BASELINE] = True
+    return data
 
 
 class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -41,10 +53,7 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
         if self.hass.data.get(DOMAIN, {}).get("yaml_import") is True:
             return self.async_create_entry(
                 title="Wendougee DATA",
-                data={
-                    CONF_ADDRESS: self._address,
-                    "poll_interval": DEFAULT_POLL_INTERVAL,
-                },
+                data=_yaml_entry_data(self.hass, self._address),
             )
         self.context["title_placeholders"] = {"name": "Wendougee DATA"}
         return await self.async_step_confirm()
@@ -96,10 +105,7 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
             title="Wendougee DATA",
-            data={
-                CONF_ADDRESS: self._address,
-                "poll_interval": DEFAULT_POLL_INTERVAL,
-            },
+            data=_yaml_entry_data(self.hass, self._address),
         )
 
     async def async_step_confirm(

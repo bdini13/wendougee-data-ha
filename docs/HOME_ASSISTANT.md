@@ -1,6 +1,6 @@
 # Experimental read-only Home Assistant integration
 
-Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.6` was installed and configuration-validated on Bobby's HA 2026.9.1 host. Its ESPHome proxy is registered and uses ESPHome's active generic proxy package. No config entry, proxy-to-machine read, four-read capture or physical comparison completed because no matching machine advertisement was visible during the bounded validation windows. Real proxy compatibility therefore remains unverified.
+Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.7` was installed and configuration-validated on Bobby's HA 2026.9.1 host. Its ESPHome proxy is registered and uses ESPHome's active generic proxy package. No config entry, proxy-to-machine read, four-read capture or physical comparison completed because no matching machine advertisement was visible during the bounded validation windows. Real proxy compatibility therefore remains unverified.
 
 ## Included
 
@@ -61,7 +61,7 @@ For an approved headless deployment without an authenticated frontend session,
 an empty YAML section provides the same explicit polling opt-in:
 
 ```yaml
-wendougee_data:
+wendougee_data: {}
 ```
 
 After a validated restart, HA imports a single supported machine already in its
@@ -73,6 +73,20 @@ section before deleting the entry if it must not be recreated on a later
 restart. At startup the importer allows up to five minutes for a remote proxy
 to populate HA's shared discovery cache; it sends no machine request while
 waiting.
+
+For a separately approved headless evidence session, use:
+
+```yaml
+wendougee_data:
+  capture_baseline: true
+```
+
+After the entry's first successful telemetry sample, this creates an owner-only
+`wendougee_data_private_baseline.json` in the HA configuration directory with
+the same private response schema as the action. Before Bluetooth access it
+atomically creates `.wendougee_data_baseline_attempted`; presence of either file
+prevents another automatic attempt after a reload or restart. A failed capture
+is not retried. This opt-in does not affect the manual response-only action.
 
 This is a manual experimental package, not a published HACS release. Copying only the tracked source component directory will omit generated protocol files; use the build output. The package requires the Bluetooth integration and its matching `bleak-retry-connector==4.7.0` dependency. Do not claim compatibility with an HA version that requires a different dependency set without testing it.
 

@@ -51,8 +51,8 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | Versioned private envelope plus standalone and HA-proxy four-read baseline paths; no live four-read run yet |
 | HA integration | Implemented; actual HA framework with simulated Bluetooth; package installed on target HA |
-| Verification baseline | **115 local tests passing:** 90 protocol/package + 25 HA tests, as of 2026-09-20 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 loads and validates package 0.0.6 |
+| Verification baseline | **116 local tests passing:** 90 protocol/package + 26 HA tests, as of 2026-09-20 |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 loads and validates the package |
 | Deployment / release | Installed with backup on target HA; no config entry/live read yet; not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
 
@@ -88,6 +88,12 @@ For a headless HA host with no available web session, adding an empty
 On restart, import succeeds only when HA already sees exactly one supported
 connectable machine; zero or multiple matches fail closed. Remove the YAML
 section before removing the imported entry if it must stay removed.
+
+An approved headless evidence session can add `capture_baseline: true` beneath
+that section. After the first successful telemetry sample, HA attempts the four
+fixed reads once, writes an owner-only private response file, and creates an
+attempt marker before Bluetooth access so restarts cannot repeat a failed or
+uncertain capture.
 
 ## Roadmap
 

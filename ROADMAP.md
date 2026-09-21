@@ -13,7 +13,7 @@ Last reviewed: 2026-09-20. The goal is a well-understood, local-first DATA S int
 - [x] Add a versioned private evidence envelope and approval-gated baseline reader.
 - [x] Add an explicitly confirmed four-read baseline action for HA's shared Bluetooth/proxy route.
 
-Evidence: 90 protocol/package tests plus 25 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
+Evidence: 90 protocol/package tests plus 26 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
 
 ## 2. Hardware validation — next gate
 

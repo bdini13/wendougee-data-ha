@@ -74,6 +74,13 @@ command, the machine must be attended, the official app disconnected, and a
 real run requires fresh approval. Installing the integration and restarting HA
 are separate approval-gated deployment steps.
 
+For an approved headless host without API/frontend credentials, the YAML option
+`capture_baseline: true` provides a one-shot equivalent. It creates an attempt
+marker before accessing Bluetooth, never retries after a failure or restart,
+and writes `wendougee_data_private_baseline.json` with owner-only permissions on
+success. The file is still `private_unreviewed`; copy it only into the ignored
+private artifact area before conversion/validation, and do not publish it.
+
 ## Offline validation and reporting
 
 Validate a private document and print a report without raw frames:

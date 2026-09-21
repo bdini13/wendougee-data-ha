@@ -13,7 +13,9 @@ from custom_components.wendougee_data._protocol.telemetry import (
     parse_telemetry_response,
 )
 from custom_components.wendougee_data.const import (
+    CONF_CAPTURE_BASELINE,
     DOMAIN,
+    PRIVATE_BASELINE_FILE,
     SERVICE_CAPTURE_BASELINE,
     device_id,
 )
@@ -27,12 +29,15 @@ ADDRESS = "00:00:00:00:00:01"  # Synthetic, not a real device identifier.
 TELEMETRY = parse_telemetry_response(TELEMETRY_RESPONSE)
 
 
-def entry():
+def entry(*, capture_baseline=False):
+    data = {CONF_ADDRESS: ADDRESS, "poll_interval": 30}
+    if capture_baseline:
+        data[CONF_CAPTURE_BASELINE] = True
     return MockConfigEntry(
         domain=DOMAIN,
         title="Wendougee DATA",
         unique_id=device_id(ADDRESS),
-        data={CONF_ADDRESS: ADDRESS, "poll_interval": 30},
+        data=data,
     )
 
 
@@ -287,6 +292,51 @@ async def test_private_baseline_service_returns_only_four_allowlisted_frames(has
         ],
     }
     assert ADDRESS not in str(response)
+
+
+async def test_headless_capture_writes_private_frames_only_once(hass, tmp_path):
+    import json
+
+    from custom_components.wendougee_data._protocol.crc import append_crc
+    from custom_components.wendougee_data._protocol.reads import ReadOperation
+
+    hass.config.config_dir = str(tmp_path)
+    configured = entry(capture_baseline=True)
+    configured.add_to_hass(hass)
+    frames = {
+        ReadOperation.TELEMETRY: TELEMETRY_RESPONSE,
+        ReadOperation.CONFIGURATION: append_crc(b"\x01\x03\x4a" + bytes(74)),
+        ReadOperation.WATER_ALARM_ENABLED: append_crc(b"\x01\x03\x02\x00\x01"),
+        ReadOperation.OPERATING_STATE: append_crc(b"\x01\x01\x03\x00\x00\x00"),
+    }
+    with (
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.read_telemetry",
+            new_callable=AsyncMock,
+            return_value=TELEMETRY,
+        ),
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.read_baseline",
+            new_callable=AsyncMock,
+            return_value=frames,
+        ) as baseline,
+    ):
+        assert await hass.config_entries.async_setup(configured.entry_id)
+        await hass.async_block_till_done()
+        assert await hass.config_entries.async_reload(configured.entry_id)
+        await hass.async_block_till_done()
+
+    baseline.assert_awaited_once()
+    from pathlib import Path
+
+    destination = Path(hass.config.path(PRIVATE_BASELINE_FILE))
+    document = json.loads(destination.read_text(encoding="utf-8"))
+    assert destination.stat().st_mode & 0o777 == 0o600
+    assert document["privacy_status"] == "private_unreviewed"
+    assert [record["operation"] for record in document["records"]] == [
+        operation.name.lower() for operation in ReadOperation
+    ]
+    assert ADDRESS not in str(document)
 
 
 async def test_all_measurements_units_disabled_defaults_and_stable_ids(

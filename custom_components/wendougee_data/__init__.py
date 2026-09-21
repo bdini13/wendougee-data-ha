@@ -1,6 +1,10 @@
 """Read-only Wendougee DATA integration."""
 
 import asyncio
+import json
+import logging
+import os
+from pathlib import Path
 
 import voluptuous as vol
 from homeassistant.components import bluetooth as ha_bluetooth
@@ -10,13 +14,78 @@ from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 
 from ._protocol.reads import ReadOperation, build_read_request
-from .const import DOMAIN, SERVICE_CAPTURE_BASELINE
+from .const import (
+    CONF_CAPTURE_BASELINE,
+    DOMAIN,
+    PRIVATE_BASELINE_FILE,
+    PRIVATE_BASELINE_MARKER,
+    SERVICE_CAPTURE_BASELINE,
+)
 from .coordinator import WendougeeCoordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 CONFIG_SCHEMA = vol.Schema(
-    {vol.Optional(DOMAIN): vol.Schema({})}, extra=vol.ALLOW_EXTRA
+    {
+        vol.Optional(DOMAIN): vol.Schema(
+            {vol.Optional(CONF_CAPTURE_BASELINE, default=False): bool}
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
 )
+_LOGGER = logging.getLogger(__name__)
+
+
+def _private_baseline_response(frames: dict[ReadOperation, bytes]) -> dict:
+    """Format raw frames without discovery or config-entry identifiers."""
+    return {
+        "schema": "wendougee-data-private-baseline/v1",
+        "privacy_status": "private_unreviewed",
+        "records": [
+            {
+                "operation": operation.name.lower(),
+                "request_hex": build_read_request(operation).hex(),
+                "response_hex": frames[operation].hex(),
+            }
+            for operation in ReadOperation
+        ],
+    }
+
+
+def _claim_private_capture(config_dir: Path) -> bool:
+    """Create an attempt marker atomically so restarts cannot repeat a read."""
+    destination = config_dir / PRIVATE_BASELINE_FILE
+    marker = config_dir / PRIVATE_BASELINE_MARKER
+    if destination.exists() or marker.exists():
+        return False
+    descriptor = os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    os.close(descriptor)
+    return True
+
+
+def _write_private_capture(config_dir: Path, document: dict) -> None:
+    """Write a new private response file with owner-only permissions."""
+    destination = config_dir / PRIVATE_BASELINE_FILE
+    descriptor = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+        json.dump(document, output, indent=2, sort_keys=True)
+        output.write("\n")
+
+
+async def _async_capture_private_baseline(
+    hass: HomeAssistant, coordinator: WendougeeCoordinator
+) -> None:
+    """Attempt the YAML-approved baseline once without failing integration setup."""
+    config_dir = Path(hass.config.config_dir)
+    claimed = await hass.async_add_executor_job(_claim_private_capture, config_dir)
+    if not claimed:
+        return
+    try:
+        frames = await coordinator.async_read_baseline()
+        document = _private_baseline_response(frames)
+        await hass.async_add_executor_job(_write_private_capture, config_dir, document)
+    except Exception:
+        # Never log backend text or raw frames; the marker deliberately prevents retry.
+        _LOGGER.warning("Read-only private baseline attempt did not complete")
 
 
 async def _async_import_when_discovered(hass: HomeAssistant) -> None:
@@ -39,7 +108,12 @@ async def _async_import_when_discovered(hass: HomeAssistant) -> None:
 
 async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     """Register the explicit read-only baseline action once per HA process."""
-    hass.data.setdefault(DOMAIN, {})["yaml_import"] = DOMAIN in _config
+    yaml_config = _config.get(DOMAIN)
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    domain_data["yaml_import"] = yaml_config is not None
+    domain_data[CONF_CAPTURE_BASELINE] = bool(
+        yaml_config and yaml_config.get(CONF_CAPTURE_BASELINE)
+    )
 
     async def capture_baseline(call: ServiceCall) -> dict:
         entry = hass.config_entries.async_get_entry(call.data["config_entry_id"])
@@ -57,18 +131,7 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             raise HomeAssistantError(
                 "Unable to complete the read-only baseline"
             ) from None
-        return {
-            "schema": "wendougee-data-private-baseline/v1",
-            "privacy_status": "private_unreviewed",
-            "records": [
-                {
-                    "operation": operation.name.lower(),
-                    "request_hex": build_read_request(operation).hex(),
-                    "response_hex": frames[operation].hex(),
-                }
-                for operation in ReadOperation
-            ],
-        }
+        return _private_baseline_response(frames)
 
     hass.services.async_register(
         DOMAIN,
@@ -95,6 +158,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = WendougeeCoordinator(hass, entry)
     try:
         await coordinator.async_config_entry_first_refresh()
+        if entry.data.get(CONF_CAPTURE_BASELINE) is True:
+            await _async_capture_private_baseline(hass, coordinator)
         entry.runtime_data = coordinator
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     except BaseException:
