@@ -21,11 +21,26 @@ async def async_get_config_entry_diagnostics(
         configuration.pop("raw_registers")
     operating_state = coordinator.operating_state
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "read_only": True,
         "last_update_success": coordinator.last_update_success,
         "last_error": coordinator.last_error,
         "poll_interval_seconds": coordinator.update_interval.total_seconds(),
+        "poll_health": {
+            "successful_polls_since_load": coordinator.successful_polls_since_load,
+            "failed_polls_since_load": coordinator.failed_polls_since_load,
+            "consecutive_failed_polls": coordinator.consecutive_failed_polls,
+            "last_successful_poll_utc": (
+                coordinator.last_successful_poll_utc.isoformat()
+                if coordinator.last_successful_poll_utc is not None
+                else None
+            ),
+            "last_failed_poll_utc": (
+                coordinator.last_failed_poll_utc.isoformat()
+                if coordinator.last_failed_poll_utc is not None
+                else None
+            ),
+        },
         "telemetry": (
             asdict(coordinator.data)
             if coordinator.last_update_success and coordinator.data is not None

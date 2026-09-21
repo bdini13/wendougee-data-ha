@@ -12,7 +12,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.0.8 is installed on the target HA host after a fresh full backup. It has completed a clean restart, a post-upgrade window beyond its ten-minute configuration-refresh cadence, and a config-entry reload through the ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** Version 0.0.8 is installed on the target HA host after a fresh full backup; 0.0.9 is the locally tested diagnostics candidate. The installed version has completed a clean restart, a post-upgrade window beyond its ten-minute configuration-refresh cadence, a config-entry reload and recovery after two isolated later polling failures through the ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
 
 ## What it does
 
@@ -22,7 +22,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 - Opens a short connection for each poll and disconnects afterward; default interval is 30 seconds.
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.
-- Exports allowlisted diagnostics without device addresses, names, hashes or raw packets.
+- Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 adds UTC poll timestamps and success/failure counters so recovery and soak evidence is distinguishable from a stale snapshot.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
 
 **No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
@@ -55,7 +55,7 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.0.8 installed and running with 23 read-only entities; restart, split-cadence polling and config-entry reload validated |
+| HA integration | Version 0.0.8 installed and running with 23 read-only entities; 0.0.9 diagnostics candidate built locally; restart, split-cadence polling, reload and recovery after isolated failures observed |
 | Verification baseline | **119 local tests passing:** 90 protocol/package + 29 HA tests, as of 2026-09-21 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.0.8 through ESPHome proxy |
 | Deployment / release | Installed with fresh full backup on target HA; one config entry, one device and 23 entities registered; not a published HACS release |

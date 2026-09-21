@@ -1,13 +1,13 @@
 # Experimental read-only Home Assistant integration
 
-Version `0.0.8` is implemented, tested offline using **Home Assistant 2026.9.3 / Python 3.14.7**, and installed on Bobby's HA 2026.9.1 host after a fresh full backup. On 2026-09-21 the target registered all 23 entities, returned schema-2 diagnostics, remained healthy beyond the ten-minute configuration-refresh cadence, and completed a config-entry reload through the active ESPHome proxy. The earlier 0.0.7 session performed the approved one-shot private baseline after the proxy entry's missing API encryption key was restored from its existing ESPHome configuration. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation, deliberate disconnect/app-contention testing and long-duration soak testing remain pending.
+Version `0.0.8` is installed on Bobby's HA 2026.9.1 host after a fresh full backup. Version `0.0.9` is the locally tested package candidate and adds schema-3 poll-health diagnostics. The installed version registered all 23 entities, completed the ten-minute configuration-refresh cadence and a config-entry reload, and later recovered after two isolated polling failures through the active ESPHome proxy. The earlier 0.0.7 session performed the approved one-shot private baseline after the proxy entry's missing API encryption key was restored from its existing ESPHome configuration. Offline framework testing uses **Home Assistant 2026.9.3 / Python 3.14.7**. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation, deliberate disconnect/app-contention testing and long-duration soak testing remain pending.
 
 ## Included
 
 - Shared Bluetooth discovery for connectable `WDG_Data_*` advertisements, manual selection from HA's discovery cache, explicit polling confirmation and duplicate prevention.
 - Nine telemetry sensors, eight decoded-setting sensors, one operating-state sensor and five binary sensors: 23 read-only entities total.
 - Bounded, serialized read-only transactions, cleanup on failure/unload, unavailable measurements after a failed poll, and fresh-connection recovery on later polls.
-- Stable hashed device/entity identifiers and allowlisted diagnostics with no addresses, names, hashes, raw packets or exception text.
+- Stable hashed device/entity identifiers and allowlisted diagnostics with no addresses, names, hashes, raw packets or exception text. Schema 3 adds UTC timestamps and in-memory success, failure and consecutive-failure counters for coordinator polls.
 - One response-only `capture_read_only_baseline` action, requiring the literal confirmation `READ ONLY`, for the four fixed evidence reads through HA's shared Bluetooth path.
 - No controls, arbitrary command interface, FF55 initialization, standalone scanner, pairing, or cloud backend.
 
@@ -37,7 +37,7 @@ Bluetooth discovery and connection selection follow [Home Assistant's shared Blu
 
 Enabled does not mean physically validated. Every value still inherits the evidence limits in [CAPABILITIES.md](../CAPABILITIES.md). Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. Unknown scale connectivity means zero weight cannot be treated as proof of an empty cup.
 
-Reachable means the **last poll succeeded**, not that a BLE connection is currently held. All other entities become unavailable after a failed poll. Diagnostics omit the previous sample after failure rather than present it as current.
+Reachable means the **last poll succeeded**, not that a BLE connection is currently held. All other entities become unavailable after a failed poll. Diagnostics omit the previous sample after failure rather than present it as current. Poll-health counters reset when the integration loads; they are operational evidence for that runtime, not durable lifetime totals.
 
 ## Polling and safety behavior
 

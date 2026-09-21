@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from contextlib import suppress
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS
@@ -52,6 +52,11 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self.address = entry.data[CONF_ADDRESS]
         self.stopped = False
         self.last_error: str | None = None
+        self.last_successful_poll_utc: datetime | None = None
+        self.last_failed_poll_utc: datetime | None = None
+        self.successful_polls_since_load = 0
+        self.failed_polls_since_load = 0
+        self.consecutive_failed_polls = 0
         self.configuration: Configuration | None = None
         self.water_alarm_enabled: bool | None = None
         self.operating_state: OperatingState | None = None
@@ -62,6 +67,20 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self._cached_baseline_frames: dict[ReadOperation, bytes] | None = None
         self._poll_task: asyncio.Task | None = None
         self._connection_lock = asyncio.Lock()
+
+    def _record_poll_success(self) -> None:
+        """Record privacy-safe health evidence for a completed coordinator poll."""
+        self.last_successful_poll_utc = datetime.now(UTC)
+        self.successful_polls_since_load += 1
+        self.consecutive_failed_polls = 0
+        self.last_error = None
+
+    def _record_poll_failure(self) -> None:
+        """Record a failed coordinator poll without retaining exception details."""
+        self.last_failed_poll_utc = datetime.now(UTC)
+        self.failed_polls_since_load += 1
+        self.consecutive_failed_polls += 1
+        self.last_error = "read_failed"
 
     def _apply_baseline(self, frames: dict[ReadOperation, bytes]) -> Telemetry:
         """Decode one complete fixed baseline only after every read succeeded."""
@@ -100,11 +119,11 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
                             self.hass, self.address
                         )
                         self._runtime_polls_since_configuration += 1
-                self.last_error = None
+                self._record_poll_success()
                 return data
             except Exception:
                 # Backend exception text can contain addresses/names; do not forward it.
-                self.last_error = "read_failed"
+                self._record_poll_failure()
                 raise UpdateFailed(
                     "Unable to obtain a valid telemetry sample"
                 ) from None

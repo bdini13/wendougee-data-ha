@@ -246,7 +246,16 @@ async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):
         )
         assert reachable.state == "off"
         diagnostics = await async_get_config_entry_diagnostics(hass, configured)
-        assert diagnostics["schema_version"] == 2
+        assert diagnostics["schema_version"] == 3
+        assert diagnostics["poll_health"] == {
+            "successful_polls_since_load": 1,
+            "failed_polls_since_load": 1,
+            "consecutive_failed_polls": 1,
+            "last_successful_poll_utc": (
+                coordinator.last_successful_poll_utc.isoformat()
+            ),
+            "last_failed_poll_utc": coordinator.last_failed_poll_utc.isoformat(),
+        }
         assert diagnostics["configuration"]["brew_target_celsius"] == 94
         assert "raw_registers" not in diagnostics["configuration"]
         assert diagnostics["water_alarm_enabled"] is True
@@ -265,6 +274,10 @@ async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):
         await coordinator.async_refresh()
         await hass.async_block_till_done()
         assert float(hass.states.get(brew.entity_id).state) == 93.6
+        diagnostics = await async_get_config_entry_diagnostics(hass, configured)
+        assert diagnostics["poll_health"]["successful_polls_since_load"] == 2
+        assert diagnostics["poll_health"]["failed_polls_since_load"] == 1
+        assert diagnostics["poll_health"]["consecutive_failed_polls"] == 0
         assert await hass.config_entries.async_unload(configured.entry_id)
         await hass.async_block_till_done()
         assert coordinator.stopped

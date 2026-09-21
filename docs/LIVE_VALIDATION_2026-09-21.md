@@ -114,6 +114,28 @@ This validates one restart, scheduled split-cadence reads and one
 unload/reload cycle. It is not evidence for deliberate proxy loss, official-app
 contention, a disabled entry, long-duration reliability or physical units.
 
+## Later unattended read-only follow-up
+
+At 19:09 and 19:16 EDT, two downloaded diagnostics snapshots from the installed
+0.0.8 integration reported a successful latest poll, no retained error, both
+boilers disabled, idle operation and no unknown state bits. Brew temperature
+was 18.5 °C in both snapshots; steam temperature changed from 22.6 °C to
+22.5 °C. The changed decoded value is evidence that the later snapshot was not
+an identical saved document, but it is not a calibrated temperature check.
+
+Home Assistant's Core log also showed two isolated coordinator failures that
+day, first at 13:13 and last at 18:26 EDT. The healthy 19:09 and 19:16
+snapshots establish subsequent automatic recovery; the available log entry did
+not expose a sanitized root cause. No failure was deliberately induced. A
+separate passive advertisement observer on the Mac could not establish its own
+proxy API session during this follow-up, so that attempt supplies no additional
+advertisement evidence. No machine control or configuration write was sent.
+
+This follow-up motivated schema-3 diagnostics in the local 0.0.9 candidate:
+UTC timestamps and success, failure and consecutive-failure counters for the
+current integration runtime. The candidate was not installed during this
+observation.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
