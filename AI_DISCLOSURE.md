@@ -14,7 +14,7 @@ The maintainer sets the goals, directs development and approves hardware/deploym
 - AI-assisted review can miss bugs and misunderstand undocumented protocols. Independent review, sanitized real fixtures and supervised physical validation remain necessary.
 - Evidence levels, unresolved assumptions and upstream revisions are recorded in [CAPABILITIES.md](CAPABILITIES.md) and the [research inventory](research/UPSTREAM_SOURCES.md).
 
-At the 2026-09-20 checkpoint, the read-only HA integration is offline-tested and has not been deployed to the actual installation. No control path is implemented. Current support claims belong in the README and capability map, not in model-generated confidence statements.
+At the 2026-09-20 checkpoint, the read-only HA package is offline-tested and installed on the target HA host after a full backup. It has not created a config entry or completed a proxy-to-machine read because no matching advertisement was visible during validation. No control path is implemented. Current support claims belong in the README and capability map, not in model-generated confidence statements.
 
 ## Runtime and data
 

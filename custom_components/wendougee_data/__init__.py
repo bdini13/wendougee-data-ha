@@ -1,7 +1,10 @@
 """Read-only Wendougee DATA integration."""
 
+import asyncio
+
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.components import bluetooth as ha_bluetooth
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
@@ -11,10 +14,32 @@ from .const import DOMAIN, SERVICE_CAPTURE_BASELINE
 from .coordinator import WendougeeCoordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+CONFIG_SCHEMA = vol.Schema(
+    {vol.Optional(DOMAIN): vol.Schema({})}, extra=vol.ALLOW_EXTRA
+)
+
+
+async def _async_import_when_discovered(hass: HomeAssistant) -> None:
+    """Wait briefly for remote proxies to populate HA's Bluetooth cache."""
+    for _attempt in range(150):
+        matches = [
+            info
+            for info in ha_bluetooth.async_discovered_service_info(
+                hass, connectable=True
+            )
+            if (info.name or "").startswith("WDG_Data_")
+        ]
+        if matches:
+            await hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": SOURCE_IMPORT}
+            )
+            return
+        await asyncio.sleep(2)
 
 
 async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     """Register the explicit read-only baseline action once per HA process."""
+    hass.data.setdefault(DOMAIN, {})["yaml_import"] = DOMAIN in _config
 
     async def capture_baseline(call: ServiceCall) -> dict:
         entry = hass.config_entries.async_get_entry(call.data["config_entry_id"])
@@ -57,6 +82,11 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
         ),
         supports_response=SupportsResponse.ONLY,
     )
+    if DOMAIN in _config:
+        hass.async_create_background_task(
+            _async_import_when_discovered(hass),
+            "import Wendougee DATA YAML configuration",
+        )
     return True
 
 

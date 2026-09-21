@@ -3,11 +3,12 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from homeassistant.config_entries import SOURCE_BLUETOOTH, SOURCE_USER
+from homeassistant.config_entries import SOURCE_BLUETOOTH, SOURCE_IMPORT, SOURCE_USER
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.wendougee_data import async_setup
 from custom_components.wendougee_data._protocol.telemetry import (
     parse_telemetry_response,
 )
@@ -67,6 +68,18 @@ async def test_bluetooth_requires_confirmation_and_never_connects_in_flow(hass):
         read.assert_not_called()
 
 
+async def test_bluetooth_discovery_uses_explicit_yaml_polling_opt_in(hass):
+    hass.data[DOMAIN] = {"yaml_import": True}
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_BLUETOOTH}, data=discovery()
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["result"].data == {
+        CONF_ADDRESS: ADDRESS,
+        "poll_interval": 30,
+    }
+
+
 async def test_duplicate_discovery_and_case_normalization(hass):
     configured = entry()
     configured.add_to_hass(hass)
@@ -112,6 +125,54 @@ async def test_no_discovered_devices(hass):
             DOMAIN, context={"source": SOURCE_USER}
         )
     assert result["reason"] == "no_devices_found"
+
+
+async def test_yaml_setup_waits_for_shared_bluetooth_discovery(hass):
+    with (
+        patch(
+            "custom_components.wendougee_data.ha_bluetooth.async_discovered_service_info",
+            side_effect=[[], [discovery()]],
+        ) as discoveries,
+        patch(
+            "custom_components.wendougee_data.asyncio.sleep", new_callable=AsyncMock
+        ) as sleep,
+        patch.object(
+            hass.config_entries.flow, "async_init", new_callable=AsyncMock
+        ) as start_flow,
+    ):
+        assert await async_setup(hass, {DOMAIN: {}})
+        await hass.async_block_till_done(wait_background_tasks=True)
+    assert discoveries.call_count == 2
+    sleep.assert_any_await(2)
+    assert sum(call.args == (2,) for call in sleep.await_args_list) == 1
+    start_flow.assert_awaited_once_with(DOMAIN, context={"source": SOURCE_IMPORT})
+
+
+async def test_yaml_import_uses_exactly_one_shared_discovery(hass):
+    with patch(
+        "homeassistant.components.bluetooth.async_discovered_service_info",
+        return_value=[discovery(), discovery(name="Other")],
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_IMPORT}
+        )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["result"].data == {
+        CONF_ADDRESS: ADDRESS,
+        "poll_interval": 30,
+    }
+
+
+async def test_yaml_import_refuses_ambiguous_machine_selection(hass):
+    with patch(
+        "homeassistant.components.bluetooth.async_discovered_service_info",
+        return_value=[discovery(), discovery(address="00:00:00:00:00:02")],
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_IMPORT}
+        )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "multiple_devices_found"
 
 
 async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):

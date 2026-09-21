@@ -12,7 +12,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
-> **Experimental, not production-ready.** The Home Assistant integration is offline-tested but has not been deployed or validated against the physical machine. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** The package is installed and configuration-valid on the target HA host, but no config entry or proxy-to-machine read has completed because the machine was not visible in HA's Bluetooth cache. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
 
 ## What it does
 
@@ -50,10 +50,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | Versioned private envelope plus standalone and HA-proxy four-read baseline paths; no live four-read run yet |
-| HA integration | Implemented; actual HA framework with simulated Bluetooth |
-| Verification baseline | **111 local tests passing:** 90 protocol/package + 21 HA tests, as of 2026-09-20 |
-| Tested HA environment | Home Assistant 2026.9.3 / Python 3.14.7; no physical adapter/proxy compatibility claim |
-| Deployment / release | Not deployed; experimental manual ZIP build, not a published HACS release |
+| HA integration | Implemented; actual HA framework with simulated Bluetooth; package installed on target HA |
+| Verification baseline | **115 local tests passing:** 90 protocol/package + 25 HA tests, as of 2026-09-20 |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 loads and validates package 0.0.6 |
+| Deployment / release | Installed with backup on target HA; no config entry/live read yet; not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
 
 The previous hardware read used a native CoreBluetooth helper, **not the Python or HA client**. An implementation in another app is useful evidence, not proof that this integration is safe or compatible. See the [59-item capability map](CAPABILITIES.md) for source revisions, conflicts and unknowns.
@@ -82,6 +82,12 @@ The generated `_protocol/` directory and ZIP are deliberately ignored by Git. Th
 4. Disconnect E-Bar/other Bluetooth clients, prepare an attended validation session, and explicitly confirm read-only polling.
 
 HA needs a connectable Bluetooth path to the machine. The target HA host has registered its ESPHome proxy, but this integration has not yet used that route. Other HA versions, proxies, firmware versions and Wendougee models remain unverified. Disable or remove the integration to stop polling.
+
+For a headless HA host with no available web session, adding an empty
+`wendougee_data:` section to `configuration.yaml` is an explicit polling opt-in.
+On restart, import succeeds only when HA already sees exactly one supported
+connectable machine; zero or multiple matches fail closed. Remove the YAML
+section before removing the imported entry if it must stay removed.
 
 ## Roadmap
 

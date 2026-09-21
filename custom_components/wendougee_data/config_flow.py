@@ -38,6 +38,14 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
         self._address = discovery_info.address
         await self.async_set_unique_id(device_id(self._address))
         self._abort_if_unique_id_configured()
+        if self.hass.data.get(DOMAIN, {}).get("yaml_import") is True:
+            return self.async_create_entry(
+                title="Wendougee DATA",
+                data={
+                    CONF_ADDRESS: self._address,
+                    "poll_interval": DEFAULT_POLL_INTERVAL,
+                },
+            )
         self.context["title_placeholders"] = {"name": "Wendougee DATA"}
         return await self.async_step_confirm()
 
@@ -66,6 +74,32 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required(CONF_ADDRESS): vol.In(self._choices)}),
+        )
+
+    async def async_step_import(
+        self, _user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Import headless YAML only when exactly one supported machine is known."""
+        matches = [
+            info
+            for info in bluetooth.async_discovered_service_info(
+                self.hass, connectable=True
+            )
+            if _supported(info)
+        ]
+        if not matches:
+            return self.async_abort(reason="no_devices_found")
+        if len(matches) > 1:
+            return self.async_abort(reason="multiple_devices_found")
+        self._address = matches[0].address
+        await self.async_set_unique_id(device_id(self._address))
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(
+            title="Wendougee DATA",
+            data={
+                CONF_ADDRESS: self._address,
+                "poll_interval": DEFAULT_POLL_INTERVAL,
+            },
         )
 
     async def async_step_confirm(

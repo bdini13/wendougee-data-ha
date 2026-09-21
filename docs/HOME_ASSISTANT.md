@@ -1,6 +1,6 @@
 # Experimental read-only Home Assistant integration
 
-Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. Bobby's HA 2026.9.1 host and its registered ESPHome Bluetooth proxy were inspected read-only, but this integration was not installed or run there. No four-read capture or physical comparison was performed. Compatibility with HA 2026.9.1 and the real proxy remains unverified.
+Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.6` was installed and configuration-validated on Bobby's HA 2026.9.1 host. Its ESPHome proxy is registered and uses ESPHome's active generic proxy package. No config entry, proxy-to-machine read, four-read capture or physical comparison completed because no matching machine advertisement was visible during the bounded validation windows. Real proxy compatibility therefore remains unverified.
 
 ## Included
 
@@ -55,7 +55,24 @@ python scripts/build_integration.py
 
 This generates `dist/wendougee_data.zip`, containing `custom_components/wendougee_data/` and the project's MIT license. The build copies only named **original project** protocol modules into a generated `_protocol/` package. The source of truth remains `src/wendougee_data/`; do not edit generated copies. The standalone scanner is excluded. There is no dependency on an unpublished `wendougee-data` PyPI package.
 
-The ZIP can be inspected without running it. Installing, restarting HA, and confirming polling are **future approval-gated steps**, not actions performed by this build. Before installation, back up the HA configuration and inspect any existing component directory; do not blindly overwrite it. Extract the generated `custom_components/wendougee_data/` into the HA configuration directory, restart HA, then use Settings → Devices & services to discover/add Wendougee DATA. Keep the machine attended for its first approved validation.
+The ZIP can be inspected without running it. Installing, restarting HA, and confirming polling are **approval-gated steps**. Before installation, back up the HA configuration and inspect any existing component directory; do not blindly overwrite it. Extract the generated `custom_components/wendougee_data/` into the HA configuration directory, restart HA, then use Settings → Devices & services to discover/add Wendougee DATA. Keep the machine attended for its first approved validation.
+
+For an approved headless deployment without an authenticated frontend session,
+an empty YAML section provides the same explicit polling opt-in:
+
+```yaml
+wendougee_data:
+```
+
+After a validated restart, HA imports a single supported machine already in its
+shared Bluetooth cache. If discovery arrives later, the same explicit YAML
+opt-in accepts that matching discovery without requiring a browser session. A
+cached import with multiple matches aborts without choosing a target. The
+imported entry uses the conservative 30-second interval. Remove this YAML
+section before deleting the entry if it must not be recreated on a later
+restart. At startup the importer allows up to five minutes for a remote proxy
+to populate HA's shared discovery cache; it sends no machine request while
+waiting.
 
 This is a manual experimental package, not a published HACS release. Copying only the tracked source component directory will omit generated protocol files; use the build output. The package requires the Bluetooth integration and its matching `bleak-retry-connector==4.7.0` dependency. Do not claim compatibility with an HA version that requires a different dependency set without testing it.
 

@@ -20,7 +20,8 @@
     "abort": {
       "already_configured": "This machine is already configured.",
       "not_supported": "This is not a connectable WDG_Data device.",
-      "no_devices_found": "No unconfigured DATA machines are visible through Home Assistant Bluetooth. Check that the machine is advertising and other clients are disconnected."
+      "no_devices_found": "No unconfigured DATA machines are visible through Home Assistant Bluetooth. Check that the machine is advertising and other clients are disconnected.",
+      "multiple_devices_found": "More than one connectable DATA machine is visible; use the UI to select one explicitly."
     }
   }
 }
