@@ -1,6 +1,6 @@
 # Experimental read-only Home Assistant integration
 
-Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.7` was installed and configuration-validated on Bobby's HA 2026.9.1 host. Its ESPHome proxy is registered and uses ESPHome's active generic proxy package. No config entry, proxy-to-machine read, four-read capture or physical comparison completed because no matching machine advertisement was visible during the bounded validation windows. Real proxy compatibility therefore remains unverified.
+Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.7` was installed on Bobby's HA 2026.9.1 host. On 2026-09-21 the active ESPHome proxy path completed discovery, initial telemetry, the approved one-shot four-read baseline, and registration of all 11 entities. The proxy's pre-existing HA entry first required its missing API encryption key to be restored from the ESPHome configuration. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation and reconnect/soak testing remain pending.
 
 ## Included
 
@@ -109,4 +109,4 @@ Do not install the standalone package's constrained Bleak dependencies into the 
 
 Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, scheduled polling, GATT validation, telemetry-only enforcement for normal sessions, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
 
-The next meaningful gate is an approved live read and physical comparison, followed by an explicitly approved test deployment. This document does not grant either approval.
+The next meaningful gate is an attended, read-only physical comparison followed by reconnect/soak testing. This document does not grant approval for a new hardware session or any control write.

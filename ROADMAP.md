@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-09-20. The goal is a well-understood, local-first DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+Last reviewed: 2026-09-21. The goal is a well-understood, local-first DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
 
 ## 1. Research and offline foundation — implemented
 
@@ -13,7 +13,7 @@ Last reviewed: 2026-09-20. The goal is a well-understood, local-first DATA S int
 - [x] Add a versioned private evidence envelope and approval-gated baseline reader.
 - [x] Add an explicitly confirmed four-read baseline action for HA's shared Bluetooth/proxy route.
 
-Evidence: 90 protocol/package tests plus 26 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
+Evidence: 90 protocol/package tests plus 26 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
 
 ## 2. Hardware validation — next gate
 
@@ -21,7 +21,7 @@ Evidence: 90 protocol/package tests plus 26 HA framework tests at this checkpoin
 - [ ] Reproduce the telemetry read through the Python client with supported Bluetooth permissions.
 - [ ] Compare temperatures, pressure, timing, flow and scale values with appropriate physical references.
 - [ ] Save reviewed, sanitized fixtures with provenance; distinguish captured and synthetic data.
-- [ ] Verify known configuration and operating-state reads during a separately approved session.
+- [x] Verify known configuration and operating-state read framing/decoding during a separately approved session.
 - [ ] Resolve unknown units/status flags before changing entity defaults.
 
 Exit criterion: repeatable reads with documented limits, physical comparisons and no unaccounted-for device changes. Use the [batched validation plan](docs/VALIDATION_PLAN.md); no blind probing or unsafe fault induction.
@@ -30,7 +30,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 
 - [x] Back up the target HA configuration and obtain explicit deployment approval.
 - [x] Verify that the target HA host has registered the ESPHome proxy as a remote Bluetooth adapter.
-- [ ] Test the actual host/adapter or proxy path; record supported software/firmware combinations.
+- [x] Test discovery, telemetry, baseline reads and entity registration through the actual HA/ESPHome proxy path.
 - [ ] Test idle reconnects, restarts, unavailable state, app contention and bounded polling load.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.

@@ -1,12 +1,12 @@
 # DATA S capability map
 
-Source audit: 2026-09-20. Target: Bobby's DATA S; firmware and installed E-Bar version not yet recorded. This is a research baseline, **not a declaration that these controls work safely on this machine**.
+Source audit: 2026-09-20; live-read update: 2026-09-21. Target: Bobby's DATA S; firmware and installed E-Bar version not yet recorded. This is a research baseline, **not a declaration that these controls work safely on this machine**.
 
 ## What we have, and what remains
 
 Existing projects supply concrete implementations for telemetry, boiler settings, cleaning, brewing, profiles, and scale connectivity. We do not need to rediscover those protocols from scratch. The remaining work is independent implementation, exact-machine verification, resolving conflicts, and building a reliable Home Assistant integration.
 
-Our Python package implements CRC, allowlisted read requests, strict response framing, ten-field telemetry and configuration/state decoders, serialized failure-quarantined read sessions, and a one-shot Bleak CLI. These have offline tests, including fake Bluetooth lifecycle failures; see [offline implementation details](docs/OFFLINE_CORE.md). One native CoreBluetooth helper obtained a valid idle telemetry response; that does **not** validate the Python transport. The [read-only HA integration](docs/HOME_ASSISTANT.md) now has discovery/confirmation, nine measurement sensors, alarm/reachability sensors, polling recovery, and redacted diagnostics, tested with simulated Bluetooth under HA 2026.9.3. It has not been deployed or hardware-validated. No control is implemented here.
+Our Python package implements CRC, allowlisted read requests, strict response framing, ten-field telemetry and configuration/state decoders, serialized failure-quarantined read sessions, and a one-shot Bleak CLI. These have offline tests, including fake Bluetooth lifecycle failures; see [offline implementation details](docs/OFFLINE_CORE.md). One native CoreBluetooth helper obtained a valid idle telemetry response; that does **not** validate the Python transport. The [read-only HA integration](docs/HOME_ASSISTANT.md) has discovery/confirmation, nine measurement sensors, alarm/reachability sensors, polling recovery, and redacted diagnostics, tested with simulated Bluetooth under HA 2026.9.3. On 2026-09-21 it also completed one four-read baseline through HA 2026.9.1 and the installed ESPHome proxy; see the [sanitized record](docs/LIVE_VALIDATION_2026-09-21.md). No control is implemented here.
 
 “100%” needs a bounded denominator: all user-facing functions in a recorded E-Bar version on a recorded DATA S firmware, plus explicitly inventoried unsupported/unknown functions. BLE access alone cannot establish complete firmware internals, undocumented service behavior, or control of mechanical hardware. This map is not yet an exhaustive inventory of the installed official app.
 
@@ -17,9 +17,10 @@ Our Python package implements CRC, allowlisted read requests, strict response fr
 - **Conflict**: incompatible or ambiguous descriptions requiring an experiment.
 - **Absent**: no endpoint identified in the reviewed sources; not proof the feature is impossible.
 - Local **offline**: our implementation exists with synthetic/known-frame tests.
-- Local **once**: observed in the single native read below; semantics still need comparison.
+- Local **native once**: observed in the earlier direct CoreBluetooth read; semantics still need comparison.
+- Local **HA baseline**: observed in the approved 2026-09-21 four-read HA/proxy session; still not physically calibrated.
 - Local **—**: neither locally implemented nor verified.
-- HA column is the destination roadmap, not a commitment to expose hazardous operations. T01/T02/T06 and S01–S10 now have the offline-tested HA slice described in the [HA guide](docs/HOME_ASSISTANT.md); configuration, operating-state and all control/accessory entities remain unimplemented. Five provisional measurements are disabled by default. No row has new hardware proof from the HA work.
+- HA column is the destination roadmap, not a commitment to expose hazardous operations. T01–T04/T06 and S01–S12 now have real read-path evidence described in the [HA guide](docs/HOME_ASSISTANT.md) and [live record](docs/LIVE_VALIDATION_2026-09-21.md); configuration and operating-state entities remain unimplemented. Five provisional measurements are disabled by default. Read evidence for a setting is not write/control evidence.
 
 All addresses below are **decimal**; FC denotes Modbus function code. Do not execute entries as a command checklist. Even Modbus reads use a BLE characteristic write and require the project's immediate pre-test approval. See the [validation plan](docs/VALIDATION_PLAN.md).
 
@@ -27,45 +28,45 @@ All addresses below are **decimal**; FC denotes Modbus function code. Do not exe
 
 | ID | Capability | Evidence / mechanism | Local status | Proposed HA destination |
 |---|---|---|---|---|
-| T01 | Discovery and GATT layout | Impl: `WDG_Data_*`, service `1910`, Modbus `2b10`, events `2c10` [G-control], [L] | CLI exists; native once | Discovery/config flow |
-| T02 | Read telemetry | Impl: FC03, 1404/count 22 [L], [C]; GeeFlow reads count 20 [G-command] | Offline + native once | Coordinator |
-| T03 | Read configuration | Impl: FC03, 0/count 37; separate 396/count 1 [G-command], [G-control] | Offline decoder/session; no live proof | Config state/diagnostics |
-| T04 | Read operating state | Impl: FC01, 182/count 24 [G-command], [G-parser] | Offline decoder/session; no live proof | State sensor |
+| T01 | Discovery and GATT layout | Impl: `WDG_Data_*`, service `1910`, Modbus `2b10`, events `2c10` [G-control], [L] | Native once + HA-proxy discovery | Discovery/config flow |
+| T02 | Read telemetry | Impl: FC03, 1404/count 22 [L], [C]; GeeFlow reads count 20 [G-command] | Offline + native once + HA baseline | Coordinator |
+| T03 | Read configuration | Impl: FC03, 0/count 37; separate 396/count 1 [G-command], [G-control] | Offline + HA baseline | Config state/diagnostics |
+| T04 | Read operating state | Impl: FC01, 182/count 24 [G-command], [G-parser] | Offline + HA baseline | State sensor |
 | T05 | Event framing / stream setup | Impl: FF55 variants; GeeFlow initialization [G-control], [G-scale]. Length/meaning conflicts [L] | No decoder; one read needed no streaming init | Internal, initially excluded |
-| T06 | Request/session handling | Impl upstream [G-session]; local strict stream/session with one outstanding request | Offline failure/cleanup tests; no live reconnect/soak proof | Unavailable/reconnect handling |
+| T06 | Request/session handling | Impl upstream [G-session]; local strict stream/session with one outstanding request | One live HA session succeeded; no reconnect/soak proof | Unavailable/reconnect handling |
 | T07 | Identity, model, firmware version | Notes: FF55 `04` interpreted as serial upstream; firmware/model query not established [G-parser], [L] | — | Redacted device info, gated |
 | T08 | Pairing/security and app coexistence | Notes: direct access without pairing [L]; no pairing prompt in local native read | One access observation, not security/coexistence proof | Single-owner connection policy |
 
 ### Telemetry and state
 
-“Offline + once” below means bytes decoded once, **not** calibrated readings. Zero-valued fields provide no evidence about their units or dynamic behavior.
+“HA baseline” below means bytes decoded in the 2026-09-21 session, **not** calibrated readings. Zero-valued fields provide no evidence about their units or dynamic behavior.
 
 | ID | Capability | Evidence / mechanism | Local status | Proposed HA destination |
 |---|---|---|---|---|
-| S01 | Brew temperature | Impl: 1409 / 10 °C [G-parser], [L] | Offline + once, 94.6 °C | Temperature sensor |
-| S02 | Steam temperature | Impl: 1408 / 10 °C [G-parser], [L] | Offline + once, 27.2 °C | Temperature sensor |
-| S03 | Pressure | Impl: 1410 / 10 bar; GeeFlow calls it pump, not puck pressure [G-parser], [G-state] | Offline + once, zero | Pressure sensor |
-| S04 | Cumulative pumped volume | Impl: 1411, mL; do not equate with beverage yield [G-parser], [G-state], [L] | Offline + once, zero | Shot-volume sensor |
-| S05 | Instantaneous flow | Impl: 1422 raw mL/s; scaling still requires calibration [G-parser], [L] | Offline + once, zero | Flow sensor, provisional |
-| S06 | Elapsed shot time | Conflict: 1405 / 10 seconds in LitaLite; GeeFlow parser retains raw integer [G-parser], [L] | Offline + once, zero | Duration sensor after unit check |
-| S07 | Pump-active time | Notes/Impl: 1417 seconds [L], [C] | Offline + once, zero | Duration sensor, provisional |
-| S08 | Scale weight | Impl: 1412 / 10 g [G-parser] | Offline + once, zero; no scale proof | Weight sensor |
-| S09 | Weight rate | Impl: 1423 / 10 g/s [G-parser]; negative/signed behavior unresolved | Offline + once, zero | Yield-rate sensor, gated |
-| S10 | Water shortage alarm asserted | Impl: 1406 nonzero [G-parser], [L] | Offline + once, false; alarm state untested | Problem binary sensor |
-| S11 | Idle/manual/profile/cleaning/free-variable state | Impl: masks in FC01 reply [G-parser]; see plan for offsets and conflicting flags | Offline; conflicts/unknown bits preserved | Enumerated state sensor |
-| S12 | Heater enabled versus actively heating/ready | Impl: configuration 6/7 gives enable state [G-parser]; active heater/ready signals not established | Offline enable decoder only | Enabled-state feedback; no invented ready flag |
+| S01 | Brew temperature | Impl: 1409 / 10 °C [G-parser], [L] | Native once 94.6 °C; HA baseline 20.1 °C | Temperature sensor |
+| S02 | Steam temperature | Impl: 1408 / 10 °C [G-parser], [L] | Native once 27.2 °C; HA baseline 23.9 °C | Temperature sensor |
+| S03 | Pressure | Impl: 1410 / 10 bar; GeeFlow calls it pump, not puck pressure [G-parser], [G-state] | Native once + HA baseline, zero | Pressure sensor |
+| S04 | Cumulative pumped volume | Impl: 1411, mL; do not equate with beverage yield [G-parser], [G-state], [L] | Native once + HA baseline, zero | Shot-volume sensor |
+| S05 | Instantaneous flow | Impl: 1422 raw mL/s; scaling still requires calibration [G-parser], [L] | Native once + HA baseline, zero | Flow sensor, provisional |
+| S06 | Elapsed shot time | Conflict: 1405 / 10 seconds in LitaLite; GeeFlow parser retains raw integer [G-parser], [L] | Native once + HA baseline, zero | Duration sensor after unit check |
+| S07 | Pump-active time | Notes/Impl: 1417 seconds [L], [C] | Native once + HA baseline, zero | Duration sensor, provisional |
+| S08 | Scale weight | Impl: 1412 / 10 g [G-parser] | Native once + HA baseline, zero; no scale proof | Weight sensor |
+| S09 | Weight rate | Impl: 1423 / 10 g/s [G-parser]; negative/signed behavior unresolved | Native once + HA baseline, zero | Yield-rate sensor, gated |
+| S10 | Water shortage alarm asserted | Impl: 1406 nonzero [G-parser], [L] | Native once + HA baseline, false; alarm state untested | Problem binary sensor |
+| S11 | Idle/manual/profile/cleaning/free-variable state | Impl: masks in FC01 reply [G-parser]; see plan for offsets and conflicting flags | HA baseline idle; no unknown bits | Enumerated state sensor |
+| S12 | Heater enabled versus actively heating/ready | Impl: configuration 6/7 gives enable state [G-parser]; active heater/ready signals not established | HA baseline: both enables off; active/ready unknown | Enabled-state feedback; no invented ready flag |
 | S13 | Detailed faults | Notes: NTC, pressure, heating/water/extraction timeout names; no validated bitfield [L] | — | Future diagnostic sensors |
 
 ### Boiler and machine configuration
 
 | ID | Capability | Evidence / mechanism | Local status | Proposed HA destination |
 |---|---|---|---|---|
-| B01 | Brew heating enable | Impl: FC06 register 7, **0 enabled / 1 disabled** [G-control] | — | Opt-in switch after readback validation |
-| B02 | Steam heating enable | Impl: FC06 register 6, **0 enabled / 1 disabled** [G-control] | — | Opt-in switch after readback validation |
-| B03 | Brew target temperature | Impl: FC06 register 9, whole °C (unlike measured temperature) [G-control] | — | Number; validated limits required |
-| B04 | Steam target temperature | Impl: FC06 register 8, whole °C [G-control] | — | Number; validated limits required |
-| B05 | Heating mode | Impl: FC06 register 22; 1 full-speed, 0 pulse [G-control] | — | Select; physical semantics unverified |
-| B06 | Water-alarm enable / water-source setup | Impl: FC10 register 396, 1 enabled / 0 disabled [G-control]; distinct from S10 | — | Advanced setting, disabled by default |
+| B01 | Brew heating enable | Impl: FC06 register 7, **0 enabled / 1 disabled** [G-control] | Read once as off; no write proof | Opt-in switch after readback validation |
+| B02 | Steam heating enable | Impl: FC06 register 6, **0 enabled / 1 disabled** [G-control] | Read once as off; no write proof | Opt-in switch after readback validation |
+| B03 | Brew target temperature | Impl: FC06 register 9, whole °C (unlike measured temperature) [G-control] | Read once as 92 °C; no write proof | Number; validated limits required |
+| B04 | Steam target temperature | Impl: FC06 register 8, whole °C [G-control] | Read once as 126 °C; no write proof | Number; validated limits required |
+| B05 | Heating mode | Impl: FC06 register 22; 1 full-speed, 0 pulse [G-control] | Read once as full-speed; no write proof | Select; physical semantics unverified |
+| B06 | Water-alarm enable / water-source setup | Impl: FC10 register 396, 1 enabled / 0 disabled [G-control]; distinct from S10 | Read once as enabled; no write proof | Advanced setting, disabled by default |
 | B07 | Standby temperature/timer/wake | Notes: candidate registers 14/33 and app symbols, incomplete [L] | — | Unknown; no entity yet |
 | B08 | True mains power / remote wake from off | Absent in reviewed controller/notes | — | Do not label heating switches “main power” |
 | B09 | Units and other app preferences | Notes: app symbols, unclear machine-versus-app ownership [L] | — | Determine ownership before exposing |
@@ -74,14 +75,14 @@ All addresses below are **decimal**; FC denotes Modbus function code. Do not exe
 
 | ID | Capability | Evidence / mechanism | Local status | Proposed HA destination |
 |---|---|---|---|---|
-| A01 | Manual/paddle preset duration | Impl: FC10 register 17, seconds × 10 [G-control] | — | Advanced number |
-| A02 | Manual/paddle preset pressure | Impl: FC10 register 19, bar × 10 [G-control] | — | Advanced number |
+| A01 | Manual/paddle preset duration | Impl: FC10 register 17, seconds × 10 [G-control] | Read once as 30.0 s; no write proof | Advanced number |
+| A02 | Manual/paddle preset pressure | Impl: FC10 register 19, bar × 10 [G-control] | Read once as 9.0 bar; no write proof | Advanced number |
 | A03 | Manual start/stop | Conflict: GeeFlow pulses coil 154 for both directions with state guards; other notes call it a valve [G-control], [L] | — | Blocked pending exact-machine semantics |
 | A04 | Profile/button start/stop | Impl: coil 150 press/release; **same pulse for start and stop**, not an idempotent off command [G-control] | — | Explicit action, not ordinary switch |
 | A05 | Enter/exit free-variable brewing | Impl: registers 15/1459 and coil 157; stop uses refreshed status plus zero targets [G-control] | — | Advanced action, withheld |
 | A06 | Live pressure/flow target | Impl: FC10 at 1419/count 2: pressure × 10 or flow × 10, other field zero [G-control] | — | Internal live-control API, withheld |
 | A07 | Change regulator during a running shot | Impl limitation: GeeFlow declares live mode switching unsupported [G-profile-cap] | — | Do not promise pressure↔flow switching |
-| A08 | Cleaning duration/rest/repetitions | Impl: FC10 registers 0/1/2; first two in tenths of seconds [G-control] | — | Advanced configuration |
+| A08 | Cleaning duration/rest/repetitions | Impl: FC10 registers 0/1/2; first two in tenths of seconds [G-control] | Read once as 5 s / 5 s / 3; no write proof | Advanced configuration |
 | A09 | Cleaning start/stop | Impl: coil 155 pulse, same action for both directions with state guards [G-control] | — | Attended maintenance action only |
 | A10 | Independent valve/steam/hot-water actuation | Conflict/Absent: 154 ambiguous; no established DATA S remote steam/hot-water endpoint | — | Excluded until evidence exists |
 
@@ -118,13 +119,13 @@ No reviewed stop path is a demonstrated hardware emergency stop. A network clien
 
 ## Evidence limits and completion criteria
 
-The local observation covered **one idle response on one machine**, with no physical display comparison, no recorded firmware version, and no retained sanitized response fixture. It did not prove nonzero units, configuration persistence, running-state transitions, accessory behavior, or safe control. Source implementations reduce discovery work; they do not remove validation work.
+Local evidence now covers one earlier native idle telemetry response and one HA/proxy four-read idle baseline on the same machine. Neither had a physical display comparison; firmware remains unrecorded; no captured frame is approved as a public fixture. The sessions did not prove nonzero units, configuration persistence, running-state transitions, accessory behavior, reconnect reliability or safe control. Source implementations reduce discovery work; they do not remove validation work.
 
 To graduate a capability to supported, record: firmware/app version, precise request and response semantics, units/ranges, prerequisites, sanitized fixture, offline tests, independent readback where applicable, physical observation, failure/reconnect behavior, and HA tests. Track app coverage separately from protocol coverage and supported HA coverage; a percentage mixing them would be misleading.
 
 Distributor guidance corroborates user-facing boiler settings, water-source alarm configuration, paddle profile binding, scale pairing, profiles, and cleaning. It is a useful UI checklist seed, not a wire-protocol authority or a substitute for inspecting the installed app. [Distributor guide][UI]
 
-See [the validation batches and conflict ledger](docs/VALIDATION_PLAN.md). No hardware action was performed to create this map.
+See [the validation batches and conflict ledger](docs/VALIDATION_PLAN.md). The 2026-09-21 update records read-only hardware evidence only; it performed no control action.
 
 ## Pinned evidence
 

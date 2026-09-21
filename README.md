@@ -12,7 +12,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
-> **Experimental, not production-ready.** The package is installed and configuration-valid on the target HA host, but no config entry or proxy-to-machine read has completed because the machine was not visible in HA's Bluetooth cache. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** The package is installed on the target HA host and has completed one approved read-only baseline through its ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and reconnect/soak behavior is not yet validated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
 
 ## What it does
 
@@ -49,14 +49,14 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Local DATA S transport | Expected GATT service/characteristics and one CRC-valid idle telemetry reply observed |
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
-| Evidence collection | Versioned private envelope plus standalone and HA-proxy four-read baseline paths; no live four-read run yet |
-| HA integration | Implemented; actual HA framework with simulated Bluetooth; package installed on target HA |
-| Verification baseline | **116 local tests passing:** 90 protocol/package + 26 HA tests, as of 2026-09-20 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 loads and validates the package |
-| Deployment / release | Installed with backup on target HA; no config entry/live read yet; not a published HACS release |
+| Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
+| HA integration | Implemented; actual HA framework tests plus one live target-host discovery, baseline and entity-registration session |
+| Verification baseline | **116 local tests passing:** 90 protocol/package + 26 HA tests, as of 2026-09-21 |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 completed live read-only setup |
+| Deployment / release | Installed with backup on target HA; one config entry and 11 entities registered; not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
 
-The previous hardware read used a native CoreBluetooth helper, **not the Python or HA client**. An implementation in another app is useful evidence, not proof that this integration is safe or compatible. See the [59-item capability map](CAPABILITIES.md) for source revisions, conflicts and unknowns.
+The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [59-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 
 The CI badge reports GitHub's workflow status, not an assertion that unpublished local changes have already passed remote CI.
 
@@ -81,7 +81,7 @@ The generated `_protocol/` directory and ZIP are deliberately ignored by Git. Th
 3. Restart HA and add **Wendougee DATA** through Settings → Devices & services.
 4. Disconnect E-Bar/other Bluetooth clients, prepare an attended validation session, and explicitly confirm read-only polling.
 
-HA needs a connectable Bluetooth path to the machine. The target HA host has registered its ESPHome proxy, but this integration has not yet used that route. Other HA versions, proxies, firmware versions and Wendougee models remain unverified. Disable or remove the integration to stop polling.
+HA needs a connectable Bluetooth path to the machine. The target HA host has now used its ESPHome proxy for discovery, polling and one four-read baseline. Other HA versions, proxy hardware/firmware combinations and Wendougee models remain unverified. Disable or remove the integration to stop polling.
 
 For a headless HA host with no available web session, adding an empty
 `wendougee_data:` section to `configuration.yaml` is an explicit polling opt-in.
@@ -100,8 +100,8 @@ uncertain capture.
 - [x] Research existing implementations and document protocol provenance.
 - [x] Build the independent read-only protocol/session layer and capability map.
 - [x] Implement offline-tested HA discovery, sensors, recovery, diagnostics and packaging.
-- [ ] Validate the Python client, readings and connection lifecycle on the actual DATA S.
-- [ ] Complete an approved HA deployment, reconnect/soak testing and sanitized fixture collection.
+- [ ] Complete physical comparison of the decoded readings and direct-Python lifecycle validation on the actual DATA S.
+- [ ] Complete HA reconnect/soak testing and review a minimal sanitized fixture for publication.
 - [ ] Add verified configuration/status entities and complete the official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [ ] Finish release hardening, compatibility documentation and HACS packaging/validation.

@@ -6,7 +6,7 @@ Prepared 2026-09-20. Companion to the [capability map](../CAPABILITIES.md), whos
 
 1. **Source audit (this pass):** map available implementations, contradictions, missing endpoints, and the actual local baseline. Completed as a first pass, not a full official-app inventory.
 2. **Offline foundation:** independently implement and test reusable read transactions/config/state decoding; build replay fixtures before connecting. This work needs no machine or user input.
-3. **One approved baseline read session:** collect configuration, state, and telemetry together. This validates many rows without changing machine settings.
+3. **One approved baseline read session:** completed through HA's ESPHome proxy on 2026-09-21; configuration, state, alarm-enable and telemetry were collected without changing machine settings.
 4. **One attended observation session:** user operates the normal controls while the client only reads. Compare displays, time and scale; observe meaningful state transitions.
 5. **Read-only HA release:** config flow, shared Bluetooth, sensors, diagnostics and reconnection before remote controls.
 6. **Small supervised control batches:** reversible settings first, profile upload/readback without activation next, brew/clean/accessories last. A fresh approval immediately before each hardware test is required.
@@ -16,7 +16,7 @@ This separates tasks we can automate from tasks that require physical evidence. 
 
 ## Batch 0: offline work that can proceed without input
 
-**Implementation update:** the allowlisted response layer, configuration/state decoders, injected read session and fake-Bleak tests are implemented and offline-tested. See [OFFLINE_CORE.md](OFFLINE_CORE.md). The read-only HA coordinator/config flow/entities are also implemented with simulated polling/recovery tests; see [HOME_ASSISTANT.md](HOME_ASSISTANT.md). The [versioned evidence envelope and approval-gated baseline paths](EVIDENCE_COLLECTION.md) are implemented and offline-tested, including a response-only action for HA's shared Bluetooth/proxy route. Real four-read captures, official-app inventory, physical validation and deployment remain pending. The original task list below is retained as the batch's scope; it is not a claim that all tasks are complete. Follow failing test → implementation → full-suite verification.
+**Implementation update:** the allowlisted response layer, configuration/state decoders, injected read session and fake-Bleak tests are implemented and offline-tested. See [OFFLINE_CORE.md](OFFLINE_CORE.md). The read-only HA coordinator/config flow/entities are also implemented with simulated polling/recovery tests; see [HOME_ASSISTANT.md](HOME_ASSISTANT.md). The [versioned evidence envelope and approval-gated baseline paths](EVIDENCE_COLLECTION.md) are implemented and offline-tested, including a response-only action for HA's shared Bluetooth/proxy route. The HA-proxy path completed one real four-read baseline on 2026-09-21; its sanitized result is documented in [the live-validation record](LIVE_VALIDATION_2026-09-21.md). Official-app inventory, physical comparison, direct-Python validation and operational soak testing remain pending. The original task list below is retained as the batch's scope; it is not a claim that all tasks are complete. Follow failing test → implementation → full-suite verification.
 
 - Generalize the response layer for FC03 configuration reads and FC01 state reads, keeping an explicit read allowlist. Decode Modbus exceptions promptly, validate slave/function/length/CRC, serialize requests, and bound buffers/timeouts.
 - Handle fragmented, coalesced, unsolicited, stale and corrupt traffic deliberately. FC03 responses do not echo the starting register: matching function/count alone cannot distinguish a late reply to a different same-length read. Drain/reset session state after timeout, and document remaining ambiguity.
@@ -39,7 +39,9 @@ Prerequisites: supported macOS Bluetooth permissions for the actual client, exac
 
 No polling rate is locally validated. Begin with single serialized requests, then a conservative bounded repeat only within the approved test. Record response time and failures before increasing frequency. Do not scan arbitrary address ranges.
 
-Success: reproduce the telemetry result through **our Python transport**, obtain valid config/status frames or document exact failures, and retain sanitized fixtures. CRC validity proves transport integrity, not field semantics. Finish disconnected; no automatic follow-on control.
+2026-09-21 result: HA's shared Bluetooth transport obtained valid responses for all four reads and retained the raw envelope privately. This validates the HA/proxy framing and decoders, not the direct Python/Bleak client or physical units. The machine reported idle, both boiler enables off, water-alarm detection enabled, and plausible ambient temperatures while the user intentionally left the boilers off. No control followed. See [the sanitized record](LIVE_VALIDATION_2026-09-21.md).
+
+Remaining success criteria: reproduce the transaction through the direct Python transport only if that path remains useful, complete physical comparisons, and review a minimal fixture before publishing any captured bytes. CRC validity proves transport integrity, not field semantics.
 
 ## Batch 2: attended, read-only observation
 

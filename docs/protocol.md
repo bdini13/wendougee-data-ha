@@ -16,6 +16,7 @@ For the broader feature inventory, evidence levels, control ambiguities and rema
 - The idle response decoded to brew boiler `94.6 °C`, steam boiler `27.2 °C`, no water-level alarm, and zero pressure, flow, volume, scale weight, and brew/pump time. These values were protocol-plausible but were not independently compared with the physical display during the headless session.
 - No control, provisioning, reset, boiler-setting, cleaning, valve, or brew command was sent.
 - This was a temporary native CoreBluetooth helper, not validation of the Python/Bleak CLI. No firmware version or sanitized response fixture was retained. The reported values are a session observation, not a reproducible fixture or calibration result.
+- On 2026-09-21, Home Assistant 2026.9.1 discovered the same DATA S through an active ESPHome proxy and completed the four allowlisted reads once. All responses passed the integration's strict function, length and CRC checks. Decoded telemetry was consistent with an idle, cold machine; configuration reported both boiler enables off; alarm detection was enabled; and the operating-state bits decoded as idle with no unknown flags. The user had intentionally left the boilers off, but no physical-display comparison was possible. Raw frames remain private. See [the sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md).
 
 ## Upstream protocol consensus
 
@@ -114,11 +115,11 @@ UUIDs and one telemetry read have now been observed on Bobby's DATA S. This does
 
 ## Next evidence to collect
 
-1. Reproduce the read through our Python transport with supported permissions and the official app disconnected.
-2. Save sanitized service metadata and response fixtures with model/firmware/app provenance.
-3. Validate known configuration and operating-state reads in the same approved session.
-4. Compare decoded values with the display, stopwatch and scale during attended observation.
-5. Observe one manually initiated shot; the client must not initiate it.
+1. Compare decoded values with the display, stopwatch and scale during attended observation.
+2. Record model/firmware/app provenance and review a minimal captured fixture before publication.
+3. Reproduce the read through the direct Python transport only if maintaining that separate path is useful.
+4. Observe one manually initiated shot; the client must not initiate it.
+5. Run HA reconnect, unload and soak tests through the proxy.
 6. Resolve the capability map's conflicts before exposing the affected controls.
 
 See the [batched plan](VALIDATION_PLAN.md) for exact scope and acceptance criteria. No new hardware session was performed during the capability audit.
