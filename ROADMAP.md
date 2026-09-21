@@ -13,7 +13,7 @@ Last reviewed: 2026-09-21. The goal is a well-understood, local-first DATA S int
 - [x] Add a versioned private evidence envelope and approval-gated baseline reader.
 - [x] Add an explicitly confirmed four-read baseline action for HA's shared Bluetooth/proxy route.
 
-Evidence: 90 protocol/package tests plus 26 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
+Evidence: 90 protocol/package tests plus 29 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
 
 ## 2. Hardware validation — next gate
 
@@ -31,10 +31,12 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Back up the target HA configuration and obtain explicit deployment approval.
 - [x] Verify that the target HA host has registered the ESPHome proxy as a remote Bluetooth adapter.
 - [x] Test discovery, telemetry, baseline reads and entity registration through the actual HA/ESPHome proxy path.
+- [x] Add provisional read-only configuration and operating-state entities, disabled by default.
+- [x] Complete a bounded 15-minute idle soak on 0.0.7 with no coordinator failures.
 - [ ] Test idle reconnects, restarts, unavailable state, app contention and bounded polling load.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.
-- [ ] Add verified read-only configuration/status entities, options and usability refinements.
+- [ ] Physically validate configuration/status semantics, then review defaults, options and usability refinements.
 
 Exit criterion: documented recovery behavior and a usable monitoring integration on the actual installation. No shot-rate logging or hardware-independent compatibility claims without evidence.
 

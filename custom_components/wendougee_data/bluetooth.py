@@ -14,6 +14,7 @@ from ._protocol.const import (
 )
 from ._protocol.reads import ReadOperation, build_read_request
 from ._protocol.session import ReadSession
+from ._protocol.state import OperatingState, decode_operating_state
 from ._protocol.telemetry import Telemetry, parse_telemetry_response
 
 
@@ -112,6 +113,26 @@ async def read_telemetry(hass: HomeAssistant, address: str) -> Telemetry:
     ) as session:
         frame = await session.read(ReadOperation.TELEMETRY)
         return parse_telemetry_response(frame)
+
+
+async def read_runtime(
+    hass: HomeAssistant, address: str
+) -> tuple[Telemetry, OperatingState]:
+    """Read changing telemetry and operating flags in one short connection."""
+    transport = HomeAssistantReadTransport(
+        hass,
+        address,
+        allowed_operations=frozenset(
+            {ReadOperation.TELEMETRY, ReadOperation.OPERATING_STATE}
+        ),
+    )
+    async with ReadSession(transport, timeout=15) as session:
+        telemetry_frame = await session.read(ReadOperation.TELEMETRY)
+        state_frame = await session.read(ReadOperation.OPERATING_STATE)
+    return (
+        parse_telemetry_response(telemetry_frame),
+        decode_operating_state(state_frame),
+    )
 
 
 async def read_baseline(

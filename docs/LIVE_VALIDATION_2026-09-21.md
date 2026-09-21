@@ -39,6 +39,12 @@ raw request/response frame.
 - A short post-restart smoke window covered four consecutive 30-second polling
   intervals with Core healthy and no Wendougee coordinator failure logged. This
   is not a long-duration soak test.
+- A later bounded idle soak sampled Home Assistant once per minute for 15
+  consecutive checkpoints while the installed 0.0.7 integration continued its
+  30-second polling. Core remained healthy, the config entry and all 11
+  entities remained present, and the Wendougee coordinator logged no failure.
+  This does not exercise restart, deliberate disconnect, unload or app
+  contention and is still not a long-duration soak.
 
 ## Sanitized decoded baseline
 

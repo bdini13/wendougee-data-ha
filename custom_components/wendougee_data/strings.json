@@ -9,7 +9,7 @@
       },
       "confirm": {
         "title": "Enable experimental read-only telemetry?",
-        "description": "Confirmation starts periodic Bluetooth telemetry requests. No brewing, heating or cleaning controls are included. Disconnect E-Bar and other clients first. Values and polling behavior still need physical validation; do not use these sensors as safety interlocks. Reads temporarily occupy the machine's Bluetooth connection.",
+        "description": "Confirmation starts periodic read-only Bluetooth telemetry, operating-state and configuration requests. No brewing, heating or cleaning controls are included. Disconnect E-Bar and other clients first. Values and polling behavior still need physical validation; do not use these sensors as safety interlocks. Reads temporarily occupy the machine's Bluetooth connection.",
         "data": {
           "confirm": "I approve read-only polling of this machine",
           "poll_interval": "Polling interval (seconds)"

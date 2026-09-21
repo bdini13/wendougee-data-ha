@@ -26,6 +26,27 @@ DESCRIPTIONS = (
     ),
 )
 
+CONFIGURATION_DESCRIPTIONS = (
+    BinarySensorEntityDescription(
+        key="steam_heating_enabled",
+        name="Steam heating enabled",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    BinarySensorEntityDescription(
+        key="brew_heating_enabled",
+        name="Brew heating enabled",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    BinarySensorEntityDescription(
+        key="water_alarm_enabled",
+        name="Water alarm detection enabled",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -33,7 +54,10 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Register the reported alarm and separate last-poll reachability signal."""
-    async_add_entities(WendougeeBinarySensor(entry, desc) for desc in DESCRIPTIONS)
+    async_add_entities(
+        WendougeeBinarySensor(entry, desc)
+        for desc in (*DESCRIPTIONS, *CONFIGURATION_DESCRIPTIONS)
+    )
 
 
 class WendougeeBinarySensor(WendougeeEntity, BinarySensorEntity):
@@ -55,6 +79,12 @@ class WendougeeBinarySensor(WendougeeEntity, BinarySensorEntity):
         """Reachability is last-poll success, not a continuously held BLE connection."""
         if self.entity_description.key == "reachable":
             return self.coordinator.last_update_success and not self.coordinator.stopped
+        key = self.entity_description.key
+        if key == "water_alarm_enabled":
+            return self.coordinator.water_alarm_enabled
+        if key in {"steam_heating_enabled", "brew_heating_enabled"}:
+            configuration = self.coordinator.configuration
+            return getattr(configuration, key) if configuration is not None else None
         if self.coordinator.data is None:
             return None
         return self.coordinator.data.water_level_alarm

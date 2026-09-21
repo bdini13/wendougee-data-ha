@@ -16,6 +16,7 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entity import WendougeeEntity
@@ -87,6 +88,90 @@ DESCRIPTIONS = (
     ),
 )
 
+CONFIGURATION_DESCRIPTIONS = (
+    SensorEntityDescription(
+        key="steam_target_celsius",
+        name="Steam target",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="brew_target_celsius",
+        name="Brew target",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="manual_time_seconds",
+        name="Manual time setting",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="manual_pressure_bar",
+        name="Manual pressure setting",
+        device_class=SensorDeviceClass.PRESSURE,
+        native_unit_of_measurement=UnitOfPressure.BAR,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="cleaning_time_seconds",
+        name="Cleaning time setting",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="cleaning_rest_seconds",
+        name="Cleaning rest setting",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="cleaning_repetitions",
+        name="Cleaning repetitions setting",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="heating_mode",
+        name="Heating mode setting",
+        device_class=SensorDeviceClass.ENUM,
+        options=["pulse", "full_speed"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+)
+
+STATE_DESCRIPTIONS = (
+    SensorEntityDescription(
+        key="operating_state",
+        name="Operating state",
+        device_class=SensorDeviceClass.ENUM,
+        options=[
+            "idle",
+            "profile",
+            "manual",
+            "cleaning",
+            "free_variable",
+            "ambiguous",
+            "unknown",
+        ],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -95,7 +180,12 @@ async def async_setup_entry(
 ) -> None:
     """Register measurements; provisional descriptions default to disabled."""
     async_add_entities(
-        WendougeeSensor(entry, description) for description in DESCRIPTIONS
+        WendougeeSensor(entry, description)
+        for description in (
+            *DESCRIPTIONS,
+            *CONFIGURATION_DESCRIPTIONS,
+            *STATE_DESCRIPTIONS,
+        )
     )
 
 
@@ -113,4 +203,11 @@ class WendougeeSensor(WendougeeEntity, SensorEntity):
         """Read the stored sample without triggering an extra device request."""
         if self.coordinator.data is None:
             return None
-        return getattr(self.coordinator.data, self.entity_description.key)
+        key = self.entity_description.key
+        if hasattr(self.coordinator.data, key):
+            return getattr(self.coordinator.data, key)
+        if key == "operating_state":
+            state = self.coordinator.operating_state
+            return state.state if state is not None else None
+        configuration = self.coordinator.configuration
+        return getattr(configuration, key) if configuration is not None else None

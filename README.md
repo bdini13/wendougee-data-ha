@@ -12,20 +12,20 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
-> **Experimental, not production-ready.** The package is installed on the target HA host and has completed one approved read-only baseline through its ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and reconnect/soak behavior is not yet validated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** The package is installed on the target HA host and has completed one approved read-only baseline plus a clean 15-minute idle soak through its ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and restart, reconnect, unload and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
 
 ## What it does
 
 - Discovers connectable `WDG_Data_*` machines through **Home Assistant's shared Bluetooth stack**.
 - Requires confirmation before starting periodic read-only telemetry requests.
-- Registers nine measurement sensors, a water-shortage alarm and last-poll reachability.
+- Registers 23 read-only entities: nine telemetry measurements, eight decoded settings, operating state, three setting flags, water shortage and last-poll reachability.
 - Opens a short connection for each poll and disconnects afterward; default interval is 30 seconds.
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.
 - Exports allowlisted diagnostics without device addresses, names, hashes or raw packets.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
 
-**No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling sends only the established telemetry request. A separate approval-gated HA action can make the same four fixed read-only requests as the private evidence CLI; it exposes no arbitrary request or control path.
+**No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
 
 ### Available entities
 
@@ -39,8 +39,13 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 | Elapsed brew time / pump active time | s | Disabled pending timing validation |
 | Water shortage | Problem | Enabled; not a safety interlock |
 | Reachable | Connectivity | Enabled; represents the last poll |
+| Boiler enable settings / water-alarm detection | Boolean | Disabled pending physical comparison |
+| Boiler targets / heating mode | °C / enum | Disabled pending physical comparison |
+| Manual time / pressure settings | s / bar | Disabled pending physical comparison |
+| Cleaning time / rest / repetitions | s / count | Disabled pending physical comparison |
+| Operating state | Enum | Disabled pending transition observation |
 
-All readings remain provisional until physical comparison. Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. The default polling interval can miss an entire shot; this is **basic monitoring, not a shot-graph recorder**. Five provisional measurements are disabled by default, not removed.
+All readings remain provisional until physical comparison. Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. The default polling interval can miss an entire shot; this is **basic monitoring, not a shot-graph recorder**. Seventeen provisional measurement, configuration and state entities are disabled by default, not removed.
 
 ## Project status
 
@@ -50,8 +55,8 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Implemented; actual HA framework tests plus one live target-host discovery, baseline and entity-registration session |
-| Verification baseline | **116 local tests passing:** 90 protocol/package + 26 HA tests, as of 2026-09-21 |
+| HA integration | Version 0.0.8 implemented with 23 read-only entities; live target runs 0.0.7 with a clean bounded 15-minute idle soak, pending upgrade |
+| Verification baseline | **119 local tests passing:** 90 protocol/package + 29 HA tests, as of 2026-09-21 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 completed live read-only setup |
 | Deployment / release | Installed with backup on target HA; one config entry and 11 entities registered; not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
@@ -90,10 +95,10 @@ connectable machine; zero or multiple matches fail closed. Remove the YAML
 section before removing the imported entry if it must stay removed.
 
 An approved headless evidence session can add `capture_baseline: true` beneath
-that section. After the first successful telemetry sample, HA attempts the four
-fixed reads once, writes an owner-only private response file, and creates an
-attempt marker before Bluetooth access so restarts cannot repeat a failed or
-uncertain capture.
+that section. HA creates an attempt marker before the first complete four-read
+refresh, then writes those already validated responses to an owner-only private
+file. Restarts cannot repeat a failed or uncertain raw capture; routine
+read-only polling still continues on its documented cadence.
 
 ## Roadmap
 
@@ -102,7 +107,8 @@ uncertain capture.
 - [x] Implement offline-tested HA discovery, sensors, recovery, diagnostics and packaging.
 - [ ] Complete physical comparison of the decoded readings and direct-Python lifecycle validation on the actual DATA S.
 - [ ] Complete HA reconnect/soak testing and review a minimal sanitized fixture for publication.
-- [ ] Add verified configuration/status entities and complete the official-app feature inventory.
+- [x] Add provisional read-only configuration and operating-state entities, disabled by default.
+- [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [ ] Finish release hardening, compatibility documentation and HACS packaging/validation.
 
@@ -115,7 +121,7 @@ HA discovery + confirmed setup
             │
             ▼
 Polling coordinator → shared Bluetooth adapter → DATA S
-            │           one read; disconnect
+            │           bounded read session; disconnect
             ▼
 Independent protocol validation and telemetry decoding
             │

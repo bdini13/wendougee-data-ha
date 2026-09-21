@@ -9,6 +9,9 @@ from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.wendougee_data import async_setup
+from custom_components.wendougee_data._protocol.crc import append_crc
+from custom_components.wendougee_data._protocol.reads import ReadOperation
+from custom_components.wendougee_data._protocol.state import decode_operating_state
 from custom_components.wendougee_data._protocol.telemetry import (
     parse_telemetry_response,
 )
@@ -22,11 +25,34 @@ from custom_components.wendougee_data.const import (
 from custom_components.wendougee_data.diagnostics import (
     async_get_config_entry_diagnostics,
 )
+from tests.test_reads import register_response
 from tests.test_telemetry import TELEMETRY_RESPONSE
 
 pytestmark = pytest.mark.asyncio
 ADDRESS = "00:00:00:00:00:01"  # Synthetic, not a real device identifier.
 TELEMETRY = parse_telemetry_response(TELEMETRY_RESPONSE)
+CONFIGURATION_VALUES = [0] * 37
+for register, value in {
+    0: 55,
+    1: 125,
+    2: 4,
+    6: 1,
+    7: 0,
+    8: 125,
+    9: 94,
+    17: 315,
+    19: 85,
+    22: 1,
+}.items():
+    CONFIGURATION_VALUES[register] = value
+IDLE_STATE_FRAME = append_crc(b"\x01\x01\x03" + bytes(3))
+IDLE_STATE = decode_operating_state(IDLE_STATE_FRAME)
+BASELINE_FRAMES = {
+    ReadOperation.TELEMETRY: TELEMETRY_RESPONSE,
+    ReadOperation.CONFIGURATION: register_response(CONFIGURATION_VALUES),
+    ReadOperation.WATER_ALARM_ENABLED: register_response([1]),
+    ReadOperation.OPERATING_STATE: IDLE_STATE_FRAME,
+}
 
 
 def entry(*, capture_baseline=False):
@@ -51,7 +77,7 @@ async def test_bluetooth_requires_confirmation_and_never_connects_in_flow(hass):
     with (
         patch(f"custom_components.{DOMAIN}.async_setup_entry", return_value=True),
         patch(
-            f"custom_components.{DOMAIN}.coordinator.read_telemetry",
+            f"custom_components.{DOMAIN}.coordinator.read_baseline",
             new_callable=AsyncMock,
         ) as read,
     ):
@@ -183,11 +209,18 @@ async def test_yaml_import_refuses_ambiguous_machine_selection(hass):
 async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):
     configured = entry()
     configured.add_to_hass(hass)
-    with patch(
-        f"custom_components.{DOMAIN}.coordinator.read_telemetry",
-        new_callable=AsyncMock,
-        return_value=TELEMETRY,
-    ) as read:
+    with (
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.read_baseline",
+            new_callable=AsyncMock,
+            return_value=BASELINE_FRAMES,
+        ),
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.read_runtime",
+            new_callable=AsyncMock,
+            return_value=(TELEMETRY, IDLE_STATE),
+        ) as read,
+    ):
         assert await hass.config_entries.async_setup(configured.entry_id)
         await hass.async_block_till_done()
         coordinator = configured.runtime_data
@@ -213,6 +246,18 @@ async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):
         )
         assert reachable.state == "off"
         diagnostics = await async_get_config_entry_diagnostics(hass, configured)
+        assert diagnostics["schema_version"] == 2
+        assert diagnostics["configuration"]["brew_target_celsius"] == 94
+        assert "raw_registers" not in diagnostics["configuration"]
+        assert diagnostics["water_alarm_enabled"] is True
+        assert diagnostics["operating_state"] == {
+            "state": "idle",
+            "profile_active": False,
+            "manual_active": False,
+            "cleaning_active": False,
+            "free_variable_active": False,
+            "unknown_bits": 0,
+        }
         assert ADDRESS not in str(diagnostics)
         assert device_id(ADDRESS) not in str(diagnostics)
         assert "private" not in str(diagnostics)
@@ -229,7 +274,7 @@ async def test_first_read_failure_uses_ha_setup_retry(hass):
     configured = entry()
     configured.add_to_hass(hass)
     with patch(
-        f"custom_components.{DOMAIN}.coordinator.read_telemetry",
+        f"custom_components.{DOMAIN}.coordinator.read_baseline",
         new_callable=AsyncMock,
         side_effect=TimeoutError,
     ):
@@ -239,9 +284,7 @@ async def test_first_read_failure_uses_ha_setup_retry(hass):
 
 
 async def test_private_baseline_service_returns_only_four_allowlisted_frames(hass):
-    from custom_components.wendougee_data._protocol.crc import append_crc
     from custom_components.wendougee_data._protocol.reads import (
-        ReadOperation,
         build_read_request,
     )
 
@@ -254,11 +297,6 @@ async def test_private_baseline_service_returns_only_four_allowlisted_frames(has
         ReadOperation.OPERATING_STATE: append_crc(b"\x01\x01\x03\x00\x00\x00"),
     }
     with (
-        patch(
-            f"custom_components.{DOMAIN}.coordinator.read_telemetry",
-            new_callable=AsyncMock,
-            return_value=TELEMETRY,
-        ),
         patch(
             f"custom_components.{DOMAIN}.coordinator.read_baseline",
             new_callable=AsyncMock,
@@ -278,7 +316,8 @@ async def test_private_baseline_service_returns_only_four_allowlisted_frames(has
             return_response=True,
         )
 
-    baseline.assert_awaited_once_with(hass, ADDRESS)
+    assert baseline.await_count == 2
+    baseline.assert_awaited_with(hass, ADDRESS)
     assert response == {
         "schema": "wendougee-data-private-baseline/v1",
         "privacy_status": "private_unreviewed",
@@ -297,9 +336,6 @@ async def test_private_baseline_service_returns_only_four_allowlisted_frames(has
 async def test_headless_capture_writes_private_frames_only_once(hass, tmp_path):
     import json
 
-    from custom_components.wendougee_data._protocol.crc import append_crc
-    from custom_components.wendougee_data._protocol.reads import ReadOperation
-
     hass.config.config_dir = str(tmp_path)
     configured = entry(capture_baseline=True)
     configured.add_to_hass(hass)
@@ -311,11 +347,6 @@ async def test_headless_capture_writes_private_frames_only_once(hass, tmp_path):
     }
     with (
         patch(
-            f"custom_components.{DOMAIN}.coordinator.read_telemetry",
-            new_callable=AsyncMock,
-            return_value=TELEMETRY,
-        ),
-        patch(
             f"custom_components.{DOMAIN}.coordinator.read_baseline",
             new_callable=AsyncMock,
             return_value=frames,
@@ -326,7 +357,7 @@ async def test_headless_capture_writes_private_frames_only_once(hass, tmp_path):
         assert await hass.config_entries.async_reload(configured.entry_id)
         await hass.async_block_till_done()
 
-    baseline.assert_awaited_once()
+    assert baseline.await_count == 2
     from pathlib import Path
 
     destination = Path(hass.config.path(PRIVATE_BASELINE_FILE))
@@ -347,17 +378,17 @@ async def test_all_measurements_units_disabled_defaults_and_stable_ids(
     configured = entry()
     configured.add_to_hass(hass)
     with patch(
-        f"custom_components.{DOMAIN}.coordinator.read_telemetry",
+        f"custom_components.{DOMAIN}.coordinator.read_baseline",
         new_callable=AsyncMock,
-        return_value=TELEMETRY,
+        return_value=BASELINE_FRAMES,
     ):
         assert await hass.config_entries.async_setup(configured.entry_id)
         await hass.async_block_till_done()
         entities = er.async_entries_for_config_entry(
             entity_registry, configured.entry_id
         )
-        assert len(entities) == 11
-        assert sum(item.disabled_by is not None for item in entities) == 5
+        assert len(entities) == 23
+        assert sum(item.disabled_by is not None for item in entities) == 17
         identities = {item.unique_id: item.entity_id for item in entities}
         assert all(ADDRESS not in identity for identity in identities)
         for item in entities:
@@ -375,16 +406,32 @@ async def test_all_measurements_units_disabled_defaults_and_stable_ids(
             "weight_rate_grams_per_second": (2.3, "g/s"),
             "elapsed_brew_time_seconds": (12.3, "s"),
             "pump_active_time_seconds": (9, "s"),
+            "steam_target_celsius": (125, "°C"),
+            "brew_target_celsius": (94, "°C"),
+            "manual_time_seconds": (31.5, "s"),
+            "manual_pressure_bar": (8.5, "bar"),
+            "cleaning_time_seconds": (5.5, "s"),
+            "cleaning_rest_seconds": (12.5, "s"),
+            "cleaning_repetitions": (4, None),
         }
         for key, (value, unit) in expectations.items():
             identity = f"{device_id(ADDRESS)}_{key}"
             state = hass.states.get(identities[identity])
             assert float(state.state) == value
-            assert state.attributes["unit_of_measurement"] == unit
+            assert state.attributes.get("unit_of_measurement") == unit
         assert (
             hass.states.get(identities[f"{device_id(ADDRESS)}_water_level_alarm"]).state
             == "on"
         )
+        for key, expected in {
+            "steam_heating_enabled": "off",
+            "brew_heating_enabled": "on",
+            "water_alarm_enabled": "on",
+            "heating_mode": "full_speed",
+            "operating_state": "idle",
+        }.items():
+            entity_state = hass.states.get(identities[f"{device_id(ADDRESS)}_{key}"])
+            assert entity_state.state == expected
         after = er.async_entries_for_config_entry(entity_registry, configured.entry_id)
         assert {item.unique_id: item.entity_id for item in after} == identities
         await hass.config_entries.async_unload(configured.entry_id)

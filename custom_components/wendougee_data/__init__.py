@@ -74,13 +74,12 @@ def _write_private_capture(config_dir: Path, document: dict) -> None:
 async def _async_capture_private_baseline(
     hass: HomeAssistant, coordinator: WendougeeCoordinator
 ) -> None:
-    """Attempt the YAML-approved baseline once without failing integration setup."""
+    """Write the YAML-approved, already completed baseline once."""
     config_dir = Path(hass.config.config_dir)
-    claimed = await hass.async_add_executor_job(_claim_private_capture, config_dir)
-    if not claimed:
-        return
     try:
-        frames = await coordinator.async_read_baseline()
+        frames = coordinator.take_cached_baseline_frames()
+        if frames is None:
+            raise RuntimeError("No completed baseline available")
         document = _private_baseline_response(frames)
         await hass.async_add_executor_job(_write_private_capture, config_dir, document)
     except Exception:
@@ -156,10 +155,17 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Require a valid first sample before loading entities; let HA retry failures."""
     coordinator = WendougeeCoordinator(hass, entry)
+    capture_claimed = False
     try:
-        await coordinator.async_config_entry_first_refresh()
         if entry.data.get(CONF_CAPTURE_BASELINE) is True:
+            capture_claimed = await hass.async_add_executor_job(
+                _claim_private_capture, Path(hass.config.config_dir)
+            )
+        await coordinator.async_config_entry_first_refresh()
+        if capture_claimed:
             await _async_capture_private_baseline(hass, coordinator)
+        else:
+            coordinator.take_cached_baseline_frames()
         entry.runtime_data = coordinator
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     except BaseException:

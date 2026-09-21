@@ -1,11 +1,11 @@
 # Experimental read-only Home Assistant integration
 
-Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.7` was installed on Bobby's HA 2026.9.1 host. On 2026-09-21 the active ESPHome proxy path completed discovery, initial telemetry, the approved one-shot four-read baseline, and registration of all 11 entities. The proxy's pre-existing HA entry first required its missing API encryption key to be restored from the ESPHome configuration. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation and reconnect/soak testing remain pending.
+Version `0.0.8` is implemented and tested offline using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.7` was installed on Bobby's HA 2026.9.1 host. On 2026-09-21 that version completed discovery, initial telemetry, the approved one-shot four-read baseline, and registration of its original 11 entities through the active ESPHome proxy. The proxy's pre-existing HA entry first required its missing API encryption key to be restored from the ESPHome configuration. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). The 0.0.8 entity expansion has not yet been deployed; physical comparison, direct-Python validation and long-duration soak testing remain pending.
 
 ## Included
 
 - Shared Bluetooth discovery for connectable `WDG_Data_*` advertisements, manual selection from HA's discovery cache, explicit polling confirmation and duplicate prevention.
-- Nine measurement sensors plus water shortage and last-poll reachability binary sensors.
+- Nine telemetry sensors, eight decoded-setting sensors, one operating-state sensor and five binary sensors: 23 read-only entities total.
 - Bounded, serialized read-only transactions, cleanup on failure/unload, unavailable measurements after a failed poll, and fresh-connection recovery on later polls.
 - Stable hashed device/entity identifiers and allowlisted diagnostics with no addresses, names, hashes, raw packets or exception text.
 - One response-only `capture_read_only_baseline` action, requiring the literal confirmation `READ ONLY`, for the four fixed evidence reads through HA's shared Bluetooth path.
@@ -28,6 +28,12 @@ Bluetooth discovery and connection selection follow [Home Assistant's shared Blu
 | Pump active time | s | Disabled: semantics need confirmation |
 | Water shortage | Problem binary sensor | Enabled; not an interlock |
 | Reachable | Connectivity binary sensor | Enabled; diagnostic |
+| Steam/brew heating enabled | Boolean binary sensors | Disabled: physical comparison pending |
+| Water-alarm detection enabled | Boolean binary sensor | Disabled: physical comparison pending |
+| Steam/brew targets and heating mode | °C / enum | Disabled: physical comparison pending |
+| Manual time / pressure settings | s / bar | Disabled: physical comparison pending |
+| Cleaning time / rest / repetitions | s / count | Disabled: physical comparison pending |
+| Operating state | Enum | Disabled: transition observation pending |
 
 Enabled does not mean physically validated. Every value still inherits the evidence limits in [CAPABILITIES.md](../CAPABILITIES.md). Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. Unknown scale connectivity means zero weight cannot be treated as proof of an empty cup.
 
@@ -35,7 +41,7 @@ Reachable means the **last poll succeeded**, not that a BLE connection is curren
 
 ## Polling and safety behavior
 
-Confirmation starts polling every 30 seconds by default (10–300 seconds selectable during setup). Each poll resolves a connectable BLE device through HA, opens a short session, subscribes, sends exactly one request `01 03 05 7c 00 16 05 10`, and disconnects. Configuration/status reads are never part of scheduled polling.
+Confirmation starts polling every 30 seconds by default (10–300 seconds selectable during setup). Each poll resolves a connectable BLE device through HA, opens a short session, reads telemetry and operating state, and disconnects. Every twentieth poll uses the complete fixed four-read set to refresh configuration and water-alarm-enable state as well. No arbitrary address or write operation is accepted.
 
 The separate `wendougee_data.capture_read_only_baseline` action is intended only for an explicitly approved evidence session. It requires selecting a loaded integration entry, typing `READ ONLY`, and requesting the action response. The action serializes against polling, opens one bounded session, sends telemetry, configuration, water-alarm-setting and operating-state reads exactly once each, and returns request/response hex marked `private_unreviewed`. It does not retry an uncertain transaction. Keep the response private until it has passed the evidence review in [EVIDENCE_COLLECTION.md](EVIDENCE_COLLECTION.md).
 
@@ -43,7 +49,7 @@ There is one connection attempt per poll and no automatic resend of an uncertain
 
 The cadence is conservative, not hardware-validated. It is intended for basic monitoring, **not full shot graphs or safety-critical automation**. A 30-second interval can miss an entire shot or a short alarm. The official app may contend for the single-central connection; close other clients during live validation. Bounded disconnect attempts cannot guarantee radio cleanup if the platform/backend itself fails.
 
-Unknown fields, detailed faults, boiler configuration, operating-state entities and controls are not exposed in this milestone. Disable/remove the integration to stop polling. Changing the interval currently requires removing/re-adding the entry; IDs remain the same for the same address.
+Unknown fields, detailed faults and controls are not exposed in this milestone. Configuration and operating-state entities are read-only and disabled by default; their presence is not evidence that the corresponding write is safe. Disable/remove the integration to stop polling. Changing the interval currently requires removing/re-adding the entry; IDs remain the same for the same address.
 
 ## Packaging and later installation
 
@@ -81,12 +87,14 @@ wendougee_data:
   capture_baseline: true
 ```
 
-After the entry's first successful telemetry sample, this creates an owner-only
-`wendougee_data_private_baseline.json` in the HA configuration directory with
-the same private response schema as the action. Before Bluetooth access it
-atomically creates `.wendougee_data_baseline_attempted`; presence of either file
-prevents another automatic attempt after a reload or restart. A failed capture
-is not retried. This opt-in does not affect the manual response-only action.
+Before the entry's first complete four-read refresh, this atomically creates
+`.wendougee_data_baseline_attempted`. After that refresh succeeds, it creates an
+owner-only `wendougee_data_private_baseline.json` in the HA configuration
+directory with the same private response schema as the action. Presence of
+either private file prevents another automatic capture after a reload or
+restart. Routine entity refreshes may still issue the same fixed read
+operations; only the private raw capture is one-shot. A failed capture is not
+retried. This opt-in does not affect the manual response-only action.
 
 This is a manual experimental package, not a published HACS release. Copying only the tracked source component directory will omit generated protocol files; use the build output. The package requires the Bluetooth integration and its matching `bleak-retry-connector==4.7.0` dependency. Do not claim compatibility with an HA version that requires a different dependency set without testing it.
 
@@ -107,6 +115,6 @@ python -m pytest -c pytest-ha.ini
 
 Do not install the standalone package's constrained Bleak dependencies into the HA test environment. HA tests import the generated bundled protocol package, use HA's real config-flow/coordinator/entity machinery, fake all Bluetooth connections and disable network sockets. CI has separate protocol and HA jobs; adding a CI job does not mean the remote workflow has already run.
 
-Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, scheduled polling, GATT validation, telemetry-only enforcement for normal sessions, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
+Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all 23 entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, split runtime/configuration polling, GATT validation, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
 
 The next meaningful gate is an attended, read-only physical comparison followed by reconnect/soak testing. This document does not grant approval for a new hardware session or any control write.
