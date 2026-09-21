@@ -17,6 +17,7 @@ For the broader feature inventory, evidence levels, control ambiguities and rema
 - No control, provisioning, reset, boiler-setting, cleaning, valve, or brew command was sent.
 - This was a temporary native CoreBluetooth helper, not validation of the Python/Bleak CLI. No firmware version or sanitized response fixture was retained. The reported values are a session observation, not a reproducible fixture or calibration result.
 - On 2026-09-21, Home Assistant 2026.9.1 discovered the same DATA S through an active ESPHome proxy and completed the four allowlisted reads once. All responses passed the integration's strict function, length and CRC checks. Decoded telemetry was consistent with an idle, cold machine; configuration reported both boiler enables off; alarm detection was enabled; and the operating-state bits decoded as idle with no unknown flags. The user had intentionally left the boilers off, but no physical-display comparison was possible. Raw frames remain private. See [the sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md).
+- Later that day, integration 0.0.8 registered all 23 read-only entities on the target, remained healthy beyond its ten-minute configuration-refresh cadence and completed one config-entry reload. This validates a bounded HA/proxy lifecycle path, not physical field semantics or long-duration reliability.
 
 ## Upstream protocol consensus
 
@@ -119,7 +120,7 @@ UUIDs and one telemetry read have now been observed on Bobby's DATA S. This does
 2. Record model/firmware/app provenance and review a minimal captured fixture before publication.
 3. Reproduce the read through the direct Python transport only if maintaining that separate path is useful.
 4. Observe one manually initiated shot; the client must not initiate it.
-5. Run HA reconnect, unload and soak tests through the proxy.
+5. Run deliberate proxy-loss, app-contention, disable and extended soak tests through the HA path; restart and one config-entry reload have succeeded.
 6. Resolve the capability map's conflicts before exposing the affected controls.
 
 See the [batched plan](VALIDATION_PLAN.md) for exact scope and acceptance criteria. No new hardware session was performed during the capability audit.

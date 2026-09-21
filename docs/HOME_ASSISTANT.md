@@ -1,6 +1,6 @@
 # Experimental read-only Home Assistant integration
 
-Version `0.0.8` is implemented and tested offline using **Home Assistant 2026.9.3 / Python 3.14.7**. After a full backup, package `0.0.7` was installed on Bobby's HA 2026.9.1 host. On 2026-09-21 that version completed discovery, initial telemetry, the approved one-shot four-read baseline, and registration of its original 11 entities through the active ESPHome proxy. The proxy's pre-existing HA entry first required its missing API encryption key to be restored from the ESPHome configuration. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). The 0.0.8 entity expansion has not yet been deployed; physical comparison, direct-Python validation and long-duration soak testing remain pending.
+Version `0.0.8` is implemented, tested offline using **Home Assistant 2026.9.3 / Python 3.14.7**, and installed on Bobby's HA 2026.9.1 host after a fresh full backup. On 2026-09-21 the target registered all 23 entities, returned schema-2 diagnostics, remained healthy beyond the ten-minute configuration-refresh cadence, and completed a config-entry reload through the active ESPHome proxy. The earlier 0.0.7 session performed the approved one-shot private baseline after the proxy entry's missing API encryption key was restored from its existing ESPHome configuration. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation, deliberate disconnect/app-contention testing and long-duration soak testing remain pending.
 
 ## Included
 
@@ -117,4 +117,4 @@ Do not install the standalone package's constrained Bleak dependencies into the 
 
 Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all 23 entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, split runtime/configuration polling, GATT validation, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
 
-The next meaningful gate is an attended, read-only physical comparison followed by reconnect/soak testing. This document does not grant approval for a new hardware session or any control write.
+The next meaningful gate is an attended, read-only physical comparison followed by deliberate disconnect, app-contention and extended soak testing. This document does not grant approval for a new hardware session or any control write.

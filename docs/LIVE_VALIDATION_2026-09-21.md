@@ -85,6 +85,35 @@ Temperatures were plausible for a cold machine, and all activity fields were
 consistent with idle. This agreement is useful but is not an independent
 physical measurement.
 
+## Version 0.0.8 deployment follow-up
+
+Later the same day, version 0.0.8 was deployed to the same HA 2026.9.1 target:
+
+- A fresh full HA backup completed before any component file changed. The
+  previous component directory was also preserved in a hidden rollback folder.
+- The built archive's SHA-256 matched before extraction, its manifest reported
+  0.0.8, and `ha core check` passed before restart.
+- After restart, HA reported version 0.0.8, one config entry, one device and all
+  23 entities. Six remain enabled and 17 provisional configuration/state or
+  measurement entities are disabled by default.
+- Schema-2 diagnostics reported a successful current sample with no last
+  error, both boilers disabled, water-alarm detection enabled, idle operating
+  state and no unknown operating-state bits. The temperatures were 19.7 °C
+  brew and 23.6 °C steam; other activity values remained zero.
+- The post-upgrade observation extended beyond the coordinator's ten-minute
+  configuration-refresh cadence. Five additional one-minute checkpoints all
+  found Core healthy, 23 registered entities, no Wendougee failure line and an
+  unchanged private-capture timestamp.
+- A normal config-entry reload completed successfully. Post-reload diagnostics
+  again showed a successful current sample and the same internally consistent
+  idle/configuration state. The private raw capture was not repeated.
+- No control, provisioning, reset, boiler, cleaning, valve, brew, calibration,
+  bootloader or OTA command was sent.
+
+This validates one restart, scheduled split-cadence reads and one
+unload/reload cycle. It is not evidence for deliberate proxy loss, official-app
+contention, a disabled entry, long-duration reliability or physical units.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -103,8 +132,9 @@ physical measurement.
   shot-state transitions.
 - Boiler-enable agreement does not validate write polarity or authorize a
   control test.
-- Firmware/model-detail queries, official-app coexistence, reconnect recovery,
-  unload behavior and long-duration polling have not been validated.
+- Firmware/model-detail queries, official-app coexistence, deliberate
+  disconnect recovery, disabled-entry behavior and long-duration polling have
+  not been validated. One restart and one config-entry reload did succeed.
 - The direct Python/Bleak client remains untested on the hardware.
 - No real frame is approved as a public fixture yet.
 
@@ -112,6 +142,6 @@ physical measurement.
 
 Run an attended, read-only observation while the user operates the machine
 normally. Compare both temperatures and state on the display, then observe one
-manually initiated shot while the integration only reads. Follow with bounded
-idle reconnect and soak tests. Control work remains a separate, freshly
-approved phase.
+manually initiated shot while the integration only reads. Follow with
+deliberate proxy-loss/app-contention checks and an extended soak. Control work
+remains a separate, freshly approved phase.

@@ -33,7 +33,8 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Test discovery, telemetry, baseline reads and entity registration through the actual HA/ESPHome proxy path.
 - [x] Add provisional read-only configuration and operating-state entities, disabled by default.
 - [x] Complete a bounded 15-minute idle soak on 0.0.7 with no coordinator failures.
-- [ ] Test idle reconnects, restarts, unavailable state, app contention and bounded polling load.
+- [x] Deploy 0.0.8 after a fresh full backup; validate restart, the split polling cadence and a config-entry reload.
+- [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.
 - [ ] Physically validate configuration/status semantics, then review defaults, options and usability refinements.

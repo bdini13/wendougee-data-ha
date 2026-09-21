@@ -12,7 +12,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
-> **Experimental, not production-ready.** The package is installed on the target HA host and has completed one approved read-only baseline plus a clean 15-minute idle soak through its ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and restart, reconnect, unload and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** Version 0.0.8 is installed on the target HA host after a fresh full backup. It has completed a clean restart, a post-upgrade window beyond its ten-minute configuration-refresh cadence, and a config-entry reload through the ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
 
 ## What it does
 
@@ -55,10 +55,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.0.8 implemented with 23 read-only entities; live target runs 0.0.7 with a clean bounded 15-minute idle soak, pending upgrade |
+| HA integration | Version 0.0.8 installed and running with 23 read-only entities; restart, split-cadence polling and config-entry reload validated |
 | Verification baseline | **119 local tests passing:** 90 protocol/package + 29 HA tests, as of 2026-09-21 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 completed live read-only setup |
-| Deployment / release | Installed with backup on target HA; one config entry and 11 entities registered; not a published HACS release |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.0.8 through ESPHome proxy |
+| Deployment / release | Installed with fresh full backup on target HA; one config entry, one device and 23 entities registered; not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [59-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
@@ -106,7 +106,7 @@ read-only polling still continues on its documented cadence.
 - [x] Build the independent read-only protocol/session layer and capability map.
 - [x] Implement offline-tested HA discovery, sensors, recovery, diagnostics and packaging.
 - [ ] Complete physical comparison of the decoded readings and direct-Python lifecycle validation on the actual DATA S.
-- [ ] Complete HA reconnect/soak testing and review a minimal sanitized fixture for publication.
+- [ ] Complete extended HA disconnect/contention/disable soak testing and review a minimal sanitized fixture for publication.
 - [x] Add provisional read-only configuration and operating-state entities, disabled by default.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
