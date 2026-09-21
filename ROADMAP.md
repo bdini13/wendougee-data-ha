@@ -11,8 +11,9 @@ Last reviewed: 2026-09-20. The goal is a well-understood, local-first DATA S int
 - [x] Implement read-only HA discovery, confirmed setup, sensors, recovery and diagnostics.
 - [x] Build a self-contained ZIP and test it independently of the development checkout.
 - [x] Add a versioned private evidence envelope and approval-gated baseline reader.
+- [x] Add an explicitly confirmed four-read baseline action for HA's shared Bluetooth/proxy route.
 
-Evidence: 90 protocol/package tests plus 19 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
+Evidence: 90 protocol/package tests plus 21 HA framework tests at this checkpoint. One earlier native telemetry read is not validation of the Python/HA transport.
 
 ## 2. Hardware validation — next gate
 
@@ -28,6 +29,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 ## 3. HA pilot and operational reliability
 
 - [ ] Back up the target HA configuration and obtain explicit deployment approval.
+- [x] Verify that the target HA host has registered the ESPHome proxy as a remote Bluetooth adapter.
 - [ ] Test the actual host/adapter or proxy path; record supported software/firmware combinations.
 - [ ] Test idle reconnects, restarts, unavailable state, app contention and bounded polling load.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.

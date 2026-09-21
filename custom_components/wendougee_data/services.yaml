@@ -1,0 +1,21 @@
+capture_read_only_baseline:
+  name: Capture read-only baseline
+  description: >-
+    Sends the four fixed, allowlisted read requests exactly once and returns
+    private, unreviewed response frames. It sends no control command and does
+    not retry an uncertain transaction.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      description: Loaded Wendougee DATA configuration entry to read.
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      name: Confirmation
+      description: Type READ ONLY to confirm this one-shot private capture.
+      required: true
+      example: READ ONLY
+      selector:
+        text:

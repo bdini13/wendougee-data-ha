@@ -1,6 +1,6 @@
 # Experimental read-only Home Assistant integration
 
-Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. No machine connection, deployment to Bobby's HA instance, or real-hardware validation was performed. Compatibility with earlier HA releases and real Bluetooth proxies remains unverified.
+Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / Python 3.14.7**. Bobby's HA 2026.9.1 host and its registered ESPHome Bluetooth proxy were inspected read-only, but this integration was not installed or run there. No four-read capture or physical comparison was performed. Compatibility with HA 2026.9.1 and the real proxy remains unverified.
 
 ## Included
 
@@ -8,7 +8,8 @@ Implemented and tested offline on 2026-09-20 using **Home Assistant 2026.9.3 / P
 - Nine measurement sensors plus water shortage and last-poll reachability binary sensors.
 - Bounded, serialized read-only transactions, cleanup on failure/unload, unavailable measurements after a failed poll, and fresh-connection recovery on later polls.
 - Stable hashed device/entity identifiers and allowlisted diagnostics with no addresses, names, hashes, raw packets or exception text.
-- No controls, services, arbitrary command interface, FF55 initialization, standalone scanner, pairing, or cloud backend.
+- One response-only `capture_read_only_baseline` action, requiring the literal confirmation `READ ONLY`, for the four fixed evidence reads through HA's shared Bluetooth path.
+- No controls, arbitrary command interface, FF55 initialization, standalone scanner, pairing, or cloud backend.
 
 Bluetooth discovery and connection selection follow [Home Assistant's shared Bluetooth APIs](https://developers.home-assistant.io/docs/core/bluetooth/api/). Device responses are handled by our independently implemented protocol library.
 
@@ -34,7 +35,9 @@ Reachable means the **last poll succeeded**, not that a BLE connection is curren
 
 ## Polling and safety behavior
 
-Confirmation starts polling every 30 seconds by default (10–300 seconds selectable during setup). Each poll resolves a connectable BLE device through HA, opens a short session, subscribes, sends exactly one request `01 03 05 7c 00 16 05 10`, and disconnects. No configuration/status reads are included yet, even though the library supports them offline.
+Confirmation starts polling every 30 seconds by default (10–300 seconds selectable during setup). Each poll resolves a connectable BLE device through HA, opens a short session, subscribes, sends exactly one request `01 03 05 7c 00 16 05 10`, and disconnects. Configuration/status reads are never part of scheduled polling.
+
+The separate `wendougee_data.capture_read_only_baseline` action is intended only for an explicitly approved evidence session. It requires selecting a loaded integration entry, typing `READ ONLY`, and requesting the action response. The action serializes against polling, opens one bounded session, sends telemetry, configuration, water-alarm-setting and operating-state reads exactly once each, and returns request/response hex marked `private_unreviewed`. It does not retry an uncertain transaction. Keep the response private until it has passed the evidence review in [EVIDENCE_COLLECTION.md](EVIDENCE_COLLECTION.md).
 
 There is one connection attempt per poll and no automatic resend of an uncertain request. A later poll starts a fresh session. HA's normal setup-retry mechanism handles initial connection failure. Malformed replies, timeout or disconnect invalidate that sample. Unloading cancels scheduled/in-flight reads and awaits cleanup.
 
@@ -73,6 +76,6 @@ python -m pytest -c pytest-ha.ini
 
 Do not install the standalone package's constrained Bleak dependencies into the HA test environment. HA tests import the generated bundled protocol package, use HA's real config-flow/coordinator/entity machinery, fake all Bluetooth connections and disable network sockets. CI has separate protocol and HA jobs; adding a CI job does not mean the remote workflow has already run.
 
-Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, scheduled polling, GATT validation, single-command enforcement, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
+Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, scheduled polling, GATT validation, telemetry-only enforcement for normal sessions, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
 
 The next meaningful gate is an approved live read and physical comparison, followed by an explicitly approved test deployment. This document does not grant either approval.

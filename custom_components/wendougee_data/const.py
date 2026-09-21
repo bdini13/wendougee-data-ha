@@ -3,6 +3,7 @@
 import hashlib
 
 DOMAIN = "wendougee_data"
+SERVICE_CAPTURE_BASELINE = "capture_read_only_baseline"
 DEFAULT_POLL_INTERVAL = 30
 MIN_POLL_INTERVAL = 10
 MAX_POLL_INTERVAL = 300

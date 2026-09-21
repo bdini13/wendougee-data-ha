@@ -23,8 +23,9 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.
 - Exports allowlisted diagnostics without device addresses, names, hashes or raw packets.
+- Offers a separately confirmed one-shot action for the four fixed private evidence reads.
 
-**No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. The integration only sends the established telemetry request; configuration and operating-state decoders exist in the independent library but are not enabled in HA.
+**No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling sends only the established telemetry request. A separate approval-gated HA action can make the same four fixed read-only requests as the private evidence CLI; it exposes no arbitrary request or control path.
 
 ### Available entities
 
@@ -48,9 +49,9 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Local DATA S transport | Expected GATT service/characteristics and one CRC-valid idle telemetry reply observed |
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
-| Evidence collection | Versioned private envelope and approval-gated four-read baseline command; no live run yet |
+| Evidence collection | Versioned private envelope plus standalone and HA-proxy four-read baseline paths; no live four-read run yet |
 | HA integration | Implemented; actual HA framework with simulated Bluetooth |
-| Verification baseline | **109 local tests passing:** 90 protocol/package + 19 HA tests, as of 2026-09-20 |
+| Verification baseline | **111 local tests passing:** 90 protocol/package + 21 HA tests, as of 2026-09-20 |
 | Tested HA environment | Home Assistant 2026.9.3 / Python 3.14.7; no physical adapter/proxy compatibility claim |
 | Deployment / release | Not deployed; experimental manual ZIP build, not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
@@ -80,7 +81,7 @@ The generated `_protocol/` directory and ZIP are deliberately ignored by Git. Th
 3. Restart HA and add **Wendougee DATA** through Settings → Devices & services.
 4. Disconnect E-Bar/other Bluetooth clients, prepare an attended validation session, and explicitly confirm read-only polling.
 
-HA needs a connectable Bluetooth path to the machine. Other HA versions, proxies, firmware versions and Wendougee models remain unverified. Disable or remove the integration to stop polling. No installation or live test is performed by this documentation task.
+HA needs a connectable Bluetooth path to the machine. The target HA host has registered its ESPHome proxy, but this integration has not yet used that route. Other HA versions, proxies, firmware versions and Wendougee models remain unverified. Disable or remove the integration to stop polling.
 
 ## Roadmap
 

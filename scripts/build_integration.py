@@ -31,6 +31,7 @@ def build_bundle(destination: Path) -> Path:
     destination.mkdir(parents=True, exist_ok=True)
     archive = destination / "wendougee_data.zip"
     sources = sorted(COMPONENT.glob("*.py")) + sorted(COMPONENT.glob("*.json"))
+    sources += sorted(COMPONENT.glob("*.yaml"))
     sources += sorted((COMPONENT / "translations").glob("*.json"))
     sources += [COMPONENT / "_protocol" / name for name in PROTOCOL_FILES]
     with ZipFile(archive, "w", ZIP_DEFLATED) as bundle:

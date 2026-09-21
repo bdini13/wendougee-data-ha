@@ -11,7 +11,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.wendougee_data._protocol.telemetry import (
     parse_telemetry_response,
 )
-from custom_components.wendougee_data.const import DOMAIN, device_id
+from custom_components.wendougee_data.const import (
+    DOMAIN,
+    SERVICE_CAPTURE_BASELINE,
+    device_id,
+)
 from custom_components.wendougee_data.diagnostics import (
     async_get_config_entry_diagnostics,
 )
@@ -166,6 +170,62 @@ async def test_first_read_failure_uses_ha_setup_retry(hass):
         assert not await hass.config_entries.async_setup(configured.entry_id)
         await hass.async_block_till_done()
     assert configured.state.name == "SETUP_RETRY"
+
+
+async def test_private_baseline_service_returns_only_four_allowlisted_frames(hass):
+    from custom_components.wendougee_data._protocol.crc import append_crc
+    from custom_components.wendougee_data._protocol.reads import (
+        ReadOperation,
+        build_read_request,
+    )
+
+    configured = entry()
+    configured.add_to_hass(hass)
+    frames = {
+        ReadOperation.TELEMETRY: TELEMETRY_RESPONSE,
+        ReadOperation.CONFIGURATION: append_crc(b"\x01\x03\x4a" + bytes(74)),
+        ReadOperation.WATER_ALARM_ENABLED: append_crc(b"\x01\x03\x02\x00\x01"),
+        ReadOperation.OPERATING_STATE: append_crc(b"\x01\x01\x03\x00\x00\x00"),
+    }
+    with (
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.read_telemetry",
+            new_callable=AsyncMock,
+            return_value=TELEMETRY,
+        ),
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.read_baseline",
+            new_callable=AsyncMock,
+            return_value=frames,
+        ) as baseline,
+    ):
+        assert await hass.config_entries.async_setup(configured.entry_id)
+        await hass.async_block_till_done()
+        response = await hass.services.async_call(
+            DOMAIN,
+            SERVICE_CAPTURE_BASELINE,
+            {
+                "config_entry_id": configured.entry_id,
+                "confirmation": "READ ONLY",
+            },
+            blocking=True,
+            return_response=True,
+        )
+
+    baseline.assert_awaited_once_with(hass, ADDRESS)
+    assert response == {
+        "schema": "wendougee-data-private-baseline/v1",
+        "privacy_status": "private_unreviewed",
+        "records": [
+            {
+                "operation": operation.name.lower(),
+                "request_hex": build_read_request(operation).hex(),
+                "response_hex": frames[operation].hex(),
+            }
+            for operation in ReadOperation
+        ],
+    }
+    assert ADDRESS not in str(response)
 
 
 async def test_all_measurements_units_disabled_defaults_and_stable_ids(

@@ -12,6 +12,7 @@ def test_bundle_is_self_contained_and_excludes_live_scanner_and_private_data(tmp
         prefix = "custom_components/wendougee_data/"
         names = bundle.namelist()
         assert prefix + "manifest.json" in names
+        assert prefix + "services.yaml" in names
         assert prefix + "_protocol/session.py" in names
         assert prefix + "_protocol/live.py" not in names
         for name in names:

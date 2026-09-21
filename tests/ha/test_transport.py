@@ -12,6 +12,7 @@ from custom_components.wendougee_data._protocol.reads import (
 from custom_components.wendougee_data._protocol.session import ReadSession
 from custom_components.wendougee_data.bluetooth import (
     HomeAssistantReadTransport,
+    read_baseline,
     read_telemetry,
 )
 from custom_components.wendougee_data.coordinator import WendougeeCoordinator
@@ -87,9 +88,37 @@ async def test_no_other_operations_enabled_in_ha(hass, fake_connection):
     transport = HomeAssistantReadTransport(hass, ADDRESS)
     async with ReadSession(transport):
         for request in [build_read_request(ReadOperation.CONFIGURATION), b"\x01\x05"]:
-            with pytest.raises(ValueError, match="Only the telemetry"):
+            with pytest.raises(ValueError, match="not enabled"):
                 await transport.send(request)
     assert fake_connection[0].sent == []
+
+
+async def test_explicit_baseline_reads_each_allowlisted_operation_once(
+    hass, fake_connection
+):
+    from custom_components.wendougee_data._protocol.crc import append_crc
+    from tests.test_telemetry import TELEMETRY_RESPONSE
+
+    client, _ = fake_connection
+    replies = {
+        ReadOperation.TELEMETRY: TELEMETRY_RESPONSE,
+        ReadOperation.CONFIGURATION: append_crc(b"\x01\x03\x4a" + bytes(74)),
+        ReadOperation.WATER_ALARM_ENABLED: append_crc(b"\x01\x03\x02\x00\x01"),
+        ReadOperation.OPERATING_STATE: append_crc(b"\x01\x01\x03\x00\x00\x00"),
+    }
+
+    async def respond(characteristic, request, *, response):
+        client.sent.append(request)
+        client.write_responses.append(response)
+        operation = next(
+            item for item in ReadOperation if request == build_read_request(item)
+        )
+        client.notifications[characteristic](characteristic, replies[operation])
+
+    client.write_gatt_char = respond
+    assert await read_baseline(hass, ADDRESS) == replies
+    assert client.sent == [build_read_request(operation) for operation in ReadOperation]
+    assert client.disconnect_called
 
 
 @pytest.mark.parametrize("properties", [{"notify"}, {"write"}])

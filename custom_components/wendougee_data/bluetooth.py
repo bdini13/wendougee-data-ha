@@ -20,9 +20,18 @@ from ._protocol.telemetry import Telemetry, parse_telemetry_response
 class HomeAssistantReadTransport:
     """No scanner, FF55 initialization, pairing, or control commands."""
 
-    def __init__(self, hass: HomeAssistant, address: str) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        address: str,
+        *,
+        allowed_operations: frozenset[ReadOperation] = frozenset(
+            {ReadOperation.TELEMETRY}
+        ),
+    ) -> None:
         self.hass = hass
         self.address = address
+        self.allowed_operations = allowed_operations
         self.client = None
         self.modbus = None
         self.subscriptions = []
@@ -61,10 +70,11 @@ class HomeAssistantReadTransport:
         await self.client.start_notify(event, lambda _sender, _data: None)
 
     async def send(self, request: bytes) -> None:
-        """Allow telemetry only, even if the independent library adds more reads."""
-        # This first HA milestone intentionally exposes only the established read.
-        if request != build_read_request(ReadOperation.TELEMETRY):
-            raise ValueError("Only the telemetry read is enabled in Home Assistant")
+        """Enforce the caller's fixed read allowlist at the Bluetooth boundary."""
+        if request not in {
+            build_read_request(operation) for operation in self.allowed_operations
+        }:
+            raise ValueError("Request is not enabled for this read-only session")
         if self.client is None or self.modbus is None:
             raise ConnectionError("Transport not ready")
         await self.client.write_gatt_char(
@@ -102,3 +112,19 @@ async def read_telemetry(hass: HomeAssistant, address: str) -> Telemetry:
     ) as session:
         frame = await session.read(ReadOperation.TELEMETRY)
         return parse_telemetry_response(frame)
+
+
+async def read_baseline(
+    hass: HomeAssistant, address: str
+) -> dict[ReadOperation, bytes]:
+    """Read each fixed baseline operation once with no retry or decoding."""
+    frames: dict[ReadOperation, bytes] = {}
+    transport = HomeAssistantReadTransport(
+        hass,
+        address,
+        allowed_operations=frozenset(ReadOperation),
+    )
+    async with ReadSession(transport, timeout=15) as session:
+        for operation in ReadOperation:
+            frames[operation] = await session.read(operation)
+    return frames

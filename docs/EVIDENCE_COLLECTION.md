@@ -57,6 +57,23 @@ fresh explicit approval under `AGENTS.md`.
 The writer refuses paths outside the explicit private root and refuses to
 overwrite an existing file. `research/artifacts/private/` is ignored by Git.
 
+## Home Assistant Bluetooth-proxy path
+
+The experimental integration also registers the response-only action
+`wendougee_data.capture_read_only_baseline`. This exists so an ESPHome Bluetooth
+proxy can carry the same four fixed reads without a second scanner. It requires
+a loaded Wendougee configuration entry and the literal confirmation `READ ONLY`.
+The action serializes with telemetry polling, sends each operation once in one
+bounded session, and returns only the fixed request/response frames in a
+`wendougee-data-private-baseline/v1` response marked `private_unreviewed`.
+
+This action does not write a file or publish anything. Save its response only in
+the ignored private artifact area, convert it to the full evidence envelope,
+and validate it before drawing protocol conclusions. As with the standalone
+command, the machine must be attended, the official app disconnected, and a
+real run requires fresh approval. Installing the integration and restarting HA
+are separate approval-gated deployment steps.
+
 ## Offline validation and reporting
 
 Validate a private document and print a report without raw frames:
