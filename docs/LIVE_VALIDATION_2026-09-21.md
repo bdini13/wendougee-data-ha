@@ -36,6 +36,9 @@ raw request/response frame.
 - One config entry, one device and all 11 expected read-only entities were
   registered after a clean restart. Six entities are enabled by default; five
   provisional measurements remain disabled by default.
+- A short post-restart smoke window covered four consecutive 30-second polling
+  intervals with Core healthy and no Wendougee coordinator failure logged. This
+  is not a long-duration soak test.
 
 ## Sanitized decoded baseline
 
