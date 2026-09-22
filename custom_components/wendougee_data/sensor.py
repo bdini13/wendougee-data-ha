@@ -88,6 +88,43 @@ DESCRIPTIONS = (
     ),
 )
 
+ACTIVITY_DESCRIPTIONS = (
+    SensorEntityDescription(
+        key="observed_shots_total",
+        name="Observed shots total",
+        native_unit_of_measurement="shots",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        icon="mdi:counter",
+    ),
+    SensorEntityDescription(
+        key="observed_pumped_water_ml",
+        name="Observed pumped water total",
+        device_class=SensorDeviceClass.VOLUME,
+        native_unit_of_measurement=UnitOfVolume.MILLILITERS,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        icon="mdi:water",
+    ),
+    SensorEntityDescription(
+        key="last_shot_utc",
+        name="Last observed shot",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        icon="mdi:coffee",
+    ),
+    SensorEntityDescription(
+        key="last_shot_volume_ml",
+        name="Last observed shot volume",
+        device_class=SensorDeviceClass.VOLUME,
+        native_unit_of_measurement=UnitOfVolume.MILLILITERS,
+        icon="mdi:cup-water",
+    ),
+    SensorEntityDescription(
+        key="last_cleaning_utc",
+        name="Last observed backflush",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        icon="mdi:shimmer",
+    ),
+)
+
 CONFIGURATION_DESCRIPTIONS = (
     SensorEntityDescription(
         key="steam_target_celsius",
@@ -183,6 +220,7 @@ async def async_setup_entry(
         WendougeeSensor(entry, description)
         for description in (
             *DESCRIPTIONS,
+            *ACTIVITY_DESCRIPTIONS,
             *CONFIGURATION_DESCRIPTIONS,
             *STATE_DESCRIPTIONS,
         )
@@ -204,6 +242,8 @@ class WendougeeSensor(WendougeeEntity, SensorEntity):
         if self.coordinator.data is None:
             return None
         key = self.entity_description.key
+        if hasattr(self.coordinator.activity, key):
+            return getattr(self.coordinator.activity, key)
         if hasattr(self.coordinator.data, key):
             return getattr(self.coordinator.data, key)
         if key == "operating_state":

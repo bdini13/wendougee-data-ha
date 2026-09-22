@@ -20,8 +20,9 @@ async def async_get_config_entry_diagnostics(
     if configuration is not None:
         configuration.pop("raw_registers")
     operating_state = coordinator.operating_state
+    activity = coordinator.activity
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "read_only": True,
         "last_update_success": coordinator.last_update_success,
         "last_error": coordinator.last_error,
@@ -40,6 +41,24 @@ async def async_get_config_entry_diagnostics(
                 if coordinator.last_failed_poll_utc is not None
                 else None
             ),
+        },
+        "activity": {
+            "observed_shots_total": activity.observed_shots_total,
+            "observed_pumped_water_ml": activity.observed_pumped_water_ml,
+            "last_shot_utc": (
+                activity.last_shot_utc.isoformat()
+                if activity.last_shot_utc is not None
+                else None
+            ),
+            "last_shot_volume_ml": activity.last_shot_volume_ml,
+            "last_cleaning_utc": (
+                activity.last_cleaning_utc.isoformat()
+                if activity.last_cleaning_utc is not None
+                else None
+            ),
+            "shot_active": activity.shot_active,
+            "cleaning_active": activity.cleaning_active,
+            "limitations": "poll_observed_lower_bound",
         },
         "telemetry": (
             asdict(coordinator.data)

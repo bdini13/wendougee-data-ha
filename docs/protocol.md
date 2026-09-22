@@ -1,4 +1,4 @@
-# Wendougee DATA BLE protocol knowledge base
+# WENDOUGEE DATA S BLE protocol knowledge base
 
 This document separates locally observed facts from upstream findings. Raw captures and device-specific identifiers remain private and gitignored.
 

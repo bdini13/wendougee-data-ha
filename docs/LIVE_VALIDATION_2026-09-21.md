@@ -19,7 +19,7 @@ raw request/response frame.
 
 ## Environment and transport result
 
-- Target: Wendougee DATA S; firmware and installed E-Bar version not yet
+- Target: WENDOUGEE DATA S; firmware and installed E-Bar version not yet
   recorded.
 - Home Assistant: 2026.9.1.
 - Integration package: 0.0.7.

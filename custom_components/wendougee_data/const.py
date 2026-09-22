@@ -3,6 +3,7 @@
 import hashlib
 
 DOMAIN = "wendougee_data"
+DEVICE_DISPLAY_NAME = "WENDOUGEE DATA S"
 CONF_CAPTURE_BASELINE = "capture_baseline"
 PRIVATE_BASELINE_FILE = "wendougee_data_private_baseline.json"
 PRIVATE_BASELINE_MARKER = ".wendougee_data_baseline_attempted"

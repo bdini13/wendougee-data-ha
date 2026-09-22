@@ -36,6 +36,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Deploy 0.0.8 after a fresh full backup; validate restart, the split polling cadence and a config-entry reload.
 - [x] Observe recovery after two naturally occurring isolated polling failures; add privacy-safe per-runtime poll-health diagnostics for more decisive soak evidence.
 - [x] Deploy 0.0.9 after a fresh full backup; verify one device, 23 entities and advancing schema-3 poll counters with zero failures after the corrected restart.
+- [x] Build and offline-test 0.1.0 read-only observed activity, persistent totals, canonical naming and the Espresso dashboard.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.

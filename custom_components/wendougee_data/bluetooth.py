@@ -16,6 +16,7 @@ from ._protocol.reads import ReadOperation, build_read_request
 from ._protocol.session import ReadSession
 from ._protocol.state import OperatingState, decode_operating_state
 from ._protocol.telemetry import Telemetry, parse_telemetry_response
+from .const import DEVICE_DISPLAY_NAME
 
 
 class HomeAssistantReadTransport:
@@ -49,7 +50,7 @@ class HomeAssistantReadTransport:
         self.client = await establish_connection(
             BleakClientWithServiceCache,
             device,
-            "Wendougee DATA",
+            DEVICE_DISPLAY_NAME,
             disconnected_callback=lambda _client: on_disconnect(),
             max_attempts=1,
         )

@@ -1,6 +1,6 @@
-# Wendougee Data S · Home Assistant
+# WENDOUGEE DATA S · Home Assistant
 
-Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with the **Wendougee DATA S**, working toward a thoroughly documented protocol and carefully validated controls.
+Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with the **WENDOUGEE DATA S**, working toward a thoroughly documented protocol and carefully validated controls.
 
 [![Validate](https://github.com/bdini13/wendougee-data-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/bdini13/wendougee-data-ha/actions/workflows/validate.yml)
 [![Status: experimental](https://img.shields.io/badge/status-experimental-orange)](#project-status)
@@ -9,21 +9,24 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Development: AI assisted](https://img.shields.io/badge/development-AI--assisted-8A2BE2)](AI_DISCLOSURE.md)
 
-[Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
+[Setup guide](docs/HOME_ASSISTANT.md) · [Espresso dashboard](docs/DASHBOARD.md) · [Capability map](CAPABILITIES.md) · [Control design](docs/CONTROL_DESIGN.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
+
+![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.0.9 is installed on the target HA host after a fresh full backup and a successful configuration check. It loaded one device and all 23 entities, and its schema-3 diagnostics advanced across multiple live polls with zero failures. The earlier 0.0.8 deployment also completed a clean restart, a post-upgrade window beyond its ten-minute configuration-refresh cadence, a config-entry reload and recovery after two isolated later polling failures through the ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** Version 0.0.9 is installed on the target HA host after a fresh full backup and a successful configuration check. It loaded one device and all 23 entities, and its schema-3 diagnostics advanced across multiple live polls with zero failures. Version 0.1.0 is the locally tested read-only analytics/dashboard candidate; it adds seven conservative activity entities and schema-4 diagnostics. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
 - Discovers connectable `WDG_Data_*` machines through **Home Assistant's shared Bluetooth stack**.
 - Requires confirmation before starting periodic read-only telemetry requests.
-- Registers 23 read-only entities: nine telemetry measurements, eight decoded settings, operating state, three setting flags, water shortage and last-poll reachability.
+- Version 0.1.0 registers 30 read-only entities: the original 23 telemetry/configuration/state entities plus observed shot/cleaning activity, persistent observed totals and last-event timestamps.
 - Opens a short connection for each poll and disconnects afterward; default interval is 30 seconds.
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.
-- Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 adds UTC poll timestamps and success/failure counters so recovery and soak evidence is distinguishable from a stale snapshot.
+- Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 added UTC poll-health evidence; 0.1.0 adds identifier-free observed-activity state and its lower-bound limitation.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
+- Includes a source-controlled, built-in-card Espresso dashboard with current state, recent activity, daily shot/water trends, maintenance history and inert boiler schedule planning helpers.
 
 **No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
 
@@ -44,6 +47,9 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 | Manual time / pressure settings | s / bar | Disabled pending physical comparison |
 | Cleaning time / rest / repetitions | s / count | Disabled pending physical comparison |
 | Operating state | Enum | Disabled pending transition observation |
+| Observed shot/cleaning activity | Binary | Enabled; lower bound at the configured poll cadence |
+| Observed shot/water totals | Count / mL | Enabled; persistent lower-bound totals for HA statistics |
+| Last observed shot/backflush | Timestamp / mL | Enabled; updates only when the corresponding transition is observed |
 
 All readings remain provisional until physical comparison. Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. The default polling interval can miss an entire shot; this is **basic monitoring, not a shot-graph recorder**. Seventeen provisional measurement, configuration and state entities are disabled by default, not removed.
 
@@ -55,11 +61,11 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.0.9 installed and running with 23 read-only entities; schema-3 counters advanced across live polls with zero failures; restart, split-cadence polling, reload and recovery after isolated failures observed across 0.0.8/0.0.9 |
-| Verification baseline | **119 local tests passing:** 90 protocol/package + 29 HA tests, as of 2026-09-22 |
+| HA integration | Version 0.0.9 installed with 23 read-only entities; 0.1.0 candidate adds seven persistent observed-activity entities, canonical naming and the Espresso dashboard without exposing writes |
+| Verification baseline | **138 local tests passing:** 106 protocol/package + 32 HA tests, as of 2026-09-22 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.0.9 through ESPHome proxy |
 | Deployment / release | Installed with fresh full backup on target HA; one config entry, one device and 23 entities registered; not a published HACS release |
-| Device controls | Not implemented; gated by future evidence and supervised validation |
+| Device controls | Four boiler-setting request shapes are offline-tested but unreachable from HA; live controls remain gated by supervised write/readback validation |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [59-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 
@@ -83,7 +89,7 @@ The generated `_protocol/` directory and ZIP are deliberately ignored by Git. Th
 
 1. Read the [HA setup and limitations guide](docs/HOME_ASSISTANT.md), confirm version compatibility and back up the HA configuration.
 2. Inspect any existing component directory before extracting the ZIP into the HA configuration directory; do not blindly overwrite an existing installation.
-3. Restart HA and add **Wendougee DATA** through Settings → Devices & services.
+3. Restart HA and add **WENDOUGEE DATA S** through Settings → Devices & services.
 4. Disconnect E-Bar/other Bluetooth clients, prepare an attended validation session, and explicitly confirm read-only polling.
 
 HA needs a connectable Bluetooth path to the machine. The target HA host has now used its ESPHome proxy for discovery, polling and one four-read baseline. Other HA versions, proxy hardware/firmware combinations and Wendougee models remain unverified. Disable or remove the integration to stop polling.
@@ -108,6 +114,7 @@ read-only polling still continues on its documented cadence.
 - [ ] Complete physical comparison of the decoded readings and direct-Python lifecycle validation on the actual DATA S.
 - [ ] Complete extended HA disconnect/contention/disable soak testing and review a minimal sanitized fixture for publication.
 - [x] Add provisional read-only configuration and operating-state entities, disabled by default.
+- [x] Add persistent observed shot/water/backflush analytics and a built-in-card Espresso dashboard.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [ ] Finish release hardening, compatibility documentation and HACS packaging/validation.
@@ -162,7 +169,9 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 | Document | Purpose |
 |---|---|
 | [HA guide](docs/HOME_ASSISTANT.md) | Entities, installation, polling and compatibility limits |
+| [Espresso dashboard](docs/DASHBOARD.md) | Current/recent shots, daily trends, maintenance and inert schedule planning |
 | [Capability map](CAPABILITIES.md) | Known, implemented, conflicting and unknown functions |
+| [Control design](docs/CONTROL_DESIGN.md) | Boiler write evidence, transaction invariants and scheduling safety boundary |
 | [Validation plan](docs/VALIDATION_PLAN.md) | Efficient test batches and evidence requirements |
 | [Evidence collection](docs/EVIDENCE_COLLECTION.md) | Private fixture schema, capture scope and review boundary |
 | [Offline core](docs/OFFLINE_CORE.md) | Framing, session behavior and failure policy |
@@ -174,7 +183,7 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 
 ## AI disclosure
 
-This project has been developed with **substantial AI assistance**, including Codex and Hermes, for research, implementation, tests, review assistance and documentation. The maintainer directs the work and authorizes hardware access; this does not imply independent human review of every generated line. Automated tests and AI review are not substitutes for physical validation or an independent safety review.
+This project has been developed with **substantial AI assistance**, including Codex and Hermes, for research, implementation, tests, review assistance, documentation and the original machine illustration above. The maintainer directs the work and authorizes hardware access; this does not imply independent human review of every generated line. Automated tests and AI review are not substitutes for physical validation or an independent safety review.
 
 AI is used in development, **not in the integration's runtime**. See [AI_DISCLOSURE.md](AI_DISCLOSURE.md) for scope, limitations and accountability.
 

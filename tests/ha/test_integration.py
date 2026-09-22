@@ -17,6 +17,7 @@ from custom_components.wendougee_data._protocol.telemetry import (
 )
 from custom_components.wendougee_data.const import (
     CONF_CAPTURE_BASELINE,
+    DEVICE_DISPLAY_NAME,
     DOMAIN,
     PRIVATE_BASELINE_FILE,
     SERVICE_CAPTURE_BASELINE,
@@ -94,6 +95,7 @@ async def test_bluetooth_requires_confirmation_and_never_connects_in_flow(hass):
             result["flow_id"], {"confirm": True, "poll_interval": 30}
         )
         assert result["type"] is FlowResultType.CREATE_ENTRY
+        assert result["title"] == DEVICE_DISPLAY_NAME
         assert result["result"].unique_id == device_id(ADDRESS)
         assert ADDRESS not in result["result"].unique_id
         read.assert_not_called()
@@ -223,6 +225,7 @@ async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):
     ):
         assert await hass.config_entries.async_setup(configured.entry_id)
         await hass.async_block_till_done()
+        assert configured.title == DEVICE_DISPLAY_NAME
         coordinator = configured.runtime_data
         states = hass.states.async_all()
         brew = next(
@@ -246,7 +249,17 @@ async def test_setup_entities_failure_recovery_diagnostics_and_unload(hass):
         )
         assert reachable.state == "off"
         diagnostics = await async_get_config_entry_diagnostics(hass, configured)
-        assert diagnostics["schema_version"] == 3
+        assert diagnostics["schema_version"] == 4
+        assert diagnostics["activity"] == {
+            "observed_shots_total": 0,
+            "observed_pumped_water_ml": 0.0,
+            "last_shot_utc": None,
+            "last_shot_volume_ml": None,
+            "last_cleaning_utc": None,
+            "shot_active": False,
+            "cleaning_active": False,
+            "limitations": "poll_observed_lower_bound",
+        }
         assert diagnostics["poll_health"] == {
             "successful_polls_since_load": 1,
             "failed_polls_since_load": 1,
@@ -400,7 +413,7 @@ async def test_all_measurements_units_disabled_defaults_and_stable_ids(
         entities = er.async_entries_for_config_entry(
             entity_registry, configured.entry_id
         )
-        assert len(entities) == 23
+        assert len(entities) == 30
         assert sum(item.disabled_by is not None for item in entities) == 17
         identities = {item.unique_id: item.entity_id for item in entities}
         assert all(ADDRESS not in identity for identity in identities)
@@ -437,6 +450,8 @@ async def test_all_measurements_units_disabled_defaults_and_stable_ids(
             == "on"
         )
         for key, expected in {
+            "shot_active": "off",
+            "cleaning_active": "off",
             "steam_heating_enabled": "off",
             "brew_heating_enabled": "on",
             "water_alarm_enabled": "on",

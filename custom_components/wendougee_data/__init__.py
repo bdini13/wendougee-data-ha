@@ -1,4 +1,4 @@
-"""Read-only Wendougee DATA integration."""
+"""Read-only WENDOUGEE DATA S integration."""
 
 import asyncio
 import json
@@ -16,6 +16,7 @@ from homeassistant.exceptions import HomeAssistantError
 from ._protocol.reads import ReadOperation, build_read_request
 from .const import (
     CONF_CAPTURE_BASELINE,
+    DEVICE_DISPLAY_NAME,
     DOMAIN,
     PRIVATE_BASELINE_FILE,
     PRIVATE_BASELINE_MARKER,
@@ -121,7 +122,7 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             or entry.domain != DOMAIN
             or not hasattr(entry, "runtime_data")
         ):
-            raise HomeAssistantError("Wendougee DATA entry is not loaded")
+            raise HomeAssistantError(f"{DEVICE_DISPLAY_NAME} entry is not loaded")
         coordinator: WendougeeCoordinator = entry.runtime_data
         try:
             frames = await coordinator.async_read_baseline()
@@ -147,14 +148,17 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     if DOMAIN in _config:
         hass.async_create_background_task(
             _async_import_when_discovered(hass),
-            "import Wendougee DATA YAML configuration",
+            f"import {DEVICE_DISPLAY_NAME} YAML configuration",
         )
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Require a valid first sample before loading entities; let HA retry failures."""
+    if entry.title != DEVICE_DISPLAY_NAME:
+        hass.config_entries.async_update_entry(entry, title=DEVICE_DISPLAY_NAME)
     coordinator = WendougeeCoordinator(hass, entry)
+    await coordinator.activity.async_load()
     capture_claimed = False
     try:
         if entry.data.get(CONF_CAPTURE_BASELINE) is True:

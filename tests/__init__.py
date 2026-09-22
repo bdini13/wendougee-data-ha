@@ -1,1 +1,1 @@
-"""Tests for the Wendougee DATA protocol package."""
+"""Tests for the WENDOUGEE DATA S protocol package."""

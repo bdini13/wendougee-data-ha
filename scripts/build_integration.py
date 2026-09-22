@@ -8,6 +8,7 @@ COMPONENT = ROOT / "custom_components" / "wendougee_data"
 PROTOCOL_FILES = (
     "__init__.py",
     "const.py",
+    "controls.py",
     "crc.py",
     "modbus.py",
     "reads.py",
@@ -33,6 +34,7 @@ def build_bundle(destination: Path) -> Path:
     sources = sorted(COMPONENT.glob("*.py")) + sorted(COMPONENT.glob("*.json"))
     sources += sorted(COMPONENT.glob("*.yaml"))
     sources += sorted((COMPONENT / "translations").glob("*.json"))
+    sources += sorted((COMPONENT / "images").glob("*.png"))
     sources += [COMPONENT / "_protocol" / name for name in PROTOCOL_FILES]
     with ZipFile(archive, "w", ZIP_DEFLATED) as bundle:
         for path in sources:

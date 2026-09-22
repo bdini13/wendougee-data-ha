@@ -5,7 +5,7 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, device_id
+from .const import DEVICE_DISPLAY_NAME, DOMAIN, device_id
 from .coordinator import WendougeeCoordinator
 
 
@@ -20,6 +20,7 @@ class WendougeeEntity(CoordinatorEntity[WendougeeCoordinator]):
         self._attr_unique_id = f"{identity}_{key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, identity)},
-            name="Wendougee DATA",
+            name=DEVICE_DISPLAY_NAME,
             manufacturer="Wendougee",
+            model="DATA S",
         )

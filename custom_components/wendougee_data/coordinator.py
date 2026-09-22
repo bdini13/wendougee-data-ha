@@ -19,12 +19,14 @@ from ._protocol.state import (
     decode_water_alarm_enabled,
 )
 from ._protocol.telemetry import Telemetry, parse_telemetry_response
+from .activity import ActivityTracker
 from .bluetooth import read_baseline, read_runtime
 from .const import (
     CONF_CAPTURE_BASELINE,
     DEFAULT_POLL_INTERVAL,
     MAX_POLL_INTERVAL,
     MIN_POLL_INTERVAL,
+    device_id,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,10 +48,11 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             hass,
             _LOGGER,
             config_entry=entry,
-            name="Wendougee DATA",
+            name="WENDOUGEE DATA S",
             update_interval=timedelta(seconds=interval),
         )
         self.address = entry.data[CONF_ADDRESS]
+        self.activity = ActivityTracker(hass, device_id(self.address))
         self.stopped = False
         self.last_error: str | None = None
         self.last_successful_poll_utc: datetime | None = None
@@ -120,6 +123,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
                         )
                         self._runtime_polls_since_configuration += 1
                 self._record_poll_success()
+                self.activity.observe(data, self.operating_state)
                 return data
             except Exception:
                 # Backend exception text can contain addresses/names; do not forward it.
@@ -147,6 +151,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
                     frames = await read_baseline(self.hass, self.address)
                     data = self._apply_baseline(frames)
                     self.last_error = None
+                    self.activity.observe(data, self.operating_state)
                     self.async_set_updated_data(data)
                     return frames
             finally:
@@ -161,3 +166,4 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             task.cancel()
             with suppress(asyncio.CancelledError):
                 await task
+        await self.activity.async_save()

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a safe, local-first Home Assistant integration for Wendougee DATA-family espresso machines, starting with the DATA S.
+Build a safe, local-first Home Assistant integration for the WENDOUGEE DATA S.
 
 ## Read first
 

@@ -7,7 +7,7 @@ capture_read_only_baseline:
   fields:
     config_entry_id:
       name: Integration entry
-      description: Loaded Wendougee DATA configuration entry to read.
+      description: Loaded WENDOUGEE DATA S configuration entry to read.
       required: true
       selector:
         config_entry:

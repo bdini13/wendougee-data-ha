@@ -1,13 +1,14 @@
 # Experimental read-only Home Assistant integration
 
-Version `0.0.9` is installed on Bobby's HA 2026.9.1 host after a fresh full backup. It registered one device and all 23 entities, and its schema-3 diagnostics advanced from two to four successful polls with zero failures after the corrected restart. The earlier 0.0.8 deployment completed the ten-minute configuration-refresh cadence and a config-entry reload, then recovered after two isolated polling failures through the active ESPHome proxy. The earlier 0.0.7 session performed the approved one-shot private baseline after the proxy entry's missing API encryption key was restored from its existing ESPHome configuration. Offline framework testing uses **Home Assistant 2026.9.3 / Python 3.14.7**. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation, deliberate disconnect/app-contention testing and long-duration soak testing remain pending.
+Version `0.0.9` is installed on Bobby's HA 2026.9.1 host after a fresh full backup. It registered one device and all 23 entities, and its schema-3 diagnostics advanced from two to four successful polls with zero failures after the corrected restart. Version `0.1.0` is the locally tested monitoring candidate: canonical **WENDOUGEE DATA S** naming, 30 read-only entities, persistent observed shot/water/backflush metrics and schema-4 diagnostics. Its bundled boiler-frame module has no Home Assistant transport or service path. Offline framework testing uses **Home Assistant 2026.9.3 / Python 3.14.7**. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md). Physical comparison, direct-Python validation, deliberate disconnect/app-contention testing and long-duration soak testing remain pending.
 
 ## Included
 
 - Shared Bluetooth discovery for connectable `WDG_Data_*` advertisements, manual selection from HA's discovery cache, explicit polling confirmation and duplicate prevention.
-- Nine telemetry sensors, eight decoded-setting sensors, one operating-state sensor and five binary sensors: 23 read-only entities total.
+- Nine telemetry sensors, eight decoded-setting sensors, one operating-state sensor, five persistent observed-activity sensors and seven binary sensors: 30 read-only entities total in 0.1.0.
 - Bounded, serialized read-only transactions, cleanup on failure/unload, unavailable measurements after a failed poll, and fresh-connection recovery on later polls.
 - Stable hashed device/entity identifiers and allowlisted diagnostics with no addresses, names, hashes, raw packets or exception text. Schema 3 adds UTC timestamps and in-memory success, failure and consecutive-failure counters for coordinator polls.
+- Persistent observed-shot count, observed pumped-water total, last shot/time/volume and last observed backflush. These are conservative lower bounds because polling can miss complete events.
 - One response-only `capture_read_only_baseline` action, requiring the literal confirmation `READ ONLY`, for the four fixed evidence reads through HA's shared Bluetooth path.
 - No controls, arbitrary command interface, FF55 initialization, standalone scanner, pairing, or cloud backend.
 
@@ -34,6 +35,9 @@ Bluetooth discovery and connection selection follow [Home Assistant's shared Blu
 | Manual time / pressure settings | s / bar | Disabled: physical comparison pending |
 | Cleaning time / rest / repetitions | s / count | Disabled: physical comparison pending |
 | Operating state | Enum | Disabled: transition observation pending |
+| Observed shot / cleaning active | Boolean | Enabled; poll-observed only |
+| Observed shots / pumped water total | Count / mL | Enabled; persistent total-increasing statistics |
+| Last observed shot / volume / backflush | Timestamp / mL | Enabled; unavailable until observed |
 
 Enabled does not mean physically validated. Every value still inherits the evidence limits in [CAPABILITIES.md](../CAPABILITIES.md). Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. Unknown scale connectivity means zero weight cannot be treated as proof of an empty cup.
 
@@ -61,7 +65,7 @@ python scripts/build_integration.py
 
 This generates `dist/wendougee_data.zip`, containing `custom_components/wendougee_data/` and the project's MIT license. The build copies only named **original project** protocol modules into a generated `_protocol/` package. The source of truth remains `src/wendougee_data/`; do not edit generated copies. The standalone scanner is excluded. There is no dependency on an unpublished `wendougee-data` PyPI package.
 
-The ZIP can be inspected without running it. Installing, restarting HA, and confirming polling are **approval-gated steps**. Before installation, back up the HA configuration and inspect any existing component directory; do not blindly overwrite it. Extract the generated `custom_components/wendougee_data/` into the HA configuration directory, restart HA, then use Settings → Devices & services to discover/add Wendougee DATA. Keep the machine attended for its first approved validation.
+The ZIP can be inspected without running it. Installing, restarting HA, and confirming polling are **approval-gated steps**. Before installation, back up the HA configuration and inspect any existing component directory; do not blindly overwrite it. Extract the generated `custom_components/wendougee_data/` into the HA configuration directory, restart HA, then use Settings → Devices & services to discover/add WENDOUGEE DATA S. Keep the machine attended for its first approved validation.
 
 For an approved headless deployment without an authenticated frontend session,
 an empty YAML section provides the same explicit polling opt-in:
@@ -115,6 +119,8 @@ python -m pytest -c pytest-ha.ini
 
 Do not install the standalone package's constrained Bleak dependencies into the HA test environment. HA tests import the generated bundled protocol package, use HA's real config-flow/coordinator/entity machinery, fake all Bluetooth connections and disable network sockets. CI has separate protocol and HA jobs; adding a CI job does not mean the remote workflow has already run.
 
-Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all 23 entity values/units, disabled defaults, stable IDs across reloads, failure/recovery, setup retry, unload cancellation, split runtime/configuration polling, GATT validation, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source and exclude capture/scanner files.
+Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all 30 entity registrations, disabled defaults, stable IDs across reloads, persistent activity restoration, conservative transition counting, failure/recovery, setup retry, unload cancellation, split runtime/configuration polling, GATT validation, the fixed four-read baseline, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source, include the original project artwork and exclude capture/scanner files.
 
-The next meaningful gate is an attended, read-only physical comparison followed by deliberate disconnect, app-contention and extended soak testing. This document does not grant approval for a new hardware session or any control write.
+The matching source-controlled dashboard is documented in [DASHBOARD.md](DASHBOARD.md). Its schedule helpers are inert; the boiler transaction and schedule requirements are in [CONTROL_DESIGN.md](CONTROL_DESIGN.md).
+
+The next meaningful gate is an attended, read-only physical comparison followed by deliberate disconnect, app-contention and extended soak testing. This document does not grant approval for any control write.

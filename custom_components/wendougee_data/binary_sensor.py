@@ -24,6 +24,16 @@ DESCRIPTIONS = (
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    BinarySensorEntityDescription(
+        key="shot_active",
+        name="Observed shot active",
+        icon="mdi:coffee-maker",
+    ),
+    BinarySensorEntityDescription(
+        key="cleaning_active",
+        name="Observed cleaning active",
+        icon="mdi:shimmer",
+    ),
 )
 
 CONFIGURATION_DESCRIPTIONS = (
@@ -80,6 +90,8 @@ class WendougeeBinarySensor(WendougeeEntity, BinarySensorEntity):
         if self.entity_description.key == "reachable":
             return self.coordinator.last_update_success and not self.coordinator.stopped
         key = self.entity_description.key
+        if key in {"shot_active", "cleaning_active"}:
+            return getattr(self.coordinator.activity, key)
         if key == "water_alarm_enabled":
             return self.coordinator.water_alarm_enabled
         if key in {"steam_heating_enabled", "brew_heating_enabled"}:

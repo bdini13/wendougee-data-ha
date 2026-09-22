@@ -52,13 +52,13 @@ async def test_configuration_and_operating_state_entities_are_read_only(hass):
         hass, configured, lambda entities: binary_sensors.extend(list(entities))
     )
 
-    assert len(sensors) == 18
-    assert len(binary_sensors) == 5
+    assert len(sensors) == 23
+    assert len(binary_sensors) == 7
     assert all(
-        entity.entity_registry_enabled_default is False for entity in sensors[9:]
+        entity.entity_registry_enabled_default is False for entity in sensors[14:]
     )
     assert all(
-        entity.entity_registry_enabled_default is False for entity in binary_sensors[2:]
+        entity.entity_registry_enabled_default is False for entity in binary_sensors[4:]
     )
     assert not any(
         entity.platform.domain in {"switch", "button", "number", "select"}

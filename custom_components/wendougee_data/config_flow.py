@@ -10,6 +10,7 @@ from homeassistant.const import CONF_ADDRESS
 from .const import (
     CONF_CAPTURE_BASELINE,
     DEFAULT_POLL_INTERVAL,
+    DEVICE_DISPLAY_NAME,
     DOMAIN,
     MAX_POLL_INTERVAL,
     MIN_POLL_INTERVAL,
@@ -52,10 +53,10 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
         if self.hass.data.get(DOMAIN, {}).get("yaml_import") is True:
             return self.async_create_entry(
-                title="Wendougee DATA",
+                title=DEVICE_DISPLAY_NAME,
                 data=_yaml_entry_data(self.hass, self._address),
             )
-        self.context["title_placeholders"] = {"name": "Wendougee DATA"}
+        self.context["title_placeholders"] = {"name": DEVICE_DISPLAY_NAME}
         return await self.async_step_confirm()
 
     async def async_step_user(
@@ -104,7 +105,7 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(device_id(self._address))
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
-            title="Wendougee DATA",
+            title=DEVICE_DISPLAY_NAME,
             data=_yaml_entry_data(self.hass, self._address),
         )
 
@@ -117,7 +118,7 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
             if user_input.get("confirm") is True:
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title="Wendougee DATA",
+                    title=DEVICE_DISPLAY_NAME,
                     data={
                         CONF_ADDRESS: self._address,
                         "poll_interval": user_input["poll_interval"],

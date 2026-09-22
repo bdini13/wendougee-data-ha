@@ -1,9 +1,9 @@
 {
-  "title": "Wendougee DATA",
+  "title": "WENDOUGEE DATA S",
   "config": {
     "step": {
       "user": {
-        "title": "Choose a Wendougee DATA machine",
+        "title": "Choose a WENDOUGEE DATA S machine",
         "description": "Select a machine already discovered by Home Assistant Bluetooth.",
         "data": {"address": "Machine"}
       },

@@ -1,0 +1,211 @@
+title: Espresso
+views:
+  - title: WENDOUGEE DATA S
+    path: overview
+    icon: mdi:coffee-maker
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: picture
+            image: /local/espresso/wendougee-data-s-white-rose-gold.png
+            alt_text: Original illustration of the white and rose-gold WENDOUGEE DATA S
+          - type: markdown
+            content: >-
+              # WENDOUGEE DATA S
+
+              Local Bluetooth observability through Home Assistant. Activity totals
+              are explicitly **observed**, because the conservative polling interval
+              can miss short shots. No boiler, brew, cleaning, or other machine
+              control is enabled until its write and readback behavior passes an
+              attended validation.
+          - type: tile
+            entity: binary_sensor.wendougee_data_reachable
+            name: Connection
+            icon: mdi:bluetooth-connect
+            vertical: false
+          - type: tile
+            entity: sensor.wendougee_data_operating_state
+            name: Operating state
+            icon: mdi:state-machine
+            vertical: false
+          - type: tile
+            entity: binary_sensor.wendougee_data_s_observed_shot_active
+            name: Shot active
+            icon: mdi:coffee-maker
+            vertical: false
+          - type: tile
+            entity: binary_sensor.wendougee_data_s_observed_cleaning_active
+            name: Backflush active
+            icon: mdi:shimmer
+            vertical: false
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Live machine
+            icon: mdi:gauge
+          - type: gauge
+            entity: sensor.wendougee_data_brew_temperature
+            name: Brew temperature
+            min: 0
+            max: 110
+            needle: true
+            severity:
+              green: 85
+              yellow: 96
+              red: 103
+          - type: gauge
+            entity: sensor.wendougee_data_steam_temperature
+            name: Steam temperature
+            min: 0
+            max: 140
+            needle: true
+            severity:
+              green: 105
+              yellow: 130
+              red: 136
+          - type: gauge
+            entity: sensor.wendougee_data_pump_pressure
+            name: Pump pressure
+            min: 0
+            max: 12
+            needle: true
+            severity:
+              green: 0
+              yellow: 9
+              red: 11
+          - type: tile
+            entity: sensor.wendougee_data_pumped_volume
+            name: Current pumped volume
+            icon: mdi:water-plus
+          - type: tile
+            entity: sensor.wendougee_data_elapsed_brew_time
+            name: Elapsed brew time
+            icon: mdi:timer-outline
+          - type: tile
+            entity: binary_sensor.wendougee_data_water_shortage
+            name: Water shortage
+            icon: mdi:water-alert
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Current and recent shots
+            icon: mdi:coffee
+          - type: tile
+            entity: sensor.wendougee_data_s_last_observed_shot
+            name: Last observed shot
+            icon: mdi:clock-check-outline
+          - type: tile
+            entity: sensor.wendougee_data_s_last_observed_shot_volume
+            name: Last observed volume
+            icon: mdi:cup-water
+          - type: tile
+            entity: sensor.wendougee_data_s_observed_shots_total
+            name: Observed shots total
+            icon: mdi:counter
+          - type: tile
+            entity: sensor.wendougee_data_s_observed_pumped_water_total
+            name: Observed pumped water
+            icon: mdi:water
+          - type: history-graph
+            title: Last 24 hours
+            hours_to_show: 24
+            entities:
+              - entity: binary_sensor.wendougee_data_s_observed_shot_active
+                name: Shot active
+              - entity: sensor.wendougee_data_pump_pressure
+                name: Pressure
+              - entity: sensor.wendougee_data_pumped_volume
+                name: Pumped volume
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Daily trends
+            icon: mdi:chart-bar
+          - type: statistics-graph
+            title: Observed shots per day
+            chart_type: bar
+            period: day
+            days_to_show: 14
+            stat_types:
+              - change
+            entities:
+              - sensor.wendougee_data_s_observed_shots_total
+          - type: statistics-graph
+            title: Observed pumped water per day
+            chart_type: bar
+            period: day
+            days_to_show: 14
+            stat_types:
+              - change
+            entities:
+              - sensor.wendougee_data_s_observed_pumped_water_total
+          - type: history-graph
+            title: Boiler temperatures · 12 hours
+            hours_to_show: 12
+            entities:
+              - entity: sensor.wendougee_data_brew_temperature
+                name: Brew
+              - entity: sensor.wendougee_data_steam_temperature
+                name: Steam
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Boiler configuration and desired schedule
+            icon: mdi:radiator
+          - type: markdown
+            content: >-
+              Schedule helpers are planning inputs only. They do not control the
+              machine until the DATA S write polarity, acknowledgment, full readback,
+              persistence, contention, and failure behavior are validated while
+              attended. Target plan: 7:00 AM–9:00 AM America/New_York, independently
+              enabled for each boiler.
+          - type: entities
+            title: Reported configuration
+            entities:
+              - binary_sensor.wendougee_data_steam_heating_enabled
+              - sensor.wendougee_data_steam_target
+              - binary_sensor.wendougee_data_brew_heating_enabled
+              - sensor.wendougee_data_brew_target
+          - type: entities
+            title: Brew boiler plan · inactive
+            entities:
+              - input_boolean.espresso_brew_schedule_enabled
+              - input_datetime.espresso_brew_on_time
+              - input_datetime.espresso_brew_off_time
+              - input_number.espresso_brew_target_temperature
+          - type: entities
+            title: Steam boiler plan · inactive
+            entities:
+              - input_boolean.espresso_steam_schedule_enabled
+              - input_datetime.espresso_steam_on_time
+              - input_datetime.espresso_steam_off_time
+              - input_number.espresso_steam_target_temperature
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Maintenance and health
+            icon: mdi:tools
+          - type: tile
+            entity: sensor.wendougee_data_s_last_observed_backflush
+            name: Last observed backflush
+            icon: mdi:shimmer
+          - type: entities
+            title: Backflush configuration
+            entities:
+              - sensor.wendougee_data_cleaning_time_setting
+              - sensor.wendougee_data_cleaning_rest_setting
+              - sensor.wendougee_data_cleaning_repetitions_setting
+          - type: history-graph
+            title: Connectivity and alarms · 24 hours
+            hours_to_show: 24
+            entities:
+              - binary_sensor.wendougee_data_reachable
+              - binary_sensor.wendougee_data_water_shortage
+              - binary_sensor.wendougee_data_s_observed_cleaning_active
