@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.0.9 is installed on the target HA host after a fresh full backup and a successful configuration check. It loaded one device and all 23 entities, and its schema-3 diagnostics advanced across multiple live polls with zero failures. Version 0.1.0 is the locally tested read-only analytics/dashboard candidate; it adds seven conservative activity entities and schema-4 diagnostics. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental, not production-ready.** Version 0.1.0 is installed on the target HA 2026.9.1 host after a fresh full backup and successful configuration check. It loaded one device and all 30 entities; schema-4 diagnostics advanced from five to eleven successful polls with zero failures after restart and reload. The Espresso dashboard and its disabled-by-default schedule planners are installed. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
@@ -61,10 +61,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.0.9 installed with 23 read-only entities; 0.1.0 candidate adds seven persistent observed-activity entities, canonical naming and the Espresso dashboard without exposing writes |
+| HA integration | Version 0.1.0 installed with 30 read-only entities, canonical naming, persistent observed-activity analytics and the Espresso dashboard; no write path is exposed |
 | Verification baseline | **138 local tests passing:** 106 protocol/package + 32 HA tests, as of 2026-09-22 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.0.9 through ESPHome proxy |
-| Deployment / release | Installed with fresh full backup on target HA; one config entry, one device and 23 entities registered; not a published HACS release |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.1.0 through ESPHome proxy |
+| Deployment / release | 0.1.0 installed after a fresh full backup; one config entry, one device, 30 entities and the Espresso dashboard verified; not a published HACS release |
 | Device controls | Four boiler-setting request shapes are offline-tested but unreachable from HA; live controls remain gated by supervised write/readback validation |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [59-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.

@@ -1,4 +1,4 @@
-# DATA S capability map
+# WENDOUGEE DATA S capability map
 
 Source audit: 2026-09-20; live-read update: 2026-09-22. Target: Bobby's WENDOUGEE DATA S; firmware and installed E-Bar version not yet recorded. This is a research baseline, **not a declaration that these controls work safely on this machine**.
 
@@ -6,7 +6,7 @@ Source audit: 2026-09-20; live-read update: 2026-09-22. Target: Bobby's WENDOUGE
 
 Existing projects supply concrete implementations for telemetry, boiler settings, cleaning, brewing, profiles, and scale connectivity. We do not need to rediscover those protocols from scratch. The remaining work is independent implementation, exact-machine verification, resolving conflicts, and building a reliable Home Assistant integration.
 
-Our Python package implements CRC, allowlisted read requests, strict response framing, ten-field telemetry and configuration/state decoders, serialized failure-quarantined read sessions, and a one-shot Bleak CLI. These have offline tests, including fake Bluetooth lifecycle failures; see [offline implementation details](docs/OFFLINE_CORE.md). Version 0.0.9 is installed on HA 2026.9.1 with 23 read-only entities and advancing schema-3 poll-health evidence. The locally tested 0.1.0 candidate adds seven conservative, persistent observed-activity entities and schema-4 diagnostics. An offline-only module constructs the four documented boiler FC06 request shapes and validates exact echoes, but no Home Assistant service, control entity or transport can send them. See the [HA guide](docs/HOME_ASSISTANT.md), [control design](docs/CONTROL_DESIGN.md) and [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
+Our Python package implements CRC, allowlisted read requests, strict response framing, ten-field telemetry and configuration/state decoders, serialized failure-quarantined read sessions, and a one-shot Bleak CLI. These have offline tests, including fake Bluetooth lifecycle failures; see [offline implementation details](docs/OFFLINE_CORE.md). Version 0.1.0 is installed on HA 2026.9.1 with 30 read-only entities, seven conservative persistent observed-activity entities and advancing schema-4 diagnostics. An offline-only module constructs the four documented boiler FC06 request shapes and validates exact echoes, but no Home Assistant service, control entity or transport can send them. See the [HA guide](docs/HOME_ASSISTANT.md), [control design](docs/CONTROL_DESIGN.md) and [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
 
 “100%” needs a bounded denominator: all user-facing functions in a recorded E-Bar version on a recorded DATA S firmware, plus explicitly inventoried unsupported/unknown functions. BLE access alone cannot establish complete firmware internals, undocumented service behavior, or control of mechanical hardware. This map is not yet an exhaustive inventory of the installed official app.
 

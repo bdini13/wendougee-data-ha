@@ -19,6 +19,17 @@ def _entities(value):
                 yield from _entities(child)
 
 
+def _card_types(value):
+    if isinstance(value, dict):
+        if isinstance(value.get("type"), str):
+            yield value["type"]
+        for child in value.values():
+            yield from _card_types(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _card_types(child)
+
+
 def test_dashboard_uses_canonical_name_and_no_machine_control_entities():
     dashboard = yaml.safe_load(Path("dashboards/espresso.yaml").read_text())
     assert dashboard["title"] == "Espresso"
@@ -36,3 +47,6 @@ def test_dashboard_uses_canonical_name_and_no_machine_control_entities():
         )
         for entity in entities
     )
+
+    # Fixed gauge ranges become incorrect when HA converts °C/bar to °F/psi.
+    assert "gauge" not in set(_card_types(dashboard))

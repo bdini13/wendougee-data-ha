@@ -46,36 +46,24 @@ views:
           - type: heading
             heading: Live machine
             icon: mdi:gauge
-          - type: gauge
+          - type: sensor
             entity: sensor.wendougee_data_brew_temperature
             name: Brew temperature
-            min: 0
-            max: 110
-            needle: true
-            severity:
-              green: 85
-              yellow: 96
-              red: 103
-          - type: gauge
+            graph: line
+            hours_to_show: 1
+            detail: 2
+          - type: sensor
             entity: sensor.wendougee_data_steam_temperature
             name: Steam temperature
-            min: 0
-            max: 140
-            needle: true
-            severity:
-              green: 105
-              yellow: 130
-              red: 136
-          - type: gauge
+            graph: line
+            hours_to_show: 1
+            detail: 2
+          - type: sensor
             entity: sensor.wendougee_data_pump_pressure
             name: Pump pressure
-            min: 0
-            max: 12
-            needle: true
-            severity:
-              green: 0
-              yellow: 9
-              red: 11
+            graph: line
+            hours_to_show: 1
+            detail: 2
           - type: tile
             entity: sensor.wendougee_data_pumped_volume
             name: Current pumped volume

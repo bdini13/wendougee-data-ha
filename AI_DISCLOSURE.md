@@ -14,7 +14,7 @@ The maintainer sets the goals, directs development and approves hardware/deploym
 - AI-assisted review can miss bugs and misunderstand undocumented protocols. Independent review, sanitized real fixtures and supervised physical validation remain necessary.
 - Evidence levels, unresolved assumptions and upstream revisions are recorded in [CAPABILITIES.md](CAPABILITIES.md) and the [research inventory](research/UPSTREAM_SOURCES.md).
 
-At the 2026-09-22 checkpoint, version 0.0.9 is installed on the target HA host and has completed real read-only polling through the ESPHome proxy. Version 0.1.0's activity analytics, dashboard and boiler frame builders are offline-tested; the frame builders remain unreachable from Home Assistant and have not been sent to hardware. Current support claims belong in the README and capability map, not in model-generated confidence statements.
+At the 2026-09-22 checkpoint, version 0.1.0 is installed on the target HA host and has completed advancing read-only polling through the ESPHome proxy. Its activity analytics and Espresso dashboard are live; the schedule helpers are inert. The boiler frame builders remain unreachable from Home Assistant and have not been sent to hardware. Current support claims belong in the README and capability map, not in model-generated confidence statements.
 
 ## Runtime and data
 

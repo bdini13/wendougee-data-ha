@@ -1,4 +1,4 @@
-# DATA S live validation · 2026-09-21
+# WENDOUGEE DATA S live validation · 2026-09-21 onward
 
 This is a sanitized record of the first complete Home Assistant read-only
 validation through the installed ESPHome Bluetooth proxy. It contains no
@@ -168,6 +168,40 @@ Version 0.0.9 was subsequently deployed to the same HA 2026.9.1 target:
 This proves that schema-3 runtime counters distinguish a fresh, advancing live
 sample from a stale snapshot on the installed target. It remains only a short
 idle observation, not a long-duration reliability test.
+
+## Version 0.1.0 deployment follow-up · 2026-09-22
+
+Version 0.1.0 was installed on the same HA 2026.9.1 target:
+
+- A new full backup named for the pre-0.1.0 state completed before files changed.
+  The complete 0.0.9 component directory remains in a rollback directory outside
+  `custom_components/`.
+- The built ZIP and separately installed dashboard image/source passed SHA-256
+  verification. The manifest reported 0.1.0 and `ha core check` passed before
+  restart.
+- After restart, the entry title and device name were `WENDOUGEE DATA S`; the
+  device reported manufacturer `Wendougee`, model `DATA S`, and all 30 expected
+  entities were registered.
+- The source-controlled Espresso storage dashboard was created with 32 built-in
+  cards. Its eight independent schedule/setpoint helpers report 07:00–09:00,
+  92 °C brew and 126 °C steam. Both schedule toggles are off and no automation
+  or callable machine control exists.
+- Nine provisional read-only configuration/state entities used by the dashboard
+  were enabled on this target, followed by a successful config-entry reload.
+- Six schema-4 checkpoints observed successful-poll counters advance from five
+  to eleven with zero failed or consecutive-failed polls. Each sample was idle,
+  had no unknown operating bits and did not fabricate shot or cleaning activity.
+- Home Assistant's in-memory system log contained no entry from the integration
+  after the deployment/reload checks. The served dashboard artwork matched the
+  source checksum.
+- No baseline action, control, configuration write, boiler, brew, cleaning,
+  profile, valve, provisioning, reset, calibration, bootloader or OTA command
+  was sent.
+
+This validates installation, restart, entry-title migration, entity registration,
+dashboard storage, helper defaults, config-entry reload and a short advancing
+read-only polling window. It is not a physical comparison, event-transition test
+or long-duration/disconnect/contention soak.
 
 ## What this proves
 

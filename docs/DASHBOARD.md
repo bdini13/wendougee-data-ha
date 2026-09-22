@@ -2,7 +2,10 @@
 
 `dashboards/espresso.yaml` is the source-controlled Home Assistant dashboard for
 the **WENDOUGEE DATA S**. It uses only built-in cards, so it does not require a
-custom frontend card collection.
+custom frontend card collection. It is installed as the sidebar dashboard
+`Espresso` on the target host. Live sensor graphs avoid fixed unit-dependent
+ranges, so the same configuration remains accurate when HA converts °C/bar/mL
+to °F/psi/fluid ounces.
 
 ## What it shows
 
