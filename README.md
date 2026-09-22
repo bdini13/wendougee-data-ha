@@ -12,7 +12,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 [Setup guide](docs/HOME_ASSISTANT.md) · [Capability map](CAPABILITIES.md) · [Evidence collection](docs/EVIDENCE_COLLECTION.md) · [Roadmap](ROADMAP.md) · [Protocol](docs/protocol.md) · [AI disclosure](AI_DISCLOSURE.md)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.0.8 is installed on the target HA host after a fresh full backup; 0.0.9 is the locally tested diagnostics candidate. The installed version has completed a clean restart, a post-upgrade window beyond its ten-minute configuration-refresh cadence, a config-entry reload and recovery after two isolated later polling failures through the ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
+> **Experimental, not production-ready.** Version 0.0.9 is installed on the target HA host after a fresh full backup and a successful configuration check. It loaded one device and all 23 entities, and its schema-3 diagnostics advanced across multiple live polls with zero failures. The earlier 0.0.8 deployment also completed a clean restart, a post-upgrade window beyond its ten-minute configuration-refresh cadence, a config-entry reload and recovery after two isolated later polling failures through the ESPHome Bluetooth proxy. The decoded values have not been compared with the physical display, and deliberate disconnect, app-contention, disable and long-duration behavior remain unvalidated. Do not use its sensors as safety interlocks. No remote brewing, boiler, cleaning, calibration, reset or firmware-update controls are implemented.
 
 ## What it does
 
@@ -55,9 +55,9 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.0.8 installed and running with 23 read-only entities; 0.0.9 diagnostics candidate built locally; restart, split-cadence polling, reload and recovery after isolated failures observed |
-| Verification baseline | **119 local tests passing:** 90 protocol/package + 29 HA tests, as of 2026-09-21 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.0.8 through ESPHome proxy |
+| HA integration | Version 0.0.9 installed and running with 23 read-only entities; schema-3 counters advanced across live polls with zero failures; restart, split-cadence polling, reload and recovery after isolated failures observed across 0.0.8/0.0.9 |
+| Verification baseline | **119 local tests passing:** 90 protocol/package + 29 HA tests, as of 2026-09-22 |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target HA 2026.9.1 runs 0.0.9 through ESPHome proxy |
 | Deployment / release | Installed with fresh full backup on target HA; one config entry, one device and 23 entities registered; not a published HACS release |
 | Device controls | Not implemented; gated by future evidence and supervised validation |
 

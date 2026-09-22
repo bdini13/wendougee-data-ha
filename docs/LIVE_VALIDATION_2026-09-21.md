@@ -131,10 +131,43 @@ separate passive advertisement observer on the Mac could not establish its own
 proxy API session during this follow-up, so that attempt supplies no additional
 advertisement evidence. No machine control or configuration write was sent.
 
-This follow-up motivated schema-3 diagnostics in the local 0.0.9 candidate:
-UTC timestamps and success, failure and consecutive-failure counters for the
-current integration runtime. The candidate was not installed during this
-observation.
+This follow-up motivated schema-3 diagnostics in version 0.0.9: UTC timestamps
+and success, failure and consecutive-failure counters for the current
+integration runtime.
+
+## Version 0.0.9 deployment follow-up · 2026-09-22
+
+Version 0.0.9 was subsequently deployed to the same HA 2026.9.1 target:
+
+- A new full HA backup completed before the installed component changed. The
+  0.0.8 component directory and the 0.0.9 staging directory were retained in a
+  rollback archive outside `custom_components/`.
+- The archive's SHA-256 matched the local build, its manifest reported 0.0.9,
+  and `ha core check` passed before the corrected restart. The installed build
+  corresponds to commit `664f5f2`; the deployed ZIP's SHA-256 is
+  `a0b82a2381600dd08bc8b785c7a8eeed6ba209a1eaa5a3d2e7d814e417bdae08`.
+- The first restart did not load the integration because hidden staging and
+  rollback directories had been left directly beneath `custom_components/`.
+  Home Assistant tried to import their leading-dot directory names as custom
+  integrations. Moving those deployment-only directories outside the scan path
+  fixed the issue; no integration source change or machine transaction was
+  required. A second `ha core check` passed before restarting again.
+- After the corrected restart, HA reported version 0.0.9, one device and all 23
+  entities. No new Wendougee setup or coordinator error appeared; the only
+  fresh Wendougee log entry was HA's standard custom-integration warning.
+- The first schema-3 diagnostic reported two successful polls, zero failed or
+  consecutive-failed polls, a successful current sample and no retained error.
+  After more than one 30-second interval, the second diagnostic reported four
+  successful polls with the failure counters still at zero and a later UTC
+  success timestamp.
+- Both diagnostics retained the expected idle state, both boiler-enable flags
+  off and no unknown operating-state bits. No baseline action was invoked.
+- No control, configuration write, provisioning, reset, cleaning, valve, brew,
+  calibration, bootloader or OTA command was sent.
+
+This proves that schema-3 runtime counters distinguish a fresh, advancing live
+sample from a stale snapshot on the installed target. It remains only a short
+idle observation, not a long-duration reliability test.
 
 ## What this proves
 

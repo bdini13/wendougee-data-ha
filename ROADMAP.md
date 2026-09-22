@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-09-21. The goal is a well-understood, local-first DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+Last reviewed: 2026-09-22. The goal is a well-understood, local-first DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
 
 ## 1. Research and offline foundation — implemented
 
@@ -35,6 +35,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Complete a bounded 15-minute idle soak on 0.0.7 with no coordinator failures.
 - [x] Deploy 0.0.8 after a fresh full backup; validate restart, the split polling cadence and a config-entry reload.
 - [x] Observe recovery after two naturally occurring isolated polling failures; add privacy-safe per-runtime poll-health diagnostics for more decisive soak evidence.
+- [x] Deploy 0.0.9 after a fresh full backup; verify one device, 23 entities and advancing schema-3 poll counters with zero failures after the corrected restart.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.
