@@ -1,5 +1,7 @@
 """Real HA config-flow and entity lifecycle tests with synthetic telemetry."""
 
+import json
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -20,11 +22,20 @@ from custom_components.wendougee_data.const import (
     DEVICE_DISPLAY_NAME,
     DOMAIN,
     PRIVATE_BASELINE_FILE,
+    PRIVATE_TRACE_DIRECTORY,
+    SERVICE_BENCHMARK_SAMPLING,
     SERVICE_CAPTURE_BASELINE,
+    SERVICE_CAPTURE_TRACE,
     device_id,
 )
 from custom_components.wendougee_data.diagnostics import (
     async_get_config_entry_diagnostics,
+)
+from custom_components.wendougee_data.fast_capture import (
+    RuntimeSample,
+    RuntimeTrace,
+    SamplingBenchmark,
+    SamplingStage,
 )
 from tests.test_reads import register_response
 from tests.test_telemetry import TELEMETRY_RESPONSE
@@ -357,6 +368,101 @@ async def test_private_baseline_service_returns_only_four_allowlisted_frames(has
         ],
     }
     assert ADDRESS not in str(response)
+
+
+async def test_sampling_benchmark_service_returns_only_privacy_safe_metrics(hass):
+    configured = entry()
+    configured.add_to_hass(hass)
+    benchmark = SamplingBenchmark(
+        selected_hz=10,
+        stages=(
+            SamplingStage(5, 10, 2, 5, 20, 30, True),
+            SamplingStage(10, 20, 2, 10, 22, 35, True),
+        ),
+    )
+    with patch(
+        f"custom_components.{DOMAIN}.coordinator.read_baseline",
+        new_callable=AsyncMock,
+        return_value=BASELINE_FRAMES,
+    ):
+        assert await hass.config_entries.async_setup(configured.entry_id)
+        await hass.async_block_till_done()
+        configured.runtime_data.async_benchmark_sampling = AsyncMock(
+            return_value=benchmark
+        )
+        response = await hass.services.async_call(
+            DOMAIN,
+            SERVICE_BENCHMARK_SAMPLING,
+            {
+                "config_entry_id": configured.entry_id,
+                "confirmation": "READ ONLY",
+            },
+            blocking=True,
+            return_response=True,
+        )
+
+    assert response["schema"] == "wendougee-data-sampling-benchmark/v1"
+    assert response["selected_hz"] == 10
+    assert [stage["target_hz"] for stage in response["stages"]] == [5, 10]
+    assert ADDRESS not in str(response)
+
+
+async def test_trace_service_writes_owner_only_identifier_free_private_file(
+    hass, tmp_path
+):
+    hass.config.config_dir = str(tmp_path)
+    configured = entry()
+    configured.add_to_hass(hass)
+    observed = datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
+    trace = RuntimeTrace(
+        started_at_utc=observed,
+        ended_at_utc=observed,
+        target_hz=10,
+        elapsed_seconds=0.1,
+        achieved_hz=10,
+        samples=(
+            RuntimeSample(
+                observed_at_utc=observed,
+                offset_seconds=0.1,
+                round_trip_ms=25,
+                telemetry_frame=TELEMETRY_RESPONSE,
+                operating_state_frame=IDLE_STATE_FRAME,
+                telemetry=TELEMETRY,
+                operating_state=IDLE_STATE,
+            ),
+        ),
+    )
+    with patch(
+        f"custom_components.{DOMAIN}.coordinator.read_baseline",
+        new_callable=AsyncMock,
+        return_value=BASELINE_FRAMES,
+    ):
+        assert await hass.config_entries.async_setup(configured.entry_id)
+        await hass.async_block_till_done()
+        configured.runtime_data.fast_sample_hz = 10
+        configured.runtime_data.async_capture_runtime_trace = AsyncMock(
+            return_value=trace
+        )
+        response = await hass.services.async_call(
+            DOMAIN,
+            SERVICE_CAPTURE_TRACE,
+            {
+                "config_entry_id": configured.entry_id,
+                "confirmation": "READ ONLY",
+                "duration_seconds": 60,
+            },
+            blocking=True,
+            return_response=True,
+        )
+
+    destination = tmp_path / PRIVATE_TRACE_DIRECTORY / response["file_name"]
+    raw_document = destination.read_text(encoding="utf-8")
+    document = json.loads(raw_document)
+    assert destination.stat().st_mode & 0o777 == 0o600
+    assert document["schema"] == "wendougee-data-private-trace/v1"
+    assert document["samples"][0]["telemetry"]["pressure_bar"] == 8.7
+    assert document["samples"][0]["operating_state"]["state"] == "idle"
+    assert ADDRESS not in raw_document
 
 
 async def test_headless_capture_writes_private_frames_only_once(hass, tmp_path):

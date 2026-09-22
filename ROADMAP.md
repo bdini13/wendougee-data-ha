@@ -13,7 +13,7 @@ Last reviewed: 2026-09-22. The goal is a well-understood, local-first WENDOUGEE 
 - [x] Add a versioned private evidence envelope and approval-gated baseline reader.
 - [x] Add an explicitly confirmed four-read baseline action for HA's shared Bluetooth/proxy route.
 
-Evidence: 106 protocol/package tests plus 32 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
+Evidence: 106 protocol/package tests plus 36 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
 
 ## 2. Hardware validation — next gate
 
@@ -37,6 +37,8 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Observe recovery after two naturally occurring isolated polling failures; add privacy-safe per-runtime poll-health diagnostics for more decisive soak evidence.
 - [x] Deploy 0.0.9 after a fresh full backup; verify one device, 23 entities and advancing schema-3 poll counters with zero failures after the corrected restart.
 - [x] Build and deploy 0.1.0 after a fresh full backup; verify canonical naming, 30 entities, schema-4 activity/poll diagnostics, dashboard/helpers, restart and config-entry reload.
+- [x] Build, offline-test and install 0.1.1's fail-closed 5 Hz → 10 Hz sampling benchmark and private bounded trace action after a fresh backup and successful configuration check.
+- [ ] Complete authenticated post-restart verification, benchmark the proxy path and capture one user-initiated normal shot without sending a control command.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.

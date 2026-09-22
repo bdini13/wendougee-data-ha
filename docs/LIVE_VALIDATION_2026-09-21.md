@@ -203,6 +203,26 @@ dashboard storage, helper defaults, config-entry reload and a short advancing
 read-only polling window. It is not a physical comparison, event-transition test
 or long-duration/disconnect/contention soak.
 
+## Version 0.1.1 deployment checkpoint · 2026-09-22
+
+Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
+
+- A fresh full backup completed before the installed component changed.
+- The locally built archive passed SHA-256 verification on the target and its
+  manifest reported 0.1.1. The complete 0.1.0 component was moved to a dated
+  rollback directory outside `custom_components/`.
+- `ha core check` completed successfully before restart. Home Assistant then
+  restarted, the frontend returned HTTP 200, and the Supervisor observer
+  reported connected, supported and healthy.
+- The deployment added only explicitly confirmed read-only actions: a fail-closed
+  5 Hz → 10 Hz benchmark and a bounded private trace capture. It added no control
+  transport or entity.
+- The authenticated browser session became unavailable after restart. Therefore
+  service registration, config-entry state, entity availability and the sampling
+  benchmark were not claimed as verified in this checkpoint.
+- No high-rate benchmark, trace capture, boiler, brew, cleaning, profile, valve,
+  provisioning, reset, calibration, bootloader or OTA command was sent.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this

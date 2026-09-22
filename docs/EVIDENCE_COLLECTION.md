@@ -81,6 +81,24 @@ and writes `wendougee_data_private_baseline.json` with owner-only permissions on
 success. The file is still `private_unreviewed`; copy it only into the ignored
 private artifact area before conversion/validation, and do not publish it.
 
+## High-rate Home Assistant trace
+
+Version 0.1.1 adds two separately confirmed, response-only actions for attended
+dynamic observation through HA's ESPHome Bluetooth proxy:
+
+1. `wendougee_data.benchmark_read_only_sampling` tests 5 Hz and then 10 Hz.
+   It serializes every telemetry/state pair, stops at the first failed stage and
+   enables capture only at the fastest clean rate.
+2. `wendougee_data.capture_read_only_trace` records 10–180 seconds at that
+   in-memory rate and creates an owner-only file beneath
+   `wendougee_data_private_traces/` in the HA configuration directory.
+
+Both require the literal confirmation `READ ONLY`. Neither can send a control
+command, retry an uncertain transaction or run automatically. Trace files are
+`private_unreviewed` and include raw response hex for unknown-register analysis;
+do not add them to Git or share them before applying the same identifier and
+privacy review required for baseline captures.
+
 ## Offline validation and reporting
 
 Validate a private document and print a report without raw frames:

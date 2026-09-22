@@ -19,3 +19,58 @@ capture_read_only_baseline:
       example: READ ONLY
       selector:
         text:
+
+benchmark_read_only_sampling:
+  name: Benchmark read-only sampling
+  description: >-
+    Tests fixed 5 Hz and 10 Hz telemetry/state sampling stages through one
+    serialized read at a time. It stops after the first failed stage, sends no
+    control command, and enables trace capture only at the fastest clean rate.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      description: Loaded WENDOUGEE DATA S configuration entry to test.
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      name: Confirmation
+      description: Type READ ONLY to confirm this bounded sampling benchmark.
+      required: true
+      example: READ ONLY
+      selector:
+        text:
+
+capture_read_only_trace:
+  name: Capture read-only trace
+  description: >-
+    Records a bounded telemetry and operating-state trace at the fastest clean
+    rate selected by the benchmark. The owner-only private file includes raw
+    replies for protocol analysis and must not be published without review.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      description: Loaded WENDOUGEE DATA S configuration entry to observe.
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      name: Confirmation
+      description: Type READ ONLY to confirm this bounded private capture.
+      required: true
+      example: READ ONLY
+      selector:
+        text:
+    duration_seconds:
+      name: Duration
+      description: Capture duration from 10 to 180 seconds.
+      required: true
+      default: 90
+      selector:
+        number:
+          min: 10
+          max: 180
+          step: 1
+          unit_of_measurement: s

@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+from dataclasses import asdict
 from pathlib import Path
 
 import voluptuous as vol
@@ -20,9 +21,13 @@ from .const import (
     DOMAIN,
     PRIVATE_BASELINE_FILE,
     PRIVATE_BASELINE_MARKER,
+    PRIVATE_TRACE_DIRECTORY,
+    SERVICE_BENCHMARK_SAMPLING,
     SERVICE_CAPTURE_BASELINE,
+    SERVICE_CAPTURE_TRACE,
 )
 from .coordinator import WendougeeCoordinator
+from .fast_capture import RuntimeTrace, SamplingBenchmark
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 CONFIG_SCHEMA = vol.Schema(
@@ -52,6 +57,50 @@ def _private_baseline_response(frames: dict[ReadOperation, bytes]) -> dict:
     }
 
 
+def _sampling_benchmark_response(result: SamplingBenchmark) -> dict:
+    """Expose timing metrics only; never include a discovery identifier."""
+    return {
+        "schema": "wendougee-data-sampling-benchmark/v1",
+        "read_only": True,
+        "selected_hz": result.selected_hz,
+        "stages": [asdict(stage) for stage in result.stages],
+    }
+
+
+def _private_trace_document(trace: RuntimeTrace) -> dict:
+    """Format decoded samples and raw replies for private protocol analysis."""
+    return {
+        "schema": "wendougee-data-private-trace/v1",
+        "privacy_status": "private_unreviewed",
+        "read_only": True,
+        "started_at_utc": trace.started_at_utc.isoformat(),
+        "ended_at_utc": trace.ended_at_utc.isoformat(),
+        "target_hz": trace.target_hz,
+        "achieved_hz": trace.achieved_hz,
+        "elapsed_seconds": trace.elapsed_seconds,
+        "sample_count": len(trace.samples),
+        "samples": [
+            {
+                "observed_at_utc": sample.observed_at_utc.isoformat(),
+                "offset_seconds": sample.offset_seconds,
+                "round_trip_ms": sample.round_trip_ms,
+                "telemetry": asdict(sample.telemetry),
+                "operating_state": {
+                    **asdict(sample.operating_state),
+                    "state": sample.operating_state.state,
+                },
+                "private_raw": {
+                    "telemetry_response_hex": sample.telemetry_frame.hex(),
+                    "operating_state_response_hex": (
+                        sample.operating_state_frame.hex()
+                    ),
+                },
+            }
+            for sample in trace.samples
+        ],
+    }
+
+
 def _claim_private_capture(config_dir: Path) -> bool:
     """Create an attempt marker atomically so restarts cannot repeat a read."""
     destination = config_dir / PRIVATE_BASELINE_FILE
@@ -70,6 +119,29 @@ def _write_private_capture(config_dir: Path, document: dict) -> None:
     with os.fdopen(descriptor, "w", encoding="utf-8") as output:
         json.dump(document, output, indent=2, sort_keys=True)
         output.write("\n")
+
+
+def _write_private_trace(config_dir: Path, document: dict) -> str:
+    """Create a unique owner-only trace file outside the integration source."""
+    directory = config_dir / PRIVATE_TRACE_DIRECTORY
+    directory.mkdir(mode=0o700, exist_ok=True)
+    os.chmod(directory, 0o700)
+    timestamp = document["started_at_utc"].replace("+00:00", "Z").replace(":", "")
+    file_name = f"trace-{timestamp}.json"
+    destination = directory / file_name
+    descriptor = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+        json.dump(document, output, indent=2, sort_keys=True)
+        output.write("\n")
+    return file_name
+
+
+def _loaded_coordinator(hass: HomeAssistant, config_entry_id: str):
+    """Resolve only a loaded entry belonging to this integration."""
+    entry = hass.config_entries.async_get_entry(config_entry_id)
+    if entry is None or entry.domain != DOMAIN or not hasattr(entry, "runtime_data"):
+        raise HomeAssistantError(f"{DEVICE_DISPLAY_NAME} entry is not loaded")
+    return entry.runtime_data
 
 
 async def _async_capture_private_baseline(
@@ -116,14 +188,9 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     )
 
     async def capture_baseline(call: ServiceCall) -> dict:
-        entry = hass.config_entries.async_get_entry(call.data["config_entry_id"])
-        if (
-            entry is None
-            or entry.domain != DOMAIN
-            or not hasattr(entry, "runtime_data")
-        ):
-            raise HomeAssistantError(f"{DEVICE_DISPLAY_NAME} entry is not loaded")
-        coordinator: WendougeeCoordinator = entry.runtime_data
+        coordinator: WendougeeCoordinator = _loaded_coordinator(
+            hass, call.data["config_entry_id"]
+        )
         try:
             frames = await coordinator.async_read_baseline()
         except Exception:
@@ -133,6 +200,46 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             ) from None
         return _private_baseline_response(frames)
 
+    async def benchmark_sampling(call: ServiceCall) -> dict:
+        coordinator: WendougeeCoordinator = _loaded_coordinator(
+            hass, call.data["config_entry_id"]
+        )
+        try:
+            result = await coordinator.async_benchmark_sampling()
+        except Exception:
+            raise HomeAssistantError(
+                "Unable to complete the read-only sampling benchmark"
+            ) from None
+        if result.selected_hz is None:
+            raise HomeAssistantError("No sampling rate completed successfully")
+        return _sampling_benchmark_response(result)
+
+    async def capture_trace(call: ServiceCall) -> dict:
+        coordinator: WendougeeCoordinator = _loaded_coordinator(
+            hass, call.data["config_entry_id"]
+        )
+        try:
+            trace = await coordinator.async_capture_runtime_trace(
+                call.data["duration_seconds"]
+            )
+            document = _private_trace_document(trace)
+            file_name = await hass.async_add_executor_job(
+                _write_private_trace, Path(hass.config.config_dir), document
+            )
+        except Exception:
+            raise HomeAssistantError(
+                "Unable to complete the read-only trace capture"
+            ) from None
+        return {
+            "schema": "wendougee-data-trace-summary/v1",
+            "read_only": True,
+            "file_name": file_name,
+            "target_hz": trace.target_hz,
+            "achieved_hz": trace.achieved_hz,
+            "sample_count": len(trace.samples),
+            "elapsed_seconds": trace.elapsed_seconds,
+        }
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_CAPTURE_BASELINE,
@@ -141,6 +248,33 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             {
                 vol.Required("config_entry_id"): str,
                 vol.Required("confirmation"): vol.Equal("READ ONLY"),
+            }
+        ),
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_BENCHMARK_SAMPLING,
+        benchmark_sampling,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("READ ONLY"),
+            }
+        ),
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CAPTURE_TRACE,
+        capture_trace,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("READ ONLY"),
+                vol.Optional("duration_seconds", default=90): vol.All(
+                    vol.Coerce(int), vol.Range(min=10, max=180)
+                ),
             }
         ),
         supports_response=SupportsResponse.ONLY,

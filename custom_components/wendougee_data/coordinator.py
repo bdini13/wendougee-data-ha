@@ -28,6 +28,12 @@ from .const import (
     MIN_POLL_INTERVAL,
     device_id,
 )
+from .fast_capture import (
+    RuntimeTrace,
+    SamplingBenchmark,
+    benchmark_runtime_sampling,
+    capture_runtime_trace,
+)
 
 _LOGGER = logging.getLogger(__name__)
 CONFIGURATION_REFRESH_POLLS = 20
@@ -70,6 +76,8 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self._cached_baseline_frames: dict[ReadOperation, bytes] | None = None
         self._poll_task: asyncio.Task | None = None
         self._connection_lock = asyncio.Lock()
+        self.fast_sample_hz: float | None = None
+        self.last_sampling_benchmark: SamplingBenchmark | None = None
 
     def _record_poll_success(self) -> None:
         """Record privacy-safe health evidence for a completed coordinator poll."""
@@ -154,6 +162,52 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
                     self.activity.observe(data, self.operating_state)
                     self.async_set_updated_data(data)
                     return frames
+            finally:
+                self._poll_task = None
+
+    async def async_benchmark_sampling(self) -> SamplingBenchmark:
+        """Find the fastest clean bounded rate before enabling trace capture."""
+        async with self._connection_lock:
+            if self.stopped:
+                raise RuntimeError("Integration stopped")
+            self._poll_task = asyncio.current_task()
+            try:
+                async with asyncio.timeout(30):
+                    result = await benchmark_runtime_sampling(self.hass, self.address)
+                self.last_sampling_benchmark = result
+                self.fast_sample_hz = result.selected_hz
+                return result
+            finally:
+                self._poll_task = None
+
+    async def async_capture_runtime_trace(self, duration_seconds: int) -> RuntimeTrace:
+        """Capture a bounded trace only after a clean rate benchmark."""
+        if self.fast_sample_hz is None:
+            raise RuntimeError("Run the read-only sampling benchmark first")
+        async with self._connection_lock:
+            if self.stopped:
+                raise RuntimeError("Integration stopped")
+            self._poll_task = asyncio.current_task()
+            try:
+                async with asyncio.timeout(duration_seconds + 20):
+                    trace = await capture_runtime_trace(
+                        self.hass,
+                        self.address,
+                        duration_seconds=duration_seconds,
+                        target_hz=self.fast_sample_hz,
+                    )
+                for sample in trace.samples:
+                    self.activity.observe(
+                        sample.telemetry,
+                        sample.operating_state,
+                        now=sample.observed_at_utc,
+                    )
+                if trace.samples:
+                    latest = trace.samples[-1]
+                    self.operating_state = latest.operating_state
+                    self.last_error = None
+                    self.async_set_updated_data(latest.telemetry)
+                return trace
             finally:
                 self._poll_task = None
 

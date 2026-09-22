@@ -17,6 +17,11 @@ from custom_components.wendougee_data.bluetooth import (
     read_telemetry,
 )
 from custom_components.wendougee_data.coordinator import WendougeeCoordinator
+from custom_components.wendougee_data.fast_capture import (
+    SamplingStage,
+    benchmark_runtime_sampling,
+    capture_runtime_trace,
+)
 from tests.test_live import FakeBleakClient
 
 from .test_integration import ADDRESS, TELEMETRY, entry
@@ -153,6 +158,86 @@ async def test_runtime_read_requests_only_telemetry_and_operating_state(
         build_read_request(ReadOperation.OPERATING_STATE),
     ]
     assert client.disconnect_called
+
+
+async def test_fast_trace_uses_one_connection_and_only_runtime_reads(
+    hass, fake_connection
+):
+    from custom_components.wendougee_data._protocol.crc import append_crc
+    from tests.test_telemetry import TELEMETRY_RESPONSE
+
+    client, lookup = fake_connection
+    replies = {
+        ReadOperation.TELEMETRY: TELEMETRY_RESPONSE,
+        ReadOperation.OPERATING_STATE: append_crc(
+            b"\x01\x01\x03" + (16).to_bytes(3, "little")
+        ),
+    }
+
+    async def respond(characteristic, request, *, response):
+        client.sent.append(request)
+        operation = next(
+            item for item in replies if request == build_read_request(item)
+        )
+        client.notifications[characteristic](characteristic, replies[operation])
+
+    client.write_gatt_char = respond
+    trace = await capture_runtime_trace(
+        hass,
+        ADDRESS,
+        duration_seconds=60,
+        target_hz=10,
+        sample_limit=3,
+    )
+
+    lookup.assert_called_once_with(hass, ADDRESS, connectable=True)
+    assert client.sent == [
+        request
+        for _ in range(3)
+        for request in (
+            build_read_request(ReadOperation.TELEMETRY),
+            build_read_request(ReadOperation.OPERATING_STATE),
+        )
+    ]
+    assert client.disconnect_called
+    assert len(trace.samples) == 3
+    assert all(sample.operating_state.state == "manual" for sample in trace.samples)
+    assert trace.samples[0].telemetry.pressure_bar == 8.7
+    assert trace.target_hz == 10
+    assert trace.achieved_hz > 0
+
+
+async def test_sampling_benchmark_stops_at_first_failure_and_selects_last_clean_stage(
+    hass,
+):
+    clean = SamplingStage(
+        target_hz=5,
+        sample_count=10,
+        elapsed_seconds=2,
+        achieved_hz=5,
+        mean_round_trip_ms=25,
+        max_round_trip_ms=30,
+        successful=True,
+    )
+    failed = SamplingStage(
+        target_hz=10,
+        sample_count=3,
+        elapsed_seconds=0.4,
+        achieved_hz=7.5,
+        mean_round_trip_ms=40,
+        max_round_trip_ms=50,
+        successful=False,
+    )
+    with patch(
+        "custom_components.wendougee_data.fast_capture._run_sampling_stage",
+        new_callable=AsyncMock,
+        side_effect=[clean, failed],
+    ) as run:
+        result = await benchmark_runtime_sampling(hass, ADDRESS)
+
+    assert [call.args[2] for call in run.await_args_list] == [5, 10]
+    assert result.selected_hz == 5
+    assert result.stages == (clean, failed)
 
 
 async def test_coordinator_initializes_details_then_uses_runtime_reads(hass):

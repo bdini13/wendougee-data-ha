@@ -84,6 +84,13 @@ Interpretation: slave 1, read holding registers, start 1404 (`0x057C`), count 22
 
 The one local response confirms framing and a plausible decode, not every unit. Register 1405's conversion still needs a stopwatch comparison (GeeFlow's parser retains the raw integer); flow and signed scale behavior also remain provisional. GeeFlow reads 20 registers from the same base, whereas our decoder expects 22; do not feed a 20-register response into the current fixed-length decoder.
 
+Upstream clients provide a useful cadence envelope rather than a local proof:
+LitaLite records the live block every 200 ms (5 Hz), Crema uses about 3.4 Hz,
+and GeeFlow's DATA-S live loop uses a 70 ms delay while also polling operating
+coils. Version 0.1.1 therefore benchmarks this installation conservatively at
+5 Hz and then 10 Hz through the ESPHome proxy, stopping on the first failure.
+The selected rate remains unvalidated until that benchmark runs on this machine.
+
 ## Known controls—documented, not approved for use
 
 The following are recorded for protocol completeness but must not be sent without explicit approval and supervised physical validation:[1][5][6]

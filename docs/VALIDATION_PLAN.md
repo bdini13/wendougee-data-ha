@@ -37,7 +37,7 @@ Prerequisites: supported macOS Bluetooth permissions for the actual client, exac
 | FC03 396/count 1 | Water-alarm enable | B06, separate from S10 | Configuration versus current alarm assertion |
 | FC01 182/count 24 | Operating flags | T04, S11 | Raw bits, decoded state, contradictions |
 
-No polling rate is locally validated. Begin with single serialized requests, then a conservative bounded repeat only within the approved test. Record response time and failures before increasing frequency. Do not scan arbitrary address ranges.
+No high-rate polling cadence is locally validated yet. Version 0.1.1 implements an offline-tested, explicitly confirmed benchmark that tries 5 Hz and then 10 Hz, requires at least 85% sustained cadence, stops at the first failed stage and keeps the selected rate only in memory. Deploy it only after backup and use it before the first bounded dynamic trace. Do not scan arbitrary address ranges.
 
 2026-09-21 result: HA's shared Bluetooth transport obtained valid responses for all four reads and retained the raw envelope privately. This validates the HA/proxy framing and decoders, not the direct Python/Bleak client or physical units. The machine reported idle, both boiler enables off, water-alarm detection enabled, and plausible ambient temperatures while the user intentionally left the boilers off. No control followed. See [the sanitized record](LIVE_VALIDATION_2026-09-21.md).
 
