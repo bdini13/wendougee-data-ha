@@ -172,7 +172,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
                 raise RuntimeError("Integration stopped")
             self._poll_task = asyncio.current_task()
             try:
-                async with asyncio.timeout(30):
+                async with asyncio.timeout(90):
                     result = await benchmark_runtime_sampling(self.hass, self.address)
                 self.last_sampling_benchmark = result
                 self.fast_sample_hz = result.selected_hz

@@ -407,6 +407,50 @@ async def test_sampling_benchmark_service_returns_only_privacy_safe_metrics(hass
     assert ADDRESS not in str(response)
 
 
+async def test_sampling_benchmark_service_returns_failed_stage_diagnostics(hass):
+    configured = entry()
+    configured.add_to_hass(hass)
+    benchmark = SamplingBenchmark(
+        selected_hz=None,
+        stages=(
+            SamplingStage(
+                1,
+                0,
+                0,
+                0,
+                None,
+                None,
+                False,
+                "transport_or_protocol_failure",
+            ),
+        ),
+    )
+    with patch(
+        f"custom_components.{DOMAIN}.coordinator.read_baseline",
+        new_callable=AsyncMock,
+        return_value=BASELINE_FRAMES,
+    ):
+        assert await hass.config_entries.async_setup(configured.entry_id)
+        await hass.async_block_till_done()
+        configured.runtime_data.async_benchmark_sampling = AsyncMock(
+            return_value=benchmark
+        )
+        response = await hass.services.async_call(
+            DOMAIN,
+            SERVICE_BENCHMARK_SAMPLING,
+            {
+                "config_entry_id": configured.entry_id,
+                "confirmation": "READ ONLY",
+            },
+            blocking=True,
+            return_response=True,
+        )
+
+    assert response["selected_hz"] is None
+    assert response["stages"][0]["failure_kind"] == ("transport_or_protocol_failure")
+    assert ADDRESS not in str(response)
+
+
 async def test_trace_service_writes_owner_only_identifier_free_private_file(
     hass, tmp_path
 ):

@@ -19,6 +19,7 @@ from custom_components.wendougee_data.bluetooth import (
 from custom_components.wendougee_data.coordinator import WendougeeCoordinator
 from custom_components.wendougee_data.fast_capture import (
     SamplingStage,
+    _run_sampling_stage,
     benchmark_runtime_sampling,
     capture_runtime_trace,
 )
@@ -207,26 +208,102 @@ async def test_fast_trace_uses_one_connection_and_only_runtime_reads(
     assert trace.achieved_hz > 0
 
 
+async def test_fast_trace_excludes_connection_setup_from_capture_window(hass):
+    from custom_components.wendougee_data._protocol.crc import append_crc
+    from tests.test_telemetry import TELEMETRY_RESPONSE
+
+    idle = append_crc(b"\x01\x01\x03" + bytes(3))
+
+    class DelayedSession:
+        def __init__(self, _transport, *, timeout):
+            self.timeout = timeout
+
+        async def __aenter__(self):
+            await asyncio.sleep(0.2)
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        async def read(self, operation):
+            if operation is ReadOperation.TELEMETRY:
+                return TELEMETRY_RESPONSE
+            return idle
+
+    with patch(
+        "custom_components.wendougee_data.fast_capture.ReadSession",
+        DelayedSession,
+    ):
+        trace = await capture_runtime_trace(
+            hass,
+            ADDRESS,
+            duration_seconds=0.15,
+            target_hz=10,
+            sample_limit=2,
+        )
+
+    assert len(trace.samples) == 2
+    assert trace.elapsed_seconds < 0.2
+
+
+async def test_fast_trace_allows_normal_proxy_connection_timeout(hass):
+    from custom_components.wendougee_data._protocol.crc import append_crc
+    from tests.test_telemetry import TELEMETRY_RESPONSE
+
+    idle = append_crc(b"\x01\x01\x03" + bytes(3))
+    observed_timeouts = []
+
+    class InspectingSession:
+        def __init__(self, _transport, *, timeout):
+            observed_timeouts.append(timeout)
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        async def read(self, operation):
+            if operation is ReadOperation.TELEMETRY:
+                return TELEMETRY_RESPONSE
+            return idle
+
+    with patch(
+        "custom_components.wendougee_data.fast_capture.ReadSession",
+        InspectingSession,
+    ):
+        await capture_runtime_trace(
+            hass,
+            ADDRESS,
+            duration_seconds=1,
+            target_hz=1,
+            sample_limit=1,
+        )
+
+    assert observed_timeouts == [15]
+
+
 async def test_sampling_benchmark_stops_at_first_failure_and_selects_last_clean_stage(
     hass,
 ):
     clean = SamplingStage(
-        target_hz=5,
-        sample_count=10,
-        elapsed_seconds=2,
-        achieved_hz=5,
+        target_hz=1,
+        sample_count=3,
+        elapsed_seconds=3,
+        achieved_hz=1,
         mean_round_trip_ms=25,
         max_round_trip_ms=30,
         successful=True,
     )
     failed = SamplingStage(
-        target_hz=10,
+        target_hz=2,
         sample_count=3,
-        elapsed_seconds=0.4,
-        achieved_hz=7.5,
+        elapsed_seconds=3,
+        achieved_hz=1.5,
         mean_round_trip_ms=40,
         max_round_trip_ms=50,
         successful=False,
+        failure_kind="insufficient_cadence",
     )
     with patch(
         "custom_components.wendougee_data.fast_capture._run_sampling_stage",
@@ -235,9 +312,21 @@ async def test_sampling_benchmark_stops_at_first_failure_and_selects_last_clean_
     ) as run:
         result = await benchmark_runtime_sampling(hass, ADDRESS)
 
-    assert [call.args[2] for call in run.await_args_list] == [5, 10]
-    assert result.selected_hz == 5
+    assert [call.args[2] for call in run.await_args_list] == [1, 2]
+    assert result.selected_hz == 1
     assert result.stages == (clean, failed)
+
+
+async def test_sampling_stage_reports_transport_or_protocol_failure(hass):
+    with patch(
+        "custom_components.wendougee_data.fast_capture.capture_runtime_trace",
+        new_callable=AsyncMock,
+        side_effect=TimeoutError,
+    ):
+        stage = await _run_sampling_stage(hass, ADDRESS, 1)
+
+    assert not stage.successful
+    assert stage.failure_kind == "transport_or_protocol_failure"
 
 
 async def test_coordinator_initializes_details_then_uses_runtime_reads(hass):

@@ -223,6 +223,24 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
 - No high-rate benchmark, trace capture, boiler, brew, cleaning, profile, valve,
   provisioning, reset, calibration, bootloader or OTA command was sent.
 
+## Version 0.1.1 benchmark attempt · 2026-09-22
+
+- The user opened Home Assistant's action UI, selected the loaded
+  WENDOUGEE DATA S entry, entered the required `READ ONLY` confirmation and
+  invoked `wendougee_data.benchmark_read_only_sampling`.
+- The action was registered and resolved the loaded integration entry, proving
+  that 0.1.1 loaded beyond the earlier unauthenticated restart checkpoint.
+- It returned the generic error `No sampling rate completed successfully`.
+  Because 0.1.1 discarded rejected-stage diagnostics, no rate or transport
+  limit can be inferred from that message.
+- Code review identified two implementation defects: the two-second sampling
+  window started before the ESPHome-proxy connection was ready, and the session
+  allowed only three seconds where normal integration reads allow fifteen.
+- Version 0.1.2 corrects those defects offline, adds 1 Hz and 2 Hz fallback
+  stages before 5 Hz and 10 Hz, and returns a privacy-safe failure category.
+  It has not yet been deployed or run against the machine.
+- No trace file or control command was created by this attempt.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this

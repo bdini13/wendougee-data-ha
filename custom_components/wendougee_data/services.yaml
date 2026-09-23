@@ -23,9 +23,10 @@ capture_read_only_baseline:
 benchmark_read_only_sampling:
   name: Benchmark read-only sampling
   description: >-
-    Tests fixed 5 Hz and 10 Hz telemetry/state sampling stages through one
-    serialized read at a time. It stops after the first failed stage, sends no
-    control command, and enables trace capture only at the fastest clean rate.
+    Tests fixed 1, 2, 5, and 10 Hz telemetry/state sampling stages through one
+    serialized read at a time. It stops after the first failed stage, returns
+    privacy-safe failure diagnostics, sends no control command, and enables
+    trace capture only at the fastest clean rate.
   fields:
     config_entry_id:
       name: Integration entry

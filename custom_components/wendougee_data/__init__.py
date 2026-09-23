@@ -210,8 +210,6 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             raise HomeAssistantError(
                 "Unable to complete the read-only sampling benchmark"
             ) from None
-        if result.selected_hz is None:
-            raise HomeAssistantError("No sampling rate completed successfully")
         return _sampling_benchmark_response(result)
 
     async def capture_trace(call: ServiceCall) -> dict:

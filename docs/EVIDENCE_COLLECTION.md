@@ -83,12 +83,13 @@ private artifact area before conversion/validation, and do not publish it.
 
 ## High-rate Home Assistant trace
 
-Version 0.1.1 adds two separately confirmed, response-only actions for attended
+Version 0.1.2 provides two separately confirmed, response-only actions for attended
 dynamic observation through HA's ESPHome Bluetooth proxy:
 
-1. `wendougee_data.benchmark_read_only_sampling` tests 5 Hz and then 10 Hz.
-   It serializes every telemetry/state pair, stops at the first failed stage and
-   enables capture only at the fastest clean rate.
+1. `wendougee_data.benchmark_read_only_sampling` tests 1, 2, 5 and then 10 Hz.
+   It connects before starting each three-second measurement, serializes every
+   telemetry/state pair, stops at the first failed stage, returns a privacy-safe
+   failure category, and enables capture only at the fastest clean rate.
 2. `wendougee_data.capture_read_only_trace` records 10–180 seconds at that
    in-memory rate and creates an owner-only file beneath
    `wendougee_data_private_traces/` in the HA configuration directory.

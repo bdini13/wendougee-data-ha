@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.1.1 was installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification and successful configuration check. Home Assistant restarted and the Supervisor observer reported healthy, supported and connected; authenticated post-restart integration/service verification and the new sampling benchmark remain pending. The prior 0.1.0 deployment had loaded one device and all 30 entities with advancing schema-4 diagnostics. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental, not production-ready.** Version 0.1.1 is installed on the target HA 2026.9.1 host. A user-run action confirmed that the integration and benchmark service loaded, but the first benchmark returned no accepted rate because connection setup was incorrectly included in its short measurement window and allowed only three seconds through the ESPHome proxy. Version 0.1.2 fixes that defect offline and awaits deployment. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
@@ -26,7 +26,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.
 - Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 added UTC poll-health evidence; 0.1.0 adds identifier-free observed-activity state and its lower-bound limitation.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
-- Version 0.1.1 adds a bounded 5 Hz → 10 Hz read-only benchmark and a private high-rate trace action. Both serialize telemetry/state reads, require the literal confirmation `READ ONLY`, never retry an uncertain transaction, and expose no control command.
+- Version 0.1.2 corrects the bounded read-only benchmark to exclude proxy connection setup from sampling time, use the normal 15-second session timeout, and test 1 → 2 → 5 → 10 Hz. It returns privacy-safe stage diagnostics even when no rate passes. The benchmark and private trace action serialize telemetry/state reads, require the literal confirmation `READ ONLY`, never retry an uncertain transaction, and expose no control command.
 - Includes a source-controlled, built-in-card Espresso dashboard with current state, recent activity, daily shot/water trends, maintenance history and inert boiler schedule planning helpers.
 
 **No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
@@ -52,7 +52,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 | Observed shot/water totals | Count / mL | Enabled; persistent lower-bound totals for HA statistics |
 | Last observed shot/backflush | Timestamp / mL | Enabled; updates only when the corresponding transition is observed |
 
-All readings remain provisional until physical comparison. Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. The default polling interval can miss an entire shot. Version 0.1.1's separate, explicitly invoked private trace action is intended for attended evidence collection; routine entities remain **basic monitoring, not a continuous shot-graph recorder**. Seventeen provisional measurement, configuration and state entities are disabled by default, not removed.
+All readings remain provisional until physical comparison. Pumped volume is not cup yield, and pump pressure is not necessarily puck pressure. The default polling interval can miss an entire shot. The separate, explicitly invoked private trace action is intended for attended evidence collection; routine entities remain **basic monitoring, not a continuous shot-graph recorder**. Seventeen provisional measurement, configuration and state entities are disabled by default, not removed.
 
 ## Project status
 
@@ -62,10 +62,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.1.1 installed after backup/configuration check and a healthy restart; authenticated post-restart service verification and hardware rate benchmark pending; no write path is exposed |
-| Verification baseline | **142 local tests passing:** 106 protocol/package + 36 HA tests, as of 2026-09-22 |
+| HA integration | Version 0.1.1 installed; its service registration was confirmed by the first user-run benchmark, which exposed a timing/timeout defect before any rate was accepted. Version 0.1.2 fixes it offline; no write path is exposed |
+| Verification baseline | **146 local tests passing:** 106 protocol/package + 40 HA tests, as of 2026-09-22 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.1 files installed through the ESPHome-proxy deployment path |
-| Deployment / release | 0.1.1 installed after a fresh full backup and healthy restart; prior 0.1.0 entity/dashboard verification remains the latest authenticated runtime checkpoint; not a published HACS release |
+| Deployment / release | 0.1.1 installed after a fresh full backup and healthy restart; 0.1.2 awaits target deployment and a repeated benchmark; not a published HACS release |
 | Device controls | Four boiler-setting request shapes are offline-tested but unreachable from HA; live controls remain gated by supervised write/readback validation |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [59-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.

@@ -17,9 +17,10 @@ from .bluetooth import HomeAssistantReadTransport
 
 MIN_CAPTURE_HZ = 1
 MAX_CAPTURE_HZ = 10
-BENCHMARK_RATES_HZ = (5, 10)
-BENCHMARK_STAGE_SECONDS = 2
+BENCHMARK_RATES_HZ = (1, 2, 5, 10)
+BENCHMARK_STAGE_SECONDS = 3
 INTER_REQUEST_DELAY_SECONDS = 0.03
+SESSION_TIMEOUT_SECONDS = 15
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,7 @@ class SamplingStage:
     mean_round_trip_ms: float | None
     max_round_trip_ms: float | None
     successful: bool
+    failure_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -103,11 +105,12 @@ async def capture_runtime_trace(
     )
     loop = asyncio.get_running_loop()
     period_seconds = 1 / target_hz
-    started_monotonic = loop.time()
-    started_at_utc = datetime.now(UTC)
     samples: list[RuntimeSample] = []
 
-    async with ReadSession(transport, timeout=3) as session:
+    async with ReadSession(transport, timeout=SESSION_TIMEOUT_SECONDS) as session:
+        # Establishing a connection through a remote proxy is not sampling time.
+        started_monotonic = loop.time()
+        started_at_utc = datetime.now(UTC)
         while sample_limit is None or len(samples) < sample_limit:
             target_time = started_monotonic + len(samples) * period_seconds
             remaining = target_time - loop.time()
@@ -132,8 +135,10 @@ async def capture_runtime_trace(
                     operating_state=decode_operating_state(state_frame),
                 )
             )
+        ended_monotonic = loop.time()
+        ended_at_utc = datetime.now(UTC)
 
-    elapsed_seconds = max(loop.time() - started_monotonic, 0.0)
+    elapsed_seconds = max(ended_monotonic - started_monotonic, 0.0)
     if len(samples) >= 2:
         sample_span = samples[-1].offset_seconds - samples[0].offset_seconds
         achieved_hz = (len(samples) - 1) / sample_span if sample_span > 0 else 0.0
@@ -143,7 +148,7 @@ async def capture_runtime_trace(
         achieved_hz = 0.0
     return RuntimeTrace(
         started_at_utc=started_at_utc,
-        ended_at_utc=datetime.now(UTC),
+        ended_at_utc=ended_at_utc,
         target_hz=target_hz,
         elapsed_seconds=elapsed_seconds,
         achieved_hz=achieved_hz,
@@ -171,6 +176,7 @@ async def _run_sampling_stage(
             mean_round_trip_ms=None,
             max_round_trip_ms=None,
             successful=False,
+            failure_kind="transport_or_protocol_failure",
         )
 
     round_trips = [sample.round_trip_ms for sample in trace.samples]
@@ -183,6 +189,7 @@ async def _run_sampling_stage(
         mean_round_trip_ms=sum(round_trips) / len(round_trips),
         max_round_trip_ms=max(round_trips),
         successful=successful,
+        failure_kind=None if successful else "insufficient_cadence",
     )
 
 

@@ -87,9 +87,10 @@ The one local response confirms framing and a plausible decode, not every unit. 
 Upstream clients provide a useful cadence envelope rather than a local proof:
 LitaLite records the live block every 200 ms (5 Hz), Crema uses about 3.4 Hz,
 and GeeFlow's DATA-S live loop uses a 70 ms delay while also polling operating
-coils. Version 0.1.1 therefore benchmarks this installation conservatively at
-5 Hz and then 10 Hz through the ESPHome proxy, stopping on the first failure.
-The selected rate remains unvalidated until that benchmark runs on this machine.
+coils. Version 0.1.2 therefore benchmarks this installation conservatively at
+1, 2, 5 and then 10 Hz through the ESPHome proxy, stopping on the first failure.
+Connection setup is excluded from each sampling window. The selected rate
+remains unvalidated until the corrected benchmark runs on this machine.
 
 ## Known controls—documented, not approved for use
 
