@@ -288,6 +288,11 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
 - The probe stopped after that first uncertain connection attempt. It did not
   subscribe to the machine, send a Modbus request, write a setting, or retry.
   The planned telemetry-only rate test therefore remains pending.
+- A later Supervisor check reported Home Assistant healthy and supported. The
+  retained recent Core log contained the one coincident failure and no later
+  Wendougee failure, but successful polls are not logged and authenticated
+  entity state was unavailable, so coordinator recovery is not claimed from
+  that check alone.
 
 ## What this proves
 
