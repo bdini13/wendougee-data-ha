@@ -254,6 +254,25 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
   or dynamic field behavior is claimed from this deployment.
 - No high-rate trace or control command was sent.
 
+## Version 0.1.2 corrected sampling benchmark · 2026-09-22
+
+- The user invoked the confirmed read-only benchmark with the machine idle.
+- The 1 Hz stage returned three complete telemetry/state pairs in 3.001 seconds,
+  sustained 0.923 pairs/s and passed the 85% threshold. Mean pair round trip was
+  about 460 ms and the maximum was about 558 ms.
+- The 2 Hz stage returned six complete pairs in 3.001 seconds, sustained 2.038
+  pairs/s and passed. Mean pair round trip was about 441 ms and the maximum was
+  about 508 ms.
+- The 5 Hz stage returned eight valid complete pairs, sustained 2.456 pairs/s
+  and stopped the ladder with `insufficient_cadence`. Mean pair round trip was
+  about 410 ms and the maximum was about 434 ms. There was no reported
+  transport or protocol failure.
+- The integration selected 2 Hz in memory for the next bounded trace. These
+  results characterize the current two-read telemetry-plus-state path through
+  this ESPHome proxy; they do not establish the maximum telemetry-only rate of
+  the machine itself.
+- No raw trace or control command was sent.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -263,6 +282,8 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
 - The current configuration and operating-state decoders produce internally
   consistent values for this idle, boilers-off snapshot.
 - The one-shot capture and restart guard operated as designed.
+- The installed proxy path can sustain 2 Hz complete telemetry/state pairs in
+  a bounded idle benchmark without a reported protocol or transport failure.
 
 ## What remains unproven
 

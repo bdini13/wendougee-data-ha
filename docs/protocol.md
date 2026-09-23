@@ -90,7 +90,10 @@ and GeeFlow's DATA-S live loop uses a 70 ms delay while also polling operating
 coils. Version 0.1.2 therefore benchmarks this installation conservatively at
 1, 2, 5 and then 10 Hz through the ESPHome proxy, stopping on the first failure.
 Connection setup is excluded from each sampling window. The selected rate
-remains unvalidated until the corrected benchmark runs on this machine.
+was 2 Hz for complete telemetry/state pairs on the installed proxy path. The
+5 Hz stage returned valid pairs at about 2.46 Hz but missed the cadence
+threshold, with no protocol/transport failure. This does not establish the
+machine's maximum rate for telemetry-only reads.
 
 ## Known controls—documented, not approved for use
 

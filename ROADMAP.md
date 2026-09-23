@@ -40,7 +40,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Build, offline-test and install 0.1.1's fail-closed 5 Hz → 10 Hz sampling benchmark and private bounded trace action after a fresh backup and successful configuration check.
 - [x] Diagnose the first 0.1.1 benchmark failure and build 0.1.2 with connection setup excluded from the sampling window, a 15-second proxy session timeout, a 1 → 2 → 5 → 10 Hz ladder and returned stage diagnostics.
 - [x] Deploy 0.1.2 after a fresh full backup, checksum verification and configuration check; verify a healthy restart.
-- [ ] Repeat the corrected read-only benchmark.
+- [x] Repeat the corrected read-only benchmark; select 2 Hz for complete telemetry/state pairs after 5 Hz sustained about 2.46 pairs/s and failed only the cadence threshold.
 - [ ] Complete authenticated post-restart verification, benchmark the proxy path and capture one user-initiated normal shot without sending a control command.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
