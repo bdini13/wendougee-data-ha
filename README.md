@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.1.1 is installed on the target HA 2026.9.1 host. A user-run action confirmed that the integration and benchmark service loaded, but the first benchmark returned no accepted rate because connection setup was incorrectly included in its short measurement window and allowed only three seconds through the ESPHome proxy. Version 0.1.2 fixes that defect offline and awaits deployment. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. It corrects the first benchmark's connection-timing defect; the corrected benchmark still needs to be invoked. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
@@ -62,10 +62,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.1.1 installed; its service registration was confirmed by the first user-run benchmark, which exposed a timing/timeout defect before any rate was accepted. Version 0.1.2 fixes it offline; no write path is exposed |
+| HA integration | Version 0.1.2 installed after backup/configuration check and a healthy restart; corrected hardware rate benchmark pending; no write path is exposed |
 | Verification baseline | **146 local tests passing:** 106 protocol/package + 40 HA tests, as of 2026-09-22 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.1 files installed through the ESPHome-proxy deployment path |
-| Deployment / release | 0.1.1 installed after a fresh full backup and healthy restart; 0.1.2 awaits target deployment and a repeated benchmark; not a published HACS release |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.2 files installed through the ESPHome-proxy deployment path |
+| Deployment / release | 0.1.2 installed after a fresh full backup, archive verification, configuration check and healthy restart; corrected benchmark pending; not a published HACS release |
 | Device controls | Four boiler-setting request shapes are offline-tested but unreachable from HA; live controls remain gated by supervised write/readback validation |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [59-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.

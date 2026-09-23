@@ -241,6 +241,19 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
   It has not yet been deployed or run against the machine.
 - No trace file or control command was created by this attempt.
 
+## Version 0.1.2 deployment checkpoint · 2026-09-22
+
+- A fresh full Home Assistant backup completed before installation.
+- The target archive matched the locally verified SHA-256 digest, and its
+  manifest reported version 0.1.2. The complete 0.1.1 component was preserved
+  in a dated rollback directory outside `custom_components/`.
+- `ha core check` completed successfully before restart. The restart command
+  completed successfully, the frontend returned HTTP 200 and the integration
+  loaded with only Home Assistant's standard custom-integration warning.
+- The corrected benchmark has not yet been invoked, so no maximum clean rate
+  or dynamic field behavior is claimed from this deployment.
+- No high-rate trace or control command was sent.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this

@@ -1,6 +1,6 @@
 # Experimental read-only Home Assistant integration
 
-Version `0.1.1` is installed on Bobby's HA 2026.9.1 host. A user-run benchmark confirmed the integration entry and action were loaded, then returned no accepted rate. Review identified a benchmark defect: ESPHome-proxy connection setup was counted inside the two-second sample window and the session timeout was only three seconds. Version `0.1.2` fixes this offline and awaits deployment. The Espresso dashboard, original artwork and disabled-by-default 07:00–09:00 schedule planners are installed. Its bundled boiler-frame module has no Home Assistant transport or service path. Offline framework testing uses **Home Assistant 2026.9.3 / Python 3.14.7**. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md).
+Version `0.1.2` is installed on Bobby's HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. It fixes the first benchmark's ESPHome-proxy connection timing and timeout defects; the corrected benchmark still needs to be invoked. The Espresso dashboard, original artwork and disabled-by-default 07:00–09:00 schedule planners are installed. Its bundled boiler-frame module has no Home Assistant transport or service path. Offline framework testing uses **Home Assistant 2026.9.3 / Python 3.14.7**. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md).
 
 ## Included
 

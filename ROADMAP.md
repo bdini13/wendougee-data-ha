@@ -39,7 +39,8 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Build and deploy 0.1.0 after a fresh full backup; verify canonical naming, 30 entities, schema-4 activity/poll diagnostics, dashboard/helpers, restart and config-entry reload.
 - [x] Build, offline-test and install 0.1.1's fail-closed 5 Hz → 10 Hz sampling benchmark and private bounded trace action after a fresh backup and successful configuration check.
 - [x] Diagnose the first 0.1.1 benchmark failure and build 0.1.2 with connection setup excluded from the sampling window, a 15-second proxy session timeout, a 1 → 2 → 5 → 10 Hz ladder and returned stage diagnostics.
-- [ ] Deploy 0.1.2 and repeat the read-only benchmark.
+- [x] Deploy 0.1.2 after a fresh full backup, checksum verification and configuration check; verify a healthy restart.
+- [ ] Repeat the corrected read-only benchmark.
 - [ ] Complete authenticated post-restart verification, benchmark the proxy path and capture one user-initiated normal shot without sending a control command.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
