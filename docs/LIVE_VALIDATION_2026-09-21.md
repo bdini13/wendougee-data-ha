@@ -273,6 +273,22 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
   the machine itself.
 - No raw trace or control command was sent.
 
+## Unattended read-only proxy probe · 2026-09-22
+
+- A bounded secondary client completed the encrypted ESPHome API handshake and
+  confirmed the proxy was running ESPHome 2026.9.0 with its active-connection,
+  remote-cache, raw-advertisement and scanner-state capabilities available.
+- A 45-second secondary subscription observed the proxy scanner cycling in
+  passive mode but received no mirrored advertisements. Home Assistant retained
+  ownership of its normal proxy path.
+- One connection attempt targeted only the already configured DATA S address.
+  It timed out before GATT discovery; cleanup also timed out. The integration
+  logged one telemetry-poll failure at the same time. This cannot distinguish
+  single-central contention from the machine being temporarily unreachable.
+- The probe stopped after that first uncertain connection attempt. It did not
+  subscribe to the machine, send a Modbus request, write a setting, or retry.
+  The planned telemetry-only rate test therefore remains pending.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this

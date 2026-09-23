@@ -85,6 +85,7 @@ All addresses below are **decimal**; FC denotes Modbus function code. Do not exe
 | A08 | Cleaning duration/rest/repetitions | Impl: FC10 registers 0/1/2; first two in tenths of seconds [G-control] | Read once as 5 s / 5 s / 3; no write proof | Advanced configuration |
 | A09 | Cleaning start/stop | Impl: coil 155 pulse, same action for both directions with state guards [G-control] | — | Attended maintenance action only |
 | A10 | Independent valve/steam/hot-water actuation | Conflict/Absent: 154 ambiguous; no established DATA S remote steam/hot-water endpoint | — | Excluded until evidence exists |
+| A11 | Daily/deep cleaning reminders | GeeFlow 1.0.2 stores reminder intervals/due dates in app-local preferences [G-maint-store]; “deep” reuses A08/A09 with a separately saved program and defaults to twice the daily cycle count [G-maint-default], [G-maint-start] | Last observed backflush is tracked locally in HA; no distinct machine reminder/read endpoint | HA maintenance helpers/history, not a BLE entity |
 
 No reviewed stop path is a demonstrated hardware emergency stop. A network client cannot promise to stop the pump after losing its connection.
 
@@ -131,16 +132,19 @@ See [the validation batches and conflict ledger](docs/VALIDATION_PLAN.md). The 2
 
 The [source inventory](research/UPSTREAM_SOURCES.md) records licenses. These are independently expressed facts, not imported upstream implementation. All upstream code links below pin the reviewed commits; the distributor page is a dated, unpinned observation.
 
-[G-reg]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeRegisters.kt
-[G-command]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeCommands.kt
-[G-control]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeDataSController.kt
-[G-parser]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeFrameParser.kt
-[G-state]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/model/DeviceState.kt
-[G-session]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/ble/modbus/ModbusSession.kt
-[G-compiler]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeProfileCompiler.kt
-[G-profile-cap]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeProfiling.kt
-[G-live]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeePressureSession.kt
-[G-scale]: https://github.com/drobekk/GeeFlow/blob/2c41af3a908e92e4b5dac5a5c706c869245adc6a/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeScaleFrame.kt
+[G-reg]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeRegisters.kt
+[G-command]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeCommands.kt
+[G-control]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeDataSController.kt
+[G-parser]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeFrameParser.kt
+[G-state]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/model/DeviceState.kt
+[G-session]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/ble/modbus/ModbusSession.kt
+[G-compiler]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeProfileCompiler.kt
+[G-profile-cap]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeProfiling.kt
+[G-live]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeePressureSession.kt
+[G-scale]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/controller/WendougeeScaleFrame.kt
+[G-maint-store]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/data/device/src/commonMain/kotlin/app/geeflow/data/device/impl/MaintenanceSettingsRepositoryImpl.kt
+[G-maint-default]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/domain/device/src/commonMain/kotlin/app/geeflow/domain/device/usecase/ObserveMaintenanceSettingsUseCase.kt
+[G-maint-start]: https://github.com/drobekk/GeeFlow/blob/10f2d191f984a35d021eb7127e3813fc3d6a8fa8/shared/domain/device/src/commonMain/kotlin/app/geeflow/domain/device/usecase/StartCleaningUseCase.kt
 [L]: https://github.com/dallonby/LitaLite/blob/3a26b7ec114ff03f228dd8cfc232b3885cd523cb/PROTOCOL.md
 [C]: https://github.com/dallonby/Crema/tree/930879755a76cefef010c05a39485e09cf59b819
 [D]: https://github.com/akiskev/DecentEbar/blob/f5f85fd42626ec26a50c10290d41bd0ef3fe9907/README.md

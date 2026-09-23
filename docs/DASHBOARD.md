@@ -16,6 +16,12 @@ to °F/psi/fluid ounces.
 - reported boiler targets/enables and cleaning configuration;
 - independent brew/steam desired schedule helpers, clearly marked inactive.
 
+Cleaning due dates are intentionally not read from the machine. Current
+upstream evidence implements daily/deep reminders as application-local state;
+the deep option runs the same machine cleaning path with a separately stored
+program. The dashboard's last-observed-backflush history is therefore the
+correct evidence boundary until a distinct machine endpoint is demonstrated.
+
 The word **observed** is intentional. A complete shot can occur between polls,
 so the counters are a conservative lower bound rather than an audit-grade meter.
 Pumped volume is a machine-reported hydraulic value, not cup yield or household

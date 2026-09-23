@@ -5,7 +5,7 @@ Last reviewed: 2026-09-22. The goal is a well-understood, local-first WENDOUGEE 
 ## 1. Research and offline foundation — implemented
 
 - [x] Review existing exact-machine projects and record pinned sources/license boundaries.
-- [x] Establish the 59-item capability map and separate upstream claims from local proof.
+- [x] Establish the 60-item capability map and separate upstream claims from local proof.
 - [x] Implement CRC, allowlisted reads, configuration/state/telemetry decoding and strict response validation.
 - [x] Test fragmentation, malformed packets, timeouts, cancellation and stale/duplicate responses.
 - [x] Implement read-only HA discovery, confirmed setup, sensors, recovery and diagnostics.
@@ -41,7 +41,8 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Diagnose the first 0.1.1 benchmark failure and build 0.1.2 with connection setup excluded from the sampling window, a 15-second proxy session timeout, a 1 → 2 → 5 → 10 Hz ladder and returned stage diagnostics.
 - [x] Deploy 0.1.2 after a fresh full backup, checksum verification and configuration check; verify a healthy restart.
 - [x] Repeat the corrected read-only benchmark; select 2 Hz for complete telemetry/state pairs after 5 Hz sustained about 2.46 pairs/s and failed only the cadence threshold.
-- [ ] Complete authenticated post-restart verification, benchmark the proxy path and capture one user-initiated normal shot without sending a control command.
+- [ ] Capture one user-initiated normal shot at the selected 2 Hz complete-pair rate without sending a control command.
+- [ ] Benchmark telemetry alone only after a connection can be acquired without contending with Home Assistant; the first bounded secondary-client attempt stopped before GATT discovery.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.
