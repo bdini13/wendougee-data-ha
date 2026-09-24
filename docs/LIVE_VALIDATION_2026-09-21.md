@@ -294,6 +294,52 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
   entity state was unavailable, so coordinator recovery is not claimed from
   that check alone.
 
+## Active-connection failure investigation · 2026-09-23
+
+- After the earlier successful 2 Hz benchmark, a later confirmed benchmark
+  stopped at its first 1 Hz stage with zero samples and
+  `transport_or_protocol_failure`. A config-entry reload also failed. This is
+  a change from the previously working path; it is not evidence that the
+  machine rejected a Modbus request.
+- Home Assistant Core restarts and separate power cycles of the machine and
+  proxy did not restore polling. The official mobile app subsequently
+  connected and displayed live data, which establishes that the machine's BLE
+  peripheral was still operating at that time.
+- A raw 30-second proxy observation then saw the exact configured target as a
+  single public-address advertiser. Its mean RSSI was -69 dBm, with a -73 to
+  -66 dBm range. The proxy API was healthy, its scanner was running, and all
+  three active-connection slots were free.
+- In that uncontended window, one approved ESPHome V3 connection-only attempt
+  stopped after 20 seconds. The proxy discovered the target, stopped scanning,
+  promoted a client slot and logged `Connecting`, but never logged
+  `Connection open`. Cleanup released the slot. No GATT discovery,
+  notification subscription or Modbus request occurred.
+- Earlier bounded diagnostics produced the same pre-open timeout with V3 cache
+  enabled and with an explicit public address type. ESPHome's legacy V1 route
+  is unavailable in this firmware (`V1 connections removed`). These attempts
+  therefore do not implicate frame construction, notification parsing or the
+  DATA S register map.
+- The proxy identifies as an original ESP32 running ESPHome 2026.9.0 with all
+  advertised Bluetooth-proxy feature flags. [ESPHome issue 18614][esphome-18614]
+  describes an original-ESP32 active-proxy regression introduced in 2026.8,
+  but that report reached `Connection open` and failed later. Its fix,
+  [pull request 18609][esphome-18609], was merged for 2026.8.1 and 2026.9.0.
+  It is relevant background, not an exact match or sufficient reason to claim
+  a downgrade will fix this installation.
+- A direct Mac comparison could not start because macOS denied Bluetooth
+  permission to both local helper app identities before scanning. That result
+  is inconclusive and caused no machine connection.
+- The current evidence localizes the immediate failure below the application
+  protocol: the ESP32 begins a BLE link attempt but does not receive a
+  connection-open event. Plausible remaining causes include ESP32/peripheral
+  radio interoperability, a machine-side central policy change, or a physical
+  RF asymmetry. Distinguishing them requires a controlled second-central or
+  alternate-proxy A/B test.
+
+No control, configuration, provisioning, reset, boiler, cleaning, valve,
+brew, calibration, bootloader or OTA command was sent during this
+investigation.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -305,6 +351,8 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
 - The one-shot capture and restart guard operated as designed.
 - The installed proxy path can sustain 2 Hz complete telemetry/state pairs in
   a bounded idle benchmark without a reported protocol or transport failure.
+  This is historical evidence from 2026-09-22; the same path could no longer
+  open an active BLE connection during the 2026-09-23 investigation.
 
 ## What remains unproven
 
@@ -317,13 +365,22 @@ Version 0.1.1 was installed to prepare a bounded dynamic read-only observation:
 - Firmware/model-detail queries, official-app coexistence, deliberate
   disconnect recovery, disabled-entry behavior and long-duration polling have
   not been validated. One restart and one config-entry reload did succeed.
+- The new active-connection failure must be isolated before dynamic capture or
+  reliability testing resumes. Advertisement visibility alone does not prove
+  that the ESP32 can open a GATT connection.
 - The direct Python/Bleak client remains untested on the hardware.
 - No real frame is approved as a public fixture yet.
 
 ## Recommended next gate
 
-Run an attended, read-only observation while the user operates the machine
-normally. Compare both temperatures and state on the display, then observe one
-manually initiated shot while the integration only reads. Follow with
-deliberate proxy-loss/app-contention checks and an extended soak. Control work
-remains a separate, freshly approved phase.
+First restore a repeatable active BLE connection without changing the machine:
+perform a controlled A/B test with another central or another ESP32 proxy,
+record the installed official-app and machine firmware versions, and compare
+the result with the current original-ESP32/ESPHome 2026.9.0 path. Any proxy
+firmware change requires a separately approved, rollback-safe maintenance
+window. Once the read path is stable, run the existing 2 Hz trace during one
+manually initiated normal shot and compare dynamic values with physical
+references. Control work remains a separate, freshly approved phase.
+
+[esphome-18609]: https://github.com/esphome/esphome/pull/18609
+[esphome-18614]: https://github.com/esphome/esphome/issues/18614

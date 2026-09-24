@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected benchmark selected 2 Hz for complete telemetry-plus-state pairs through the installed ESPHome proxy; a 5 Hz request was cadence-limited rather than rejected by the protocol. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected benchmark previously selected 2 Hz for complete telemetry-plus-state pairs through the installed ESPHome proxy; a later active-connection regression is under investigation and currently prevents reliable polling. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
@@ -62,7 +62,7 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.1.2 installed after backup/configuration check and a healthy restart; corrected benchmark selected 2 Hz for complete telemetry/state pairs; no write path is exposed |
+| HA integration | Version 0.1.2 installed after backup/configuration check and a healthy restart; corrected benchmark previously selected 2 Hz, but the ESP32 path stopped reaching BLE `Connection open` on 2026-09-23; no write path is exposed |
 | Verification baseline | **146 local tests passing:** 106 protocol/package + 40 HA tests, as of 2026-09-22 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.2 files installed through the ESPHome-proxy deployment path |
 | Deployment / release | 0.1.2 installed after a fresh full backup, archive verification, configuration check and healthy restart; 2 Hz benchmark passed; not a published HACS release |
@@ -117,6 +117,7 @@ read-only polling still continues on its documented cadence.
 - [x] Add provisional read-only configuration and operating-state entities, disabled by default.
 - [x] Add persistent observed shot/water/backflush analytics and a built-in-card Espresso dashboard.
 - [x] Add offline-tested, approval-gated sampling benchmark and private bounded trace capture.
+- [ ] Restore repeatable active BLE connection establishment through a controlled second-central or alternate-proxy A/B test.
 - [ ] Validate the selected high-rate sampling cadence and one manually initiated shot through the actual ESPHome proxy.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
