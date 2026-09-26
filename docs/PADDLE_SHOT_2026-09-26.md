@@ -66,10 +66,31 @@ yield or silently edit the stored history.
 
 ## Next steps and boundaries
 
-1. Add an independently written regression test and a bounded post-shot
-   finalization policy, keeping later shots, cleaning, resets and long polling
-   gaps from being assigned to the previous shot. The observed tail exceeds one
-   second; a one-second-only policy would miss this example.
+### Offline correction · 0.3.1 (not deployed)
+
+The tracker still records the end timestamp at first observed idle, but can refine
+the last-shot volume for a fixed five seconds after that transition. It accepts
+only unambiguous idle, no reported water alarm, nondecreasing volume, a latched
+unchanged brew timer and consecutive sample gaps of at most two seconds. The first
+idle observation additionally requires a nondecreasing timer relative to the active
+sample. A reset, new activity, unknown/ambiguous flags, backwards clock or long gap
+closes attribution; later idle samples cannot reopen it. Reload restores the saved
+result, never an unfinished attribution window. These are conservative integration
+heuristics, not proven maximum machine settling times or proof of unobserved events.
+
+Synthetic regression tests were first observed failing against 0.3.0, then passed
+with the correction. Offline replay revalidated all 720 private response frames
+and produced one observed shot, **66 mL** last-shot volume and **66 mL** total water.
+It did not alter the live 64 mL history, send a command, or connect to the machine.
+Public tests use synthetic samples based on the reviewed transition summary;
+private frames were not committed.
+
+The five-second window does not add polling, delay the idle timestamp or count
+water twice. Ordinary 30 s polling cannot resolve it: high-rate capture is still
+needed for this comparison. Code is prepared as 0.3.1; HA remains on 0.3.0.
+
+1. Deploy 0.3.1 with rollback safeguards, then verify with another attended 2 Hz
+   trace extending at least ten seconds past shot stop.
 2. Repeat with a measured cup weight and independent shot duration for comparison.
 3. Investigate the bound-profile mode/bank and remote trigger without changing
    the recipe. The paddle produced the profile flag, **not** the manual flag;

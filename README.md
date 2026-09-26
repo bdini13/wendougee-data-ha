@@ -35,7 +35,10 @@ upstream findings, including terminal-shot timing and app-local device naming.
 66 mL settled pumped counter; cup weight was not measured. This revealed a
 last-shot finalization limitation: HA saved 64 mL before the counter settled,
 although cumulative water included all 66 mL. See the
-[reviewed shot record and next fix](docs/PADDLE_SHOT_2026-09-26.md).
+[reviewed shot record and correction](docs/PADDLE_SHOT_2026-09-26.md).
+Version 0.3.1 corrects this in offline replay with a bounded 5 s terminal window
+at closely spaced samples. It is not yet deployed; live HA remains on 0.3.0.
+Normal 30 s polling cannot resolve the tail, and no stored history was rewritten.
 
 ## What it does
 
@@ -124,7 +127,7 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
 | HA integration | 0.3.0 adds a separate attended-cleaning opt-in; app-profile start remains off and requested paddle trigger pending |
-| Verification baseline | **218 local tests passing:** 157 protocol/package + 61 HA tests, as of 2026-09-26 |
+| Verification baseline | **237 local tests passing:** 157 protocol/package + 80 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
 | Deployment / release | 0.3.0 installed after a fresh full backup, verified archive and configuration check; not a published HACS release |
 | Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; one cleaning run verified by telemetry, unchanged settings and owner-observed three repetitions/normal completion |
@@ -186,7 +189,8 @@ read-only polling still continues on its documented cadence.
 - [x] Add strict passive decoding for the locally observed opcode-`0x83` FF55 marker without exposing a command path.
 - [x] Complete a three-minute 2 Hz paired-read idle soak with all 360 samples returned.
 - [x] Capture one manually initiated paddle shot at the selected 2 Hz paired cadence through the ESPHome proxy; physical calibration remains pending.
-- [ ] Correct bounded post-shot finalization using the observed delayed terminal values without attributing later shots or cleaning to the previous shot.
+- [x] Correct bounded post-shot finalization offline; regression guards exclude observed new activity, resets and long gaps. Existing full capture replays to 66 mL.
+- [ ] Deploy 0.3.1 and confirm finalization during another attended high-rate shot trace.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [x] Add opt-in boiler enable switches and guarded app-selected stored-profile infrastructure (0.2.0); enable only boiler switches on this installation.

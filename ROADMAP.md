@@ -51,7 +51,8 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Complete the first private bounded hardware trace: 20 correlated idle samples over 10.00 seconds at 1.99 Hz, stored owner-only with raw evidence excluded from Git.
 - [x] Complete a 180-second idle soak at the selected paired-read rate: all 360 samples completed at 2.003 Hz, with no interval over one second and private raw evidence excluded from Git.
 - [x] Capture one user-initiated normal paddle shot at 2 Hz without a control command: 360 valid pairs, profile state `0x2`, 22.4 s timer. See [shot record](docs/PADDLE_SHOT_2026-09-26.md).
-- [ ] Fix last-shot finalization: this capture recorded 64 mL while active, but the machine counter settled at 66 mL after idle. Preserve boundaries against later shots, cleaning and counter resets.
+- [x] Fix last-shot finalization offline (0.3.1): existing capture now replays to 66 mL, with bounded attribution and regression guards for new activity, resets and long gaps.
+- [ ] Deploy 0.3.1 and confirm the final value in a new attended high-rate shot trace, including at least 10 seconds after stopping.
 - [ ] Retain at least five seconds after that shot; resolve delayed terminal volume, reset/latching and sequential telemetry/state timing before claiming final shot totals.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.

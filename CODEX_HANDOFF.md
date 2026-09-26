@@ -6,6 +6,19 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.3.1 offline finalization fix (not deployed):** added a fixed 5 s post-idle
+volume-refinement window, requiring consecutive samples no more than 2 s apart,
+unambiguous idle, no water alarm, monotonic volume and a latched unchanged timer.
+Resets, changed timer, new activity, unknown flags, backwards time or a long gap
+close the window permanently. First-idle time, shot count and cumulative-water
+accounting are unchanged; no live history is edited. The runtime window is not
+restored on reload. All 720 frames of the existing private paddle trace revalidated;
+offline replay now yields one shot, 66 mL last-shot and 66 mL total water.
+This does not improve ordinary 30 s polling or add automatic fast capture.
+Next: deploy the patch with rollback safeguards, then an attended read-only 2 Hz
+shot trace through at least 10 s after stopping. No machine connection or command
+was sent while developing this fix; installed HA remains 0.3.0.
+
 **0.3.0 cleaning implementation:** owner approved adding a guarded cleaning action
 and supplied app screenshots showing cleaning 5 s / standing 5 s / count 3, matching
 read-only settings. Implemented coil-155 start/release only, fresh program/idle/alarm
@@ -35,7 +48,7 @@ Final reported timer 22.4 s, peak pump pressure 9.5 bar, settled pumped counter
 66 mL; no cup weight was measured. Confirmed finalization limitation: last-shot
 volume saved 64 mL, while the counter reached 66 mL after idle; cumulative water
 did include the full 66 mL. No code/history correction or remote shot command was
-performed. Next: bounded terminal-sample finalization with regression tests.
+performed at that checkpoint. The offline 0.3.1 correction is described above.
 See `docs/PADDLE_SHOT_2026-09-26.md`; raw trace stays private and gitignored.
 
 **Latest live control evidence · 2026-09-26 17:28:24 UTC:** owner was home,

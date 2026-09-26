@@ -11,6 +11,10 @@ from ._protocol.telemetry import Telemetry
 from .const import DOMAIN
 
 STORAGE_VERSION = 1
+# Conservative attribution policy, not machine timing limits. The reviewed
+# 2 Hz trace settles 1.536 s after idle; ordinary 30 s polls cannot resolve this.
+SHOT_TAIL_SECONDS = 5.0
+SHOT_TAIL_MAX_SAMPLE_GAP_SECONDS = 2.0
 
 
 class ActivityTracker:
@@ -34,6 +38,11 @@ class ActivityTracker:
         self._initialized = False
         self._previous_volume_ml: int | None = None
         self._current_shot_peak_volume_ml = 0
+        self._previous_observed_at: datetime | None = None
+        self._previous_brew_time_seconds: float | None = None
+        # Runtime-only: reload must not resume attributing old tails.
+        self._shot_tail_started_at: datetime | None = None
+        self._shot_tail_brew_time_seconds: float | None = None
 
     def _as_dict(self) -> dict[str, Any]:
         """Return the durable, identifier-free activity state."""
@@ -95,6 +104,15 @@ class ActivityTracker:
         )
         cleaning_active = state.cleaning_active
         volume_ml = telemetry.dispensed_volume_ml
+        brew_time = telemetry.elapsed_brew_time_seconds
+        sample_gap = (
+            (observed_at - self._previous_observed_at).total_seconds()
+            if self._previous_observed_at is not None
+            else None
+        )
+        previous_brew_time = self._previous_brew_time_seconds
+        self._previous_observed_at = observed_at
+        self._previous_brew_time_seconds = brew_time
 
         if not self._initialized:
             self._initialized = True
@@ -111,6 +129,25 @@ class ActivityTracker:
             changed = True
 
         previous_volume = self._previous_volume_ml
+        continuous_idle = (
+            state.state == "idle"
+            and not telemetry.water_level_alarm
+            and sample_gap is not None
+            and 0 <= sample_gap <= SHOT_TAIL_MAX_SAMPLE_GAP_SECONDS
+            and previous_volume is not None
+            and volume_ml >= previous_volume
+        )
+        if self._shot_tail_started_at is not None:
+            tail_age = (observed_at - self._shot_tail_started_at).total_seconds()
+            if (
+                not continuous_idle
+                or not 0 <= tail_age <= SHOT_TAIL_SECONDS
+                or brew_time != self._shot_tail_brew_time_seconds
+            ):
+                # Close permanently on any discontinuity; a later idle sample
+                # must not reopen the previous shot's attribution window.
+                self._shot_tail_started_at = None
+
         if previous_volume is not None:
             delta = (
                 volume_ml - previous_volume
@@ -129,6 +166,23 @@ class ActivityTracker:
             self.last_shot_utc = observed_at
             self.last_shot_volume_ml = self._current_shot_peak_volume_ml
             self._current_shot_peak_volume_ml = 0
+            if (
+                continuous_idle
+                and previous_brew_time is not None
+                and brew_time >= previous_brew_time
+            ):
+                self._shot_tail_started_at = observed_at
+                self._shot_tail_brew_time_seconds = brew_time
+            changed = True
+
+        if (
+            self._shot_tail_started_at is not None
+            and self.last_shot_volume_ml is not None
+            and volume_ml > self.last_shot_volume_ml
+        ):
+            # Refine only volume, retaining the first idle timestamp and count.
+            # Total water already accounts for this delta above; do not add twice.
+            self.last_shot_volume_ml = volume_ml
             changed = True
 
         if self.cleaning_active and not cleaning_active:
