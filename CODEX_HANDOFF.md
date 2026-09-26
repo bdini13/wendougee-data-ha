@@ -6,7 +6,25 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
-**Current checkpoint · 2026-09-26:** installed integration remains 0.1.2 on HA
+**0.2.0 implementation checkpoint:** owner requested separate boiler on/off and
+default stored-shot activation. Implemented separate opt-in categories, two
+switches, a current-active-mode-2 profile button and Espresso dashboard controls.
+No profile selection/upload or temperature writes. Controls use finite transaction
+allowlists, fresh guards, exact echoes, full boiler readback, no retries and a
+persistent shot-start uncertainty latch. Attended hardware commissioning remains
+pending; no boiler/shot activation was performed during implementation. See
+`docs/CONTROL_DESIGN.md` for the current behavior; older read-only notes below
+describe the 0.1.2 checkpoint. The owner clarified "default" means **paddle-bound**,
+so only boiler switches are enabled on the target; the optional app-profile start
+is off and absent from Espresso. Paddle-specific activation remains unimplemented
+pending resolution of separate recipe banks and conflicting coil-154 semantics;
+see `docs/PADDLE_PROFILE.md`. Do not enable app-profile start as a substitute.
+0.2.0 was installed after a fresh full backup, verified archive and config check;
+post-restart polling recovered. Both boiler entities and all 32 dashboard references
+were available. Local verification: 145 protocol/package + 48 HA tests. No control
+was fired; the reported state was brew enabled and steam disabled.
+
+**Earlier read-only checkpoint · 2026-09-26:** installed integration was 0.1.2 on HA
 2026.9.1. The proxy diagnostic failure was caused by the missing advertisement
 subscription that retains BLE ownership; corrected probes worked on both
 ESPHome 2026.7.2 and restored 2026.9.0. HA recovered after a checked restart,

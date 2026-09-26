@@ -1,7 +1,43 @@
 # Boiler scheduling and control safety design
 
-Status: **offline design only**. Home Assistant 0.1.0 contains no callable
-machine-write path. The dashboard schedule helpers are inert planning inputs.
+Status: **0.2.0 implements opt-in boiler switches and stored-profile start**.
+The dashboard schedule helpers remain inert planning inputs. Transactions have
+synthetic protocol and HA framework coverage; physical commissioning is pending.
+No hardware control was fired during implementation/deployment.
+
+The owner clarified that "default stored profile" means the **physical paddle's
+bound recipe**. That activation path is not established. The implemented optional
+app-selected-profile path below is therefore **disabled on the target**, and its
+button is omitted from Espresso. Only the two boiler switches are opted in.
+See [paddle-binding evidence and the remaining test](PADDLE_PROFILE.md).
+
+## Implemented control boundary
+
+The default read transport is unchanged. A separate, short-lived transport admits
+only the exact commands needed for a requested transaction. Boiler switches write
+only registers 6/7, require fresh idle state, and compare all 37 configuration words
+after the exact echo. Turning on additionally checks the reported water alarm.
+No operation retries automatically. This is not an emergency-off mechanism.
+
+The shot button pulses coil 150 on then off (100 ms), with bounded release cleanup
+even when the press acknowledgement fails or the task is cancelled. It requires
+brew enabled, no reported water alarm, active mode register 87 equal to 2, and fresh
+idle state immediately before the pulse. It then checks for profile-running state.
+It does not change register 87, the paddle binding at 88, a profile, or a setpoint.
+"Stored profile" means the current active selection, not a promise that the paddle
+uses that same recipe. Mode 4 and all other unverified modes are rejected.
+
+A persistent start-uncertainty latch is saved before the operation; failures,
+process death and cancellation cannot silently allow a repeat toggle. Only confirmed
+success, known pre-control rejection, or explicit physical-check acknowledgement
+with a new idle read clears it. A failed storage clear keeps it locked in memory.
+The integration options are the category opt-in; direct HA `button.press` calls
+have no physical-presence confirmation. Never schedule shot starts.
+
+Remaining attended checks: separate boiler on/off with unrelated settings stable,
+physical enable feedback, selected-profile/paddle relationship, press release,
+actual shot start/finish, app contention, power-cycle persistence and fault recovery.
+No automatic heating schedule or target-temperature control is enabled by this work.
 
 ## Independently implemented protocol facts
 
@@ -18,8 +54,9 @@ S. LitaLite's configuration map independently places the same values in the
 
 `src/wendougee_data/controls.py` can build only these four request shapes and
 validates an FC06 reply as an exact, CRC-valid echo. It accepts no arbitrary
-register. The module is bundled for offline tests, but the Home Assistant BLE
-transport still rejects everything outside the fixed read allowlist.
+register. The general setting builder remains offline-only for target temperatures.
+The separate HA control transport admits only boiler enables and coil-150 pulses;
+normal polling still rejects everything outside its fixed read allowlist.
 
 The upstream application accepts broad 0–140 °C steam and 0–110 °C brew ranges.
 Those are application bounds, **not manufacturer-validated safe operating

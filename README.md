@@ -1,10 +1,10 @@
 # WENDOUGEE DATA S · Home Assistant
 
-Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with the **WENDOUGEE DATA S**, working toward a thoroughly documented protocol and carefully validated controls.
+Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low Energy for the **WENDOUGEE DATA S**. Controls are experimental and require attended commissioning.
 
 [![Validate](https://github.com/bdini13/wendougee-data-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/bdini13/wendougee-data-ha/actions/workflows/validate.yml)
 [![Status: experimental](https://img.shields.io/badge/status-experimental-orange)](#project-status)
-[![Access: read only](https://img.shields.io/badge/access-read--only-blue)](#what-it-does)
+[![Controls: opt in](https://img.shields.io/badge/controls-opt--in-orange)](#machine-controls)
 [![HA tested: 2026.9.3](https://img.shields.io/badge/HA%20tested-2026.9.3-18BCF2?logo=homeassistant&logoColor=white)](docs/HOME_ASSISTANT.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Development: AI assisted](https://img.shields.io/badge/development-AI--assisted-8A2BE2)](AI_DISCLOSURE.md)
@@ -14,11 +14,12 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental monitoring integration.** Version 0.1.2 is installed on HA 2026.9.1.
+> **Experimental integration.** Version 0.2.0 adds opt-in machine controls.
 > Routine polling defaults to 30 seconds; bounded private traces have sustained
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
 > shot-transition validation remain pending. Boiler schedules are planning helpers;
-> live machine controls are not exposed. Do not use these sensors as safety interlocks.
+> schedules do not run automatically. Control transactions are simulation-tested,
+> not yet physically commissioned. Do not use these sensors as safety interlocks.
 
 Latest evidence, **September 26, 2026**: 360/360 paired samples at 2.003 Hz,
 8 Hz in a separate short telemetry-only test, and 28 validated passive FF55 events.
@@ -32,6 +33,8 @@ upstream findings, including terminal-shot timing and app-local device naming.
 
 - Discovers connectable `WDG_Data_*` machines through **Home Assistant's shared Bluetooth stack**.
 - Requires confirmation before starting periodic read-only telemetry requests.
+- Separately opts into independent brew/steam boiler switches and a guarded button
+  for the currently selected stored mode-2 shot profile. Setup never activates them.
 - Version 0.1.0 registers 30 read-only entities: the original 23 telemetry/configuration/state entities plus observed shot/cleaning activity, persistent observed totals and last-event timestamps.
 - Opens a short connection for each poll and disconnects afterward; default interval is 30 seconds.
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
@@ -43,6 +46,36 @@ upstream findings, including terminal-shot timing and app-local device naming.
 - Includes a built-in-card Espresso dashboard with latest readings, recent activity, daily shot/water trends, maintenance history and inert boiler schedule planning helpers. An Evidence & capture tab explains measured rates, trace collection and remaining limits.
 
 **No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
+
+## Machine controls
+
+**This installation:** independent brew/steam switches are enabled. The requested
+**paddle-bound shot trigger remains disabled and unimplemented**: upstream stores
+it separately from the app-selected recipe, and its remote activation is not yet
+verified. The Espresso dashboard explicitly marks it pending; no substitute shot
+button is shown. See [the paddle-binding evidence](docs/PADDLE_PROFILE.md).
+
+In **Settings → Devices & services → WENDOUGEE DATA S → Configure**, independently
+enable boiler control and stored-profile start. Both options default off.
+
+- **Brew boiler / Steam boiler:** explicit on/off, fresh idle check, exact response
+  echo and complete configuration readback. No temperature or other setting writes.
+- **Start stored profile:** uses the profile already selected in the machine/app,
+  **not necessarily the paddle-bound profile**. Requires brew enabled, no reported
+  water alarm, supported mode 2 and fresh idle state. It neither selects nor uploads
+  a recipe. Be at the machine with portafilter and cup ready; reaching temperature
+  is not verified. This optional app-profile control is **not** the requested
+  paddle trigger and remains disabled on this installation.
+- A start with uncertain outcome locks further starts across reloads/restarts.
+  Physically check the machine, then use `wendougee_data.acknowledge_profile_uncertainty`
+  with `MACHINE CHECKED`; a fresh idle read is also required. Never retry blindly.
+
+The underlying shot command is a start/stop toggle, so no remote stop button or
+automatic retry is exposed. HA's `button.press` invokes the optional app-profile
+entity directly once enabled; there is no service-level physical-presence check.
+Do not enable it as a substitute for paddle execution or automate shot starts.
+Boiler schedules remain inert.
+See [control behavior and commissioning limits](docs/CONTROL_DESIGN.md).
 
 ### Available entities
 
@@ -75,11 +108,11 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | 0.1.2 installed; 22 enabled entities available after recovery; 2 Hz paired-read benchmark and three-minute idle soak passed |
-| Verification baseline | **157 local tests passing:** 117 protocol/package + 40 HA tests, as of 2026-09-26 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.2 files installed through the ESPHome-proxy deployment path |
-| Deployment / release | 0.1.2 installed after a fresh full backup, archive verification, configuration check and healthy restart; 2 Hz benchmark passed; not a published HACS release |
-| Device controls | Four boiler-setting request shapes are offline-tested but unreachable from HA; live controls remain gated by supervised write/readback validation |
+| HA integration | 0.2.0 installed; independent boiler switches opted in; app-profile start opted out; requested paddle trigger pending |
+| Verification baseline | **193 local tests passing:** 145 protocol/package + 48 HA tests, as of 2026-09-26 |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.2.0 files installed through the ESPHome-proxy deployment path |
+| Deployment / release | 0.2.0 installed after a fresh full backup, archive verification and configuration check; telemetry recovered after restart; not a published HACS release |
+| Device controls | 0.2.0 opt-in boiler switches and stored mode-2 profile start; simulation-tested, attended hardware commissioning pending |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 
@@ -140,6 +173,8 @@ read-only polling still continues on its documented cadence.
 - [ ] Validate the selected high-rate sampling cadence and one manually initiated shot through the actual ESPHome proxy.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
+- [x] Add opt-in boiler enable switches and guarded app-selected stored-profile infrastructure (0.2.0); enable only boiler switches on this installation.
+- [ ] Resolve and validate the specifically requested paddle-bound shot trigger; do not substitute the app-selected recipe.
 - [ ] Finish release hardening, compatibility documentation and HACS packaging/validation.
 
 The [detailed roadmap](ROADMAP.md) defines acceptance gates rather than promising dates or “100% support.” Calibration, raw valves, reset and OTA are not ordinary integration features and remain outside the initial control roadmap.

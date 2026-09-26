@@ -13,7 +13,11 @@ machine volume. Unknown backflush history is explained without suggesting the
 machine has never been cleaned. The **Evidence & capture** tab records the dated
 2 Hz paired-read and 8 Hz telemetry-only results, distinguishes private traces
 from routine history graphs, and provides the read-only capture procedure.
-Its buttons navigate to tools/documentation; they do not invoke an action.
+The Evidence tab's buttons only navigate to tools/documentation. The overview
+now also includes opt-in boiler switches. **Paddle-bound shot** is explicitly
+marked pending; no shot-start action is displayed because the user means the
+paddle-bound recipe, not the app-selected recipe. Controls remain experimental
+pending physical commissioning. See [paddle-binding evidence](PADDLE_PROFILE.md).
 
 Sampling evidence is a dated validation record, not a live benchmark status.
 The selected trace rate is held only in memory and must be re-established after

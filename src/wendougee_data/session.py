@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import math
 from collections.abc import Callable
+from enum import Enum
 from types import TracebackType
 from typing import Protocol
 
@@ -61,7 +62,7 @@ class ReadSession:
         self._lock = asyncio.Lock()
         self._stream = ReadResponseStream()
         self._pending: asyncio.Future[bytes] | None = None
-        self._operation: ReadOperation | None = None
+        self._operation: Enum | None = None
         self._failure: BaseException | None = None
         self._active = False
         self._used = False
@@ -140,7 +141,10 @@ class ReadSession:
         Cancelling a queued reader does not invalidate someone else's active
         read. Cancelling after it acquires the lock does invalidate the session.
         """
-        request = build_read_request(operation)
+        return await self._exchange(build_read_request(operation), operation)
+
+    async def _exchange(self, request: bytes, operation: Enum) -> bytes:
+        """Share connection-epoch lifecycle with narrowly allowlisted subclasses."""
         async with self._lock:
             self._require_active()
             self._operation = operation

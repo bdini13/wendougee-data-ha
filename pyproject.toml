@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wendougee-data"
-version = "0.1.2"
-description = "Read-only protocol support for the WENDOUGEE DATA S espresso machine"
+version = "0.2.0"
+description = "Local telemetry and opt-in controls for the WENDOUGEE DATA S espresso machine"
 readme = "README.md"
 requires-python = ">=3.13"
 license = { file = "LICENSE" }

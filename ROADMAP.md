@@ -62,7 +62,9 @@ Exit criterion: documented recovery behavior and a usable monitoring integration
 ## 4. Carefully gated controls
 
 - [ ] Validate conservative setting ranges, polarity, response correlation, readback and persistence.
-- [ ] Add explicitly opt-in boiler/configuration controls only after supervised validation.
+- [x] Implement opt-in boiler enable switches and a stored mode-2 profile start button, with synthetic transaction tests and fail-closed guards (0.2.0, requested by owner).
+- [ ] Commission those controls with supervised exact-machine write/readback and shot observation before routine use; temperature controls and scheduling remain withheld.
+- [ ] Resolve remote activation of the **paddle-bound** recipe specifically. The optional app-selected-profile action remains disabled on the target; it is not the requested default-shot control.
 - [ ] Validate profile layout, slot capacity and complete readback; keep upload separate from activation.
 - [ ] Resolve toggle-versus-stop semantics and app/physical-control races before brew/clean actions.
 - [ ] Add supported accessory features after resolving FF55 direction/context conflicts.

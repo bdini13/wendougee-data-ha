@@ -15,7 +15,7 @@ views:
             content: |-
               # WENDOUGEE DATA S
 
-              Your espresso workspace · local Bluetooth monitoring
+              Your espresso workspace · local Bluetooth monitoring and controls
 
               Routine readings refresh about every **30 seconds** by default.
               Short shots can be missed; shot and water totals count only observed activity.
@@ -44,6 +44,34 @@ views:
 
       - type: grid
         cards:
+          - type: heading
+            heading: Machine controls
+            icon: mdi:coffee-maker
+          - type: markdown
+            content: >-
+              Experimental controls: commission while at the machine. Switches
+              show verified boiler enable settings, not heater-element activity.
+              There is no remote emergency stop. Schedule helpers remain inactive.
+          - type: tile
+            entity: switch.wendougee_data_s_brew_boiler
+            name: Brew boiler
+            tap_action:
+              action: more-info
+            features:
+              - type: toggle
+          - type: tile
+            entity: switch.wendougee_data_s_steam_boiler
+            name: Steam boiler
+            tap_action:
+              action: more-info
+            features:
+              - type: toggle
+          - type: markdown
+            content: >-
+              **Paddle-bound shot · pending validation.** The paddle stores its
+              recipe separately from the app-selected profile. Remote paddle
+              activation is not yet verified, so no shot-start button is exposed
+              here. Use the physical paddle for now; HA continues observing.
           - type: heading
             heading: Latest readings
             icon: mdi:gauge

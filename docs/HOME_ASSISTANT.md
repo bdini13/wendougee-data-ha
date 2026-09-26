@@ -1,4 +1,27 @@
-# Experimental read-only Home Assistant integration
+# Experimental Home Assistant integration
+
+## 0.2.0 opt-in controls
+
+Version 0.2.0 adds independent **Steam boiler** / **Brew boiler** switches and
+**Start stored profile**. Open the integration's Configure/options dialog to
+enable either category; both default off. Setup/reload does not activate a control.
+The button starts the current active stored mode-2 profile, not necessarily the
+paddle-bound recipe. It does not select or upload a profile. The boiler switches
+do not change temperature targets. Hardware commissioning remains pending.
+
+On the target host, **only the boiler switches are enabled**. The owner requested
+the paddle-bound recipe, whose remote trigger is not established; the different
+app-selected-profile control remains off. Espresso shows that distinction rather
+than exposing a misleading shot button. See [paddle evidence](PADDLE_PROFILE.md).
+
+Prepare the machine and cup and supervise the first use. An uncertain start
+locks repeats durably. After physically checking the machine, invoke
+`wendougee_data.acknowledge_profile_uncertainty` with `MACHINE CHECKED`;
+the integration must also read a fresh idle state. Do not treat this as stop.
+See [the current control design](CONTROL_DESIGN.md) and [README](../README.md#machine-controls).
+
+The following 0.1.2 deployment history describes the earlier read-only release;
+its statement that no controls were exposed does not apply to 0.2.0 opt-ins.
 
 Version `0.1.2` is installed on Bobby's HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected benchmark selected 2 Hz for complete telemetry/state pairs through the installed ESPHome proxy. A later apparent proxy lifecycle regression was traced on 2026-09-26 to the standalone diagnostic harness omitting ESPHome's required advertisement subscription. The corrected Proxy 2 path connected, discovered services and returned valid telemetry on ESPHome 2026.7.2 and restored 2026.9.0. A separate telemetry-only ladder accepted 8 Hz and rejected 10 Hz for insufficient cadence. A configuration-checked HA Core restart then restored all 22 enabled entities; a fresh paired benchmark selected 2 Hz and the first successful 10-second private trace completed 20 correlated idle samples at 1.99 Hz. The Espresso dashboard, original artwork and disabled-by-default 07:00–09:00 schedule planners are installed. Its bundled boiler-frame module has no Home Assistant transport or service path. Offline framework testing uses **Home Assistant 2026.9.3 / Python 3.14.7**. See the [sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md).
 
@@ -11,7 +34,7 @@ Version `0.1.2` is installed on Bobby's HA 2026.9.1 host after a fresh full back
 - Persistent observed-shot count, observed pumped-water total, last shot/time/volume and last observed backflush. These are conservative lower bounds because polling can miss complete events.
 - One response-only `capture_read_only_baseline` action, requiring the literal confirmation `READ ONLY`, for the four fixed evidence reads through HA's shared Bluetooth path.
 - Two response-only evidence actions: a bounded 1 → 2 → 5 → 10 Hz sampling benchmark and a 10–180 second private trace capture at the fastest clean stage. They also require `READ ONLY` and are unavailable as automatic actions.
-- No controls, arbitrary command interface, FF55 initialization, standalone scanner, pairing, or cloud backend.
+- No arbitrary command interface, FF55 initialization, standalone scanner, pairing, or cloud backend. Controls require the separate 0.2.0 options above.
 
 Bluetooth discovery and connection selection follow [Home Assistant's shared Bluetooth APIs](https://developers.home-assistant.io/docs/core/bluetooth/api/). Device responses are handled by our independently implemented protocol library.
 

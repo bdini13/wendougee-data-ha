@@ -4,8 +4,9 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant.components import bluetooth
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_ADDRESS
+from homeassistant.core import callback
 
 from .const import (
     CONF_CAPTURE_BASELINE,
@@ -37,6 +38,11 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Do not connect or send any command during discovery/confirmation."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return WendougeeOptionsFlow()
 
     def __init__(self) -> None:
         self._address: str | None = None
@@ -137,6 +143,33 @@ class WendougeeConfigFlow(ConfigFlow, domain=DOMAIN):
                         vol.Coerce(int),
                         vol.Range(min=MIN_POLL_INTERVAL, max=MAX_POLL_INTERVAL),
                     ),
+                }
+            ),
+        )
+
+
+class WendougeeOptionsFlow(OptionsFlow):
+    """Control categories require separate explicit opt-ins; defaults stay off."""
+
+    async def async_step_init(self, user_input=None):
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        "allow_boiler_control",
+                        default=self.config_entry.options.get(
+                            "allow_boiler_control", False
+                        ),
+                    ): bool,
+                    vol.Optional(
+                        "allow_profile_start",
+                        default=self.config_entry.options.get(
+                            "allow_profile_start", False
+                        ),
+                    ): bool,
                 }
             ),
         )

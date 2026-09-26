@@ -20,6 +20,26 @@ capture_read_only_baseline:
       selector:
         text:
 
+acknowledge_profile_uncertainty:
+  name: Acknowledge uncertain profile start
+  description: >-
+    Clear the persistent start lock only after physically checking the machine.
+    Performs a fresh idle read; never sends a control command. This is not stop.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      name: Confirmation
+      description: Type MACHINE CHECKED after physically checking the machine is safe and idle.
+      required: true
+      example: MACHINE CHECKED
+      selector:
+        text:
+
 benchmark_read_only_sampling:
   name: Benchmark read-only sampling
   description: >-

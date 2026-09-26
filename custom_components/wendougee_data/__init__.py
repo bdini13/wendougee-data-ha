@@ -29,7 +29,7 @@ from .const import (
 from .coordinator import WendougeeCoordinator
 from .fast_capture import RuntimeTrace, SamplingBenchmark
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH, Platform.BUTTON]
 CONFIG_SCHEMA = vol.Schema(
     {
         vol.Optional(DOMAIN): vol.Schema(
@@ -238,6 +238,22 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             "elapsed_seconds": trace.elapsed_seconds,
         }
 
+    async def acknowledge_profile_uncertainty(call: ServiceCall) -> None:
+        coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
+        await coordinator.async_acknowledge_profile_uncertainty()
+
+    hass.services.async_register(
+        DOMAIN,
+        "acknowledge_profile_uncertainty",
+        acknowledge_profile_uncertainty,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("MACHINE CHECKED"),
+            }
+        ),
+    )
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_CAPTURE_BASELINE,
@@ -291,6 +307,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.config_entries.async_update_entry(entry, title=DEVICE_DISPLAY_NAME)
     coordinator = WendougeeCoordinator(hass, entry)
     await coordinator.activity.async_load()
+    await coordinator.async_load_control_state()
     capture_claimed = False
     try:
         if entry.data.get(CONF_CAPTURE_BASELINE) is True:
@@ -303,11 +320,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             coordinator.take_cached_baseline_frames()
         entry.runtime_data = coordinator
+        entry.async_on_unload(entry.add_update_listener(_async_options_updated))
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     except BaseException:
         await coordinator.async_shutdown()
         raise
     return True
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

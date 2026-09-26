@@ -9,6 +9,7 @@ PROTOCOL_FILES = (
     "__init__.py",
     "const.py",
     "controls.py",
+    "control_session.py",
     "crc.py",
     "events.py",
     "modbus.py",

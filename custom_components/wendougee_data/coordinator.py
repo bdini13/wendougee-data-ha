@@ -8,8 +8,11 @@ from datetime import UTC, datetime, timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from ._protocol.control_session import ControlRejected
 from ._protocol.reads import ReadOperation
 from ._protocol.state import (
     Configuration,
@@ -28,6 +31,7 @@ from .const import (
     MIN_POLL_INTERVAL,
     device_id,
 )
+from .control import execute_boiler, execute_profile, verify_idle
 from .fast_capture import (
     RuntimeTrace,
     SamplingBenchmark,
@@ -78,6 +82,104 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self._connection_lock = asyncio.Lock()
         self.fast_sample_hz: float | None = None
         self.last_sampling_benchmark: SamplingBenchmark | None = None
+        self.entry = entry
+        self.profile_start_locked = False
+        self._control_store = Store(
+            hass, 1, f"wendougee_data.controls.{device_id(self.address)}", private=True
+        )
+
+    async def async_load_control_state(self) -> None:
+        """An uncertain toggle stays blocked across reloads and restarts."""
+        saved = await self._control_store.async_load()
+        self.profile_start_locked = bool(saved and saved.get("profile_start_locked"))
+
+    async def _save_profile_lock(self, locked: bool) -> None:
+        # A failed disk write must never unlock the in-memory guard.
+        if locked:
+            self.profile_start_locked = True
+        await self._control_store.async_save({"profile_start_locked": locked})
+        self.profile_start_locked = locked
+        self.async_update_listeners()
+
+    def _require_control(self, option: str) -> None:
+        if self.entry.options.get(option) is not True:
+            raise HomeAssistantError(
+                "This control is not enabled in integration options"
+            )
+        if self.stopped:
+            raise HomeAssistantError("Integration stopped")
+
+    async def async_set_boiler(self, setting, enabled: bool) -> None:
+        """Publish feedback only after a verified complete configuration readback."""
+        self._require_control("allow_boiler_control")
+        async with self._connection_lock:
+            self._require_control("allow_boiler_control")
+            self._poll_task = asyncio.current_task()
+            try:
+                async with asyncio.timeout(90):
+                    self.configuration = await execute_boiler(
+                        self.hass, self.address, setting, enabled
+                    )
+                self.async_set_updated_data(self.data)
+            except ControlRejected as error:
+                raise HomeAssistantError(str(error)) from None
+            except Exception:
+                self.async_set_update_error(UpdateFailed("Control result uncertain"))
+                raise HomeAssistantError(
+                    "Boiler result uncertain; refresh and check the machine "
+                    "before retrying"
+                ) from None
+            finally:
+                self._poll_task = None
+
+    async def async_start_profile(self) -> None:
+        """Never queue a delayed start or repeat an uncertain toggle."""
+        self._require_control("allow_profile_start")
+        if self._connection_lock.locked():
+            raise HomeAssistantError("Bluetooth operation busy; start was not queued")
+        if self.profile_start_locked:
+            raise HomeAssistantError(
+                "Previous profile start is uncertain; inspect the machine "
+                "and acknowledge it first"
+            )
+        async with self._connection_lock:
+            self._poll_task = asyncio.current_task()
+            try:
+                # Persist before touching the machine: process death also locks retries.
+                await self._save_profile_lock(True)
+                async with asyncio.timeout(90):
+                    telemetry, state = await execute_profile(self.hass, self.address)
+                self.operating_state = state
+                self.activity.observe(telemetry, state)
+                await self._save_profile_lock(False)
+                self.async_set_updated_data(telemetry)
+            except ControlRejected as error:
+                await self._save_profile_lock(False)
+                raise HomeAssistantError(str(error)) from None
+            except Exception:
+                raise HomeAssistantError(
+                    "Profile start result uncertain; further starts are locked. "
+                    "Check the machine physically before acknowledging uncertainty."
+                ) from None
+            finally:
+                self._poll_task = None
+
+    async def async_acknowledge_profile_uncertainty(self) -> None:
+        """Explicit acknowledgement also requires a new idle read; never writes."""
+        self._require_control("allow_profile_start")
+        async with self._connection_lock:
+            self._require_control("allow_profile_start")
+            self._poll_task = asyncio.current_task()
+            try:
+                async with asyncio.timeout(30):
+                    await verify_idle(self.hass, self.address)
+                await self._save_profile_lock(False)
+            except Exception:
+                raise HomeAssistantError(
+                    "Unable to verify idle; start remains locked"
+                ) from None
+            finally:
+                self._poll_task = None
 
     def _record_poll_success(self) -> None:
         """Record privacy-safe health evidence for a completed coordinator poll."""

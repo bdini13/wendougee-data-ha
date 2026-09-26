@@ -1,5 +1,17 @@
 {
   "title": "WENDOUGEE DATA S",
+  "options": {
+    "step": {
+      "init": {
+        "title": "Enable experimental machine controls",
+        "description": "Controls operate real heaters and the pump. Enable only for an attended commissioning session. Setup never fires a control. Profile start uses the already selected mode-2 profile, not necessarily the paddle-bound profile. Prepare the machine and cup before starting. No remote emergency stop, setpoint writes, profile uploads or schedules are provided.",
+        "data": {
+          "allow_boiler_control": "Enable independent brew and steam boiler switches",
+          "allow_profile_start": "Enable start of the currently selected stored profile"
+        }
+      }
+    }
+  },
   "config": {
     "step": {
       "user": {
