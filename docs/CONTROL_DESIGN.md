@@ -2,7 +2,9 @@
 
 Status: **0.3.0 adds guarded attended cleaning to the 0.2.0 opt-in controls**.
 The dashboard schedule helpers remain inert planning inputs. Transactions have
-synthetic protocol and HA framework coverage; physical commissioning is pending.
+synthetic protocol and HA framework coverage; one live steam-off readback and
+one attended cleaning-to-idle/unchanged-settings test passed. Broader commissioning
+remains pending.
 No hardware control was fired during implementation/deployment.
 
 The owner clarified that "default stored profile" means the **physical paddle's
@@ -109,6 +111,7 @@ return to idle and unchanged configuration; it exposes no stop toggle. It contin
 recording the observed active-to-idle timestamp as **Last observed backflush**.
 See [cleaning implementation and limits](CLEANING_CONTROL.md).
 
-Attended hardware commissioning remains required to confirm coil 155, the state
-transition, physical repetitions/timing, cancellation behavior and connection-loss
-behavior on this exact DATA S. These are not established by synthetic tests.
+One attended coil-155 start produced cleaning then idle with unchanged settings
+on this DATA S. Physical repetition/timing confirmation, cancellation behavior and
+connection-loss behavior remain unverified. One successful start does not establish
+those other properties.

@@ -107,7 +107,7 @@ All addresses below are **decimal**; FC denotes Modbus function code. Do not exe
 | A06 | Live pressure/flow target | Impl: FC10 at 1419/count 2: pressure × 10 or flow × 10, other field zero [G-control] | — | Internal live-control API, withheld |
 | A07 | Change regulator during a running shot | Impl limitation: GeeFlow declares live mode switching unsupported [G-profile-cap] | — | Do not promise pressure↔flow switching |
 | A08 | Cleaning duration/rest/repetitions | Impl: FC10 registers 0/1/2; first two in tenths of seconds [G-control] | Read once as 5 s / 5 s / 3; no write proof | Advanced configuration |
-| A09 | Cleaning start/stop | Impl: coil 155 pulse, same action for both directions with state guards [G-control] | — | Attended maintenance action only |
+| A09 | Cleaning start/stop | Impl: coil 155 pulse, same action for both directions with state guards [G-control] | One attended start observed cleaning then idle, all settings unchanged; stop untested and not exposed | Opt-in attended start only |
 | A10 | Independent valve/steam/hot-water actuation | Conflict/Absent: 154 ambiguous; no established DATA S remote steam/hot-water endpoint | — | Excluded until evidence exists |
 | A11 | Daily/deep cleaning reminders | GeeFlow 1.0.2 stores reminder intervals/due dates in app-local preferences [G-maint-store]; “deep” reuses A08/A09 with a separately saved program and defaults to twice the daily cycle count [G-maint-default], [G-maint-start] | Last observed backflush is tracked locally in HA; no distinct machine reminder/read endpoint | HA maintenance helpers/history, not a BLE entity |
 
