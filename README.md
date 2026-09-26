@@ -19,7 +19,7 @@ Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low En
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
 > broader shot-transition validation remain pending. Boiler schedules are planning helpers;
 > schedules do not run automatically. Steam-off has one verified command/readback
-> test; cleaning is simulation-tested, with live commissioning pending.
+> test; one attended cleaning start/return-to-idle and unchanged-settings test passed.
 > Do not use these sensors as safety interlocks.
 
 Latest evidence, **September 26, 2026**: 360/360 paired samples at 2.003 Hz,
@@ -127,7 +127,7 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Verification baseline | **218 local tests passing:** 157 protocol/package + 61 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
 | Deployment / release | 0.3.0 installed after a fresh full backup, verified archive and configuration check; not a published HACS release |
-| Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; cleaning live test pending |
+| Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback and cleaning-to-idle/unchanged-settings each verified once; physical cleaning repetition confirmation pending |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 

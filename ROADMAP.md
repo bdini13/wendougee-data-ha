@@ -63,7 +63,8 @@ Exit criterion: documented recovery behavior and a usable monitoring integration
 ## 4. Carefully gated controls
 
 - [x] Implement opt-in attended cleaning with fresh stored-parameter reads, unchanged settings, exact pulse echoes, full-window observation and durable uncertainty guard (0.3.0).
-- [ ] Perform the newly approved supervised cleaning test after deployment and fresh physical readiness confirmation; compare observed state with actual repetitions.
+- [x] Perform one supervised cleaning start after fresh readiness approval; observe cleaning then idle and verify all configuration unchanged (2026-09-26).
+- [ ] Compare the successful cleaning-state test with the owner's physical repetition-count observation.
 
 - [ ] Validate conservative setting ranges, polarity, response correlation, readback and persistence.
 - [x] Implement opt-in boiler enable switches and a stored mode-2 profile start button, with synthetic transaction tests and fail-closed guards (0.2.0, requested by owner).

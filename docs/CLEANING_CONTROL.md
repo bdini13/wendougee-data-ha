@@ -61,8 +61,22 @@ available, and the Espresso dashboard's 33 entity references resolved without
 unavailable entities. Dashboard configuration was read back exactly and its three
 maintenance-template branches validated against HA. No visual browser QA was done.
 
-No real cleaning activation has yet been performed with 0.3.0. An observed cleaning
-state followed by idle will establish that state transition, not cleaning effectiveness,
-exact physical repetition count, chemical suitability, cancellation safety or
-loss-of-connection behavior. The live test needs a fresh readiness confirmation
-after deployment; deployment/setup/reload never starts cleaning by itself.
+### First attended live test · 2026-09-26
+
+After deployment, the owner freshly confirmed presence, fitted blind/backflush
+basket, water readiness and app disconnection, and approved one stored program.
+One HA service invocation was sent at 18:14:04 UTC (14:14:04 EDT). It returned:
+
+- Program: 5 s cleaning, 5 s standing, 3 repetitions; no parameter writes.
+- Result: `cleaning_observed_then_idle`; 34 observations across 30.491 seconds
+  of monitoring after confirmed start, including two successive idle reads.
+- Peak reported pump pressure: 9.9 bar, not an independently calibrated measurement.
+- All 37 configuration registers unchanged after activation and at final readback.
+- Last observed backflush updated to 18:14:36 UTC; uncertainty lock cleared.
+- One start/release pair only; no retry, stop, boiler or profile command.
+
+This verifies one real HA-initiated cleaning-state transition and unchanged
+configuration. Owner confirmation of all three physical repetitions is still
+pending. It does not prove cleaning effectiveness, chemical suitability,
+cancellation safety or loss-of-connection behavior. Future attended tests still
+need fresh readiness confirmation; deployment/setup/reload never starts cleaning.

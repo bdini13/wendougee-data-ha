@@ -8,7 +8,9 @@ Source audit: 2026-09-20; live-read update: 2026-09-26. Target: Bobby's WENDOUGE
 stored program unchanged. The owner's app screenshots show 5 s cleaning, 5 s
 standing and 3 repetitions, agreeing with the read-only decode. Parameter editing
 is still app-only; the pilot rejects programs over 120 seconds. Synthetic tests
-pass; no HA-initiated cleaning cycle has yet been performed. See
+pass; one attended HA start observed cleaning then idle with all 37 configuration
+words unchanged (5 s / 5 s / 3, 9.9 bar reported peak). Physical repetition-count
+confirmation remains pending. See
 [cleaning control](docs/CLEANING_CONTROL.md).
 
 **0.2.0 control implementation update:** B01/B02 now have opt-in boiler switches;

@@ -19,8 +19,12 @@ post-restart service registration and 22 healthy telemetry entities verified.
 Cleaning opt-in enabled without activation; uncertainty lock is clear. Espresso
 dashboard saved with a private rollback copy, exact readback, all 33 entity
 references present/available and three maintenance-template branches validated.
-No cleaning command has been sent yet: get fresh readiness/app-disconnected
-confirmation after deployment before the attended test. See `docs/CLEANING_CONTROL.md`.
+After fresh readiness/app-disconnected approval, one live cleaning invocation at
+18:14:04 UTC succeeded: 5 s / 5 s / 3, cleaning then idle, 34 observations over
+30.491 s, 9.9 bar reported peak, all 37 configuration words unchanged. Last
+backflush is 18:14:36 UTC; uncertainty lock clear. No retry or stop sent. Owner
+confirmation of three physical repetitions pending. Both GitHub CI jobs passed
+for implementation commit `f5edd00`. See `docs/CLEANING_CONTROL.md`.
 
 **Latest shot evidence · 2026-09-26:** a complete owner-operated paddle shot was
 captured read-only at 2 Hz (360 pairs over 180 s; all 720 frames revalidated).
