@@ -6,6 +6,14 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Latest live control evidence · 2026-09-26 17:28:24 UTC:** owner was home,
+reported steam on and explicitly requested off. One HA steam-off action succeeded;
+fresh baselines bracketed it. Steam-enable register 6 changed 0 → 1, brew stayed
+enabled, and all other words in the 37-register configuration stayed unchanged.
+HA also reported steam off. This verifies the steam-off command/readback path,
+not independent heater-power measurement, the on direction or brew-boiler writes.
+No remote brew/shot action was sent. See `docs/LIVE_VALIDATION_2026-09-21.md`.
+
 **0.2.0 implementation checkpoint:** owner requested separate boiler on/off and
 default stored-shot activation. Implemented separate opt-in categories, two
 switches, a current-active-mode-2 profile button and Espresso dashboard controls.

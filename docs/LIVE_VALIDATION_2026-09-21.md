@@ -511,6 +511,30 @@ trace capture.
 
 No control, configuration or FF55 command was sent during this soak.
 
+## 2026-09-26: explicitly approved steam-boiler off transition
+
+After the owner reported being home, enabling steam, and explicitly requested
+turning it back off, integration 0.2.0 completed one `switch.turn_off` action
+targeting only the steam boiler. Verification completed at **17:28:24 UTC**.
+
+- A fresh read-only baseline before the action reported steam enabled and brew
+  enabled (registers 6 and 7 both zero).
+- The installed control path required fresh idle state, one exact FC06 echo,
+  and complete 37-register configuration readback before returning success.
+- A separate fresh baseline after the action reported steam disabled (register
+  6 changed to 1) and brew still enabled (register 7 remained zero).
+- Comparing the complete pre/post configuration found **only register 6 changed**.
+  HA's steam switch also reported `off`.
+- No boiler-on action, brew activation, profile change, setpoint change, or retry
+  was performed by the agent. The owner supplied the initial steam-on condition.
+
+An earlier off request at 16:10:48 UTC found steam already disabled before and
+afterward, so it did not demonstrate a transition. This later test does validate
+the steam-off command/acknowledgement/readback path on the exact machine. It does
+not independently measure heater electrical power or cooling, validate the
+agent-driven on direction or brew-boiler writes, or establish schedule/fault safety.
+Raw responses and credentials were not published.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -538,8 +562,10 @@ No control, configuration or FF55 command was sent during this soak.
   reference, a graduated volume or a scale.
 - Zero activity values do not validate dynamic units, signed scale behavior or
   shot-state transitions.
-- Boiler-enable agreement does not validate write polarity or authorize a
-  control test.
+- Earlier read-only boiler-enable agreement did not validate write polarity.
+  The separately approved steam-off transition above now verifies that one
+  command/readback direction; other controls still need their own approval and
+  validation. Heater power and physical cooling were not independently measured.
 - Firmware/model-detail queries, official-app coexistence, deliberate
   disconnect recovery, disabled-entry behavior and long-duration polling have
   not been validated. One restart and one config-entry reload did succeed.
