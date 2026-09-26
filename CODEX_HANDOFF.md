@@ -6,6 +6,22 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.3.0 cleaning implementation:** owner approved adding a guarded cleaning action
+and supplied app screenshots showing cleaning 5 s / standing 5 s / count 3, matching
+read-only settings. Implemented coil-155 start/release only, fresh program/idle/alarm
+guards, exact echoes, full unchanged config checks, nominal-window monitoring and
+durable cleaning uncertainty lock (also blocks profile start). Stored parameters
+are never rewritten. Pilot accepts run/rest 1–60 s, count 1–10, total including
+standing ≤120 s; reject rather than clamp. Separate opt-in, button, service and
+Espresso confirmation card. No remote stop or automatic retry. All 218 tests pass
+(157 protocol/package + 61 HA). Installed after full backup, checksum/config check;
+post-restart service registration and 22 healthy telemetry entities verified.
+Cleaning opt-in enabled without activation; uncertainty lock is clear. Espresso
+dashboard saved with a private rollback copy, exact readback, all 33 entity
+references present/available and three maintenance-template branches validated.
+No cleaning command has been sent yet: get fresh readiness/app-disconnected
+confirmation after deployment before the attended test. See `docs/CLEANING_CONTROL.md`.
+
 **Latest shot evidence · 2026-09-26:** a complete owner-operated paddle shot was
 captured read-only at 2 Hz (360 pairs over 180 s; all 720 frames revalidated).
 Paddle activity asserted raw state `0x2`, decoded profile, then returned idle.

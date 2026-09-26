@@ -170,6 +170,12 @@ class WendougeeOptionsFlow(OptionsFlow):
                             "allow_profile_start", False
                         ),
                     ): bool,
+                    vol.Optional(
+                        "allow_cleaning_control",
+                        default=self.config_entry.options.get(
+                            "allow_cleaning_control", False
+                        ),
+                    ): bool,
                 }
             ),
         )

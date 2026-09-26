@@ -1,7 +1,7 @@
 """Explicit boiler-enable and stored-profile transactions, without retries.
 
 Only mode 2 of the already selected active profile is accepted. No profile,
-setpoint, mode selector, cleaning command or arbitrary address is writable.
+setpoint, mode selector or arbitrary address is writable.
 """
 
 import asyncio
@@ -35,6 +35,8 @@ class Command(Enum):
     BREW_OFF = (6, 7, 1)
     PROFILE_PRESS = (5, 150, 0xFF00)
     PROFILE_RELEASE = (5, 150, 0)
+    CLEANING_PRESS = (5, 155, 0xFF00)
+    CLEANING_RELEASE = (5, 155, 0)
 
 
 def command_request(command: Command) -> bytes:
@@ -108,11 +110,17 @@ class ControlSession(ReadSession):
         only a best-effort release is sent; the original error remains an error.
         This is cleanup, never another press or a retry of an uncertain action.
         """
+        await self.release_press(Command.PROFILE_RELEASE)
+
+    async def release_press(self, command: Command) -> None:
+        """Deassert only a known momentary input, even after quarantine."""
+        if command not in (Command.PROFILE_RELEASE, Command.CLEANING_RELEASE):
+            raise ValueError("Only a momentary release is allowed")
         async with asyncio.timeout(3):
             if self._failure is None:
-                await self.transact(Command.PROFILE_RELEASE)
+                await self.transact(command)
             else:
-                await self._transport.send(command_request(Command.PROFILE_RELEASE))
+                await self._transport.send(command_request(command))
 
 
 async def _idle(session: ControlSession) -> OperatingState:

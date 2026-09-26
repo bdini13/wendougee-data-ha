@@ -1,6 +1,16 @@
 # Experimental Home Assistant integration
 
-## 0.2.0 opt-in controls
+## 0.3.0 attended cleaning
+
+The new **Start cleaning** button and `wendougee_data.start_cleaning` action use
+the machine's stored run/standing/count parameters without changing them. Enable
+the separate cleaning option and prepare the blind basket for attended use. The
+action observes the nominal program window and return to idle, and retains a
+persistent lock on any uncertain result. It neither retries nor sends a stop toggle.
+See [cleaning settings, limits and recovery](CLEANING_CONTROL.md). Live cleaning
+commissioning is still pending; installation does not run a cycle.
+
+## Existing boiler/profile controls
 
 Version 0.2.0 adds independent **Steam boiler** / **Brew boiler** switches and
 **Start stored profile**. Open the integration's Configure/options dialog to
@@ -9,7 +19,7 @@ The button starts the current active stored mode-2 profile, not necessarily the
 paddle-bound recipe. It does not select or upload a profile. The boiler switches
 do not change temperature targets. Hardware commissioning remains pending.
 
-On the target host, **only the boiler switches are enabled**. The owner requested
+The target's boiler switches are enabled; cleaning has its own opt-in. The owner requested
 the paddle-bound recipe, whose remote trigger is not established; the different
 app-selected-profile control remains off. Espresso shows that distinction rather
 than exposing a misleading shot button. See [paddle evidence](PADDLE_PROFILE.md).

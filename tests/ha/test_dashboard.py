@@ -50,9 +50,18 @@ def test_dashboard_exposes_boilers_but_not_unverified_paddle_start():
     } == {
         "switch.wendougee_data_s_steam_boiler",
         "switch.wendougee_data_s_brew_boiler",
+        "button.wendougee_data_s_start_cleaning",
     }
     cards = dashboard["views"][0]["sections"][1]["cards"]
     assert any("Paddle-bound shot" in c.get("content", "") for c in cards)
+    maintenance = dashboard["views"][0]["sections"][-1]["cards"]
+    cleaning = next(
+        c
+        for c in maintenance
+        if c.get("entity") == "button.wendougee_data_s_start_cleaning"
+    )
+    assert cleaning["tap_action"]["confirmation"]["text"]
+    assert cleaning["tap_action"]["perform_action"] == "button.press"
 
     # Fixed gauge ranges become incorrect when HA converts °C/bar to °F/psi.
     assert "gauge" not in set(_card_types(dashboard))

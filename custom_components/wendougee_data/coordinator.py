@@ -31,7 +31,7 @@ from .const import (
     MIN_POLL_INTERVAL,
     device_id,
 )
-from .control import execute_boiler, execute_profile, verify_idle
+from .control import execute_boiler, execute_cleaning, execute_profile, verify_idle
 from .fast_capture import (
     RuntimeTrace,
     SamplingBenchmark,
@@ -84,6 +84,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self.last_sampling_benchmark: SamplingBenchmark | None = None
         self.entry = entry
         self.profile_start_locked = False
+        self.cleaning_start_locked = False
         self._control_store = Store(
             hass, 1, f"wendougee_data.controls.{device_id(self.address)}", private=True
         )
@@ -92,12 +93,18 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         """An uncertain toggle stays blocked across reloads and restarts."""
         saved = await self._control_store.async_load()
         self.profile_start_locked = bool(saved and saved.get("profile_start_locked"))
+        self.cleaning_start_locked = bool(saved and saved.get("cleaning_start_locked"))
 
     async def _save_profile_lock(self, locked: bool) -> None:
         # A failed disk write must never unlock the in-memory guard.
         if locked:
             self.profile_start_locked = True
-        await self._control_store.async_save({"profile_start_locked": locked})
+        await self._control_store.async_save(
+            {
+                "profile_start_locked": locked,
+                "cleaning_start_locked": self.cleaning_start_locked,
+            }
+        )
         self.profile_start_locked = locked
         self.async_update_listeners()
 
@@ -137,7 +144,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self._require_control("allow_profile_start")
         if self._connection_lock.locked():
             raise HomeAssistantError("Bluetooth operation busy; start was not queued")
-        if self.profile_start_locked:
+        if self.profile_start_locked or self.cleaning_start_locked:
             raise HomeAssistantError(
                 "Previous profile start is uncertain; inspect the machine "
                 "and acknowledge it first"
@@ -177,6 +184,77 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             except Exception:
                 raise HomeAssistantError(
                     "Unable to verify idle; start remains locked"
+                ) from None
+            finally:
+                self._poll_task = None
+
+    async def _save_cleaning_lock(self, locked: bool) -> None:
+        """Preserve both guards and never clear memory after a failed disk write."""
+        if locked:
+            self.cleaning_start_locked = True
+        await self._control_store.async_save(
+            {
+                "profile_start_locked": self.profile_start_locked,
+                "cleaning_start_locked": locked,
+            }
+        )
+        self.cleaning_start_locked = locked
+        self.async_update_listeners()
+
+    def _observe_cleaning(self, telemetry, state, configuration) -> None:
+        self.configuration = configuration
+        self.operating_state = state
+        self.activity.observe(telemetry, state)
+        self.async_set_updated_data(telemetry)
+
+    async def async_start_cleaning(self) -> dict:
+        """Explicit attended start; persist uncertainty before the first command."""
+        self._require_control("allow_cleaning_control")
+        if self._connection_lock.locked():
+            raise HomeAssistantError(
+                "Bluetooth operation busy; cleaning was not queued"
+            )
+        if self.cleaning_start_locked or self.profile_start_locked:
+            raise HomeAssistantError(
+                "Previous control is uncertain; inspect the machine first"
+            )
+        async with self._connection_lock:
+            self._poll_task = asyncio.current_task()
+            try:
+                await self._save_cleaning_lock(True)
+                async with asyncio.timeout(180):
+                    result = await execute_cleaning(
+                        self.hass, self.address, self._observe_cleaning
+                    )
+                await self.activity.async_save()
+                await self._save_cleaning_lock(False)
+                return result
+            except ControlRejected as error:
+                await self._save_cleaning_lock(False)
+                raise HomeAssistantError(str(error)) from None
+            except Exception:
+                self.async_set_update_error(UpdateFailed("Cleaning result uncertain"))
+                raise HomeAssistantError(
+                    "Cleaning result uncertain; further starts are locked. "
+                    "Check the machine physically; no retry or stop pulse was sent."
+                ) from None
+            finally:
+                self._poll_task = None
+
+    async def async_acknowledge_cleaning_uncertainty(self) -> None:
+        """Clear only on explicit physical-check acknowledgement and fresh idle."""
+        self._require_control("allow_cleaning_control")
+        if self._connection_lock.locked():
+            raise HomeAssistantError("Bluetooth operation busy")
+        async with self._connection_lock:
+            self._poll_task = asyncio.current_task()
+            try:
+                async with asyncio.timeout(30):
+                    await verify_idle(self.hass, self.address)
+                await self._save_cleaning_lock(False)
+            except Exception:
+                raise HomeAssistantError(
+                    "Unable to verify idle; cleaning remains locked"
                 ) from None
             finally:
                 self._poll_task = None

@@ -20,6 +20,47 @@ capture_read_only_baseline:
       selector:
         text:
 
+start_cleaning:
+  name: Start stored cleaning program
+  description: >-
+    Attended backflush only. Reads the current cleaning time, standing time and
+    count without changing them; starts once and monitors through the program
+    window for return to idle. Do not retry an uncertain result. No remote stop.
+    The pilot accepts programs up to 120 seconds including standing intervals.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      name: Backflush readiness
+      description: Type BACKFLUSH READY with the correct blind basket fitted and machine attended.
+      required: true
+      example: BACKFLUSH READY
+      selector:
+        text:
+
+acknowledge_cleaning_uncertainty:
+  name: Acknowledge uncertain cleaning result
+  description: >-
+    After physically checking the machine, verify fresh idle and clear the
+    persistent cleaning-start lock. This does not stop a running cycle.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      name: Confirmation
+      required: true
+      example: MACHINE CHECKED
+      selector:
+        text:
+
 acknowledge_profile_uncertainty:
   name: Acknowledge uncertain profile start
   description: >-

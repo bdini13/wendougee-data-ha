@@ -25,12 +25,19 @@ async def async_get_config_entry_diagnostics(
         "schema_version": 4,
         "read_only": not any(
             entry.options.get(key) is True
-            for key in ("allow_boiler_control", "allow_profile_start")
+            for key in (
+                "allow_boiler_control",
+                "allow_profile_start",
+                "allow_cleaning_control",
+            )
         ),
         "controls": {
             "boiler_control_enabled": entry.options.get("allow_boiler_control") is True,
             "profile_start_enabled": entry.options.get("allow_profile_start") is True,
             "profile_start_locked": coordinator.profile_start_locked,
+            "cleaning_control_enabled": entry.options.get("allow_cleaning_control")
+            is True,
+            "cleaning_start_locked": coordinator.cleaning_start_locked,
         },
         "last_update_success": coordinator.last_update_success,
         "last_error": coordinator.last_error,

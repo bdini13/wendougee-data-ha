@@ -235,6 +235,6 @@ async def test_control_reply_faults_quarantine_without_retry(fault):
 def test_commands_exclude_temperature_profile_upload_and_arbitrary_addresses():
     requests = [command_request(c) for c in Command]
     assert {int.from_bytes(r[2:4], "big") for r in requests if r[1] == 6} == {6, 7}
-    assert {int.from_bytes(r[2:4], "big") for r in requests if r[1] == 5} == {150}
+    assert {int.from_bytes(r[2:4], "big") for r in requests if r[1] == 5} == {150, 155}
     with pytest.raises(ValueError):
         command_request("arbitrary")

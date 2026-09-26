@@ -1,7 +1,10 @@
 """Short, explicitly requested control sessions on HA's shared Bluetooth route."""
 
+import asyncio
+
 from homeassistant.core import HomeAssistant
 
+from ._protocol.cleaning import cleaning_duration, start_cleaning
 from ._protocol.control_session import (
     Command,
     ControlRejected,
@@ -11,7 +14,7 @@ from ._protocol.control_session import (
     start_stored_profile,
 )
 from ._protocol.controls import BoilerSetting, build_boiler_setting_request
-from ._protocol.state import decode_operating_state
+from ._protocol.state import decode_configuration, decode_operating_state
 from ._protocol.telemetry import parse_telemetry_response
 from .bluetooth import HomeAssistantReadTransport
 
@@ -68,3 +71,64 @@ async def verify_idle(hass: HomeAssistant, address):
             raise ControlRejected(
                 "Machine must report idle before clearing uncertainty"
             )
+
+
+async def execute_cleaning(hass: HomeAssistant, address, observe):
+    """Keep one connection through the stored program, observing without retries.
+
+    A return to idle is evidence of state, not proof of cleaning effectiveness
+    or that every programmed repetition physically ran. Never send a stop toggle.
+    """
+    commands = READ_COMMANDS | {Command.CLEANING_PRESS, Command.CLEANING_RELEASE}
+    transport = HomeAssistantControlTransport(hass, address, commands)
+    async with ControlSession(transport) as session:
+        configuration, state = await start_cleaning(session)
+        duration = cleaning_duration(configuration)
+        # Preserve the confirmed start even if a short program ends before the
+        # next state read. Telemetry and state reads are not atomic snapshots.
+        telemetry = parse_telemetry_response(await session.transact(Command.TELEMETRY))
+        observe(telemetry, state, configuration)
+        loop = asyncio.get_running_loop()
+        started = loop.time()
+        idle_samples = 0
+        sample_count = 1
+        pressure_max = telemetry.pressure_bar
+        states = {"cleaning"}
+        async with asyncio.timeout(duration + 20):
+            while True:
+                telemetry = parse_telemetry_response(
+                    await session.transact(Command.TELEMETRY)
+                )
+                state = decode_operating_state(await session.transact(Command.STATE))
+                if (
+                    state.state not in ("cleaning", "idle")
+                    or telemetry.water_level_alarm
+                ):
+                    raise ValueError("Unexpected state or water alarm during cleaning")
+                observe(telemetry, state, configuration)
+                sample_count += 1
+                pressure_max = max(pressure_max, telemetry.pressure_bar)
+                states.add(state.state)
+                idle_samples = idle_samples + 1 if state.state == "idle" else 0
+                elapsed = loop.time() - started
+                if elapsed >= duration and idle_samples >= 2:
+                    after = decode_configuration(
+                        await session.transact(Command.CONFIGURATION)
+                    )
+                    if after.raw_registers != configuration.raw_registers:
+                        raise ValueError(
+                            "Cleaning configuration changed during observation"
+                        )
+                    return {
+                        "schema": "wendougee-data-cleaning-result/v1",
+                        "result": "cleaning_observed_then_idle",
+                        "cleaning_time_seconds": configuration.cleaning_time_seconds,
+                        "standing_time_seconds": configuration.cleaning_rest_seconds,
+                        "cleaning_count": configuration.cleaning_repetitions,
+                        "settings_unchanged": True,
+                        "observed_seconds": elapsed,
+                        "sample_count": sample_count,
+                        "peak_pressure_bar": pressure_max,
+                        "observed_states": sorted(states | {"cleaning"}),
+                    }
+                await asyncio.sleep(0.5)

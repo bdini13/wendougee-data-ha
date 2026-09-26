@@ -1,6 +1,6 @@
 # Boiler scheduling and control safety design
 
-Status: **0.2.0 implements opt-in boiler switches and stored-profile start**.
+Status: **0.3.0 adds guarded attended cleaning to the 0.2.0 opt-in controls**.
 The dashboard schedule helpers remain inert planning inputs. Transactions have
 synthetic protocol and HA framework coverage; physical commissioning is pending.
 No hardware control was fired during implementation/deployment.
@@ -8,7 +8,7 @@ No hardware control was fired during implementation/deployment.
 The owner clarified that "default stored profile" means the **physical paddle's
 bound recipe**. That activation path is not established. The implemented optional
 app-selected-profile path below is therefore **disabled on the target**, and its
-button is omitted from Espresso. Only the two boiler switches are opted in.
+button is omitted from Espresso. Boilers and cleaning have separate opt-ins.
 See [paddle-binding evidence and the remaining test](PADDLE_PROFILE.md).
 
 ## Implemented control boundary
@@ -103,10 +103,12 @@ retry unsafe.
 
 Upstream implementations use a momentary coil-155 pulse for both starting and
 stopping cleaning. That is a toggle-like action, not an idempotent off command.
-The current integration only observes the cleaning-state bit and records the
-timestamp of an observed active-to-idle transition as **Last observed
-backflush**. It does not start or stop cleaning.
+Version 0.3.0 adds a separately opted-in, guarded cleaning start using the stored
+parameters unchanged. It monitors through the nominal program window and verifies
+return to idle and unchanged configuration; it exposes no stop toggle. It continues
+recording the observed active-to-idle timestamp as **Last observed backflush**.
+See [cleaning implementation and limits](CLEANING_CONTROL.md).
 
-Before any cleaning action exists, an attended session must confirm coil 155,
-the state transition, configured repetitions/timing, safe cancellation behavior
-and loss-of-connection behavior on this exact DATA S.
+Attended hardware commissioning remains required to confirm coil 155, the state
+transition, physical repetitions/timing, cancellation behavior and connection-loss
+behavior on this exact DATA S. These are not established by synthetic tests.

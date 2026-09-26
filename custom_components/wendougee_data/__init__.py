@@ -238,6 +238,38 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             "elapsed_seconds": trace.elapsed_seconds,
         }
 
+    async def start_cleaning(call: ServiceCall) -> dict:
+        coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
+        return await coordinator.async_start_cleaning()
+
+    async def acknowledge_cleaning_uncertainty(call: ServiceCall) -> None:
+        coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
+        await coordinator.async_acknowledge_cleaning_uncertainty()
+
+    hass.services.async_register(
+        DOMAIN,
+        "start_cleaning",
+        start_cleaning,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("BACKFLUSH READY"),
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "acknowledge_cleaning_uncertainty",
+        acknowledge_cleaning_uncertainty,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("MACHINE CHECKED"),
+            }
+        ),
+    )
+
     async def acknowledge_profile_uncertainty(call: ServiceCall) -> None:
         coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
         await coordinator.async_acknowledge_profile_uncertainty()

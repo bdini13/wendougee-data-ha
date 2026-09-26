@@ -214,6 +214,31 @@ views:
           - type: heading
             heading: Maintenance and health
             icon: mdi:tools
+          - type: button
+            entity: button.wendougee_data_s_start_cleaning
+            name: Start stored cleaning program
+            icon: mdi:shimmer
+            show_state: false
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.wendougee_data_s_start_cleaning
+              confirmation:
+                text: >-
+                  Start backflush now using the machine's current cleaning time,
+                  standing time and count? Stay at the machine with the correct
+                  blind basket fitted. Disconnect the official app. Do not repeat
+                  an uncertain action; there is no remote emergency stop.
+            hold_action:
+              action: none
+          - type: markdown
+            content: >-
+              Cleaning reads and preserves the program stored in the machine.
+              Change parameters in the official app; this action does not rewrite
+              them. The attended pilot accepts programs up to 120 seconds including
+              standing intervals. Last backflush means an observed return to idle,
+              not independent proof that the machine is clean.
           - type: tile
             entity: sensor.wendougee_data_s_last_observed_backflush
             name: Last observed backflush

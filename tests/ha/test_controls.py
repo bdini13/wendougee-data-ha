@@ -142,6 +142,7 @@ async def test_options_flow_exposes_separate_control_opt_ins(hass):
     assert configured.options == {
         "allow_boiler_control": True,
         "allow_profile_start": False,
+        "allow_cleaning_control": False,
     }
 
 

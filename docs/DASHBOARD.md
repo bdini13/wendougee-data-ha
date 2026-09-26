@@ -19,6 +19,12 @@ marked pending; no shot-start action is displayed because the user means the
 paddle-bound recipe, not the app-selected recipe. Controls remain experimental
 pending physical commissioning. See [paddle-binding evidence](PADDLE_PROFILE.md).
 
+Version 0.3.0 adds **Start stored cleaning program** in Maintenance and health.
+The button requires an attended-use confirmation and calls the enabled cleaning
+entity; it does not alter run/standing/count settings. Normal app-profile start
+remains absent. See [cleaning control](CLEANING_CONTROL.md) for the pilot envelope,
+monitoring, persistent uncertainty lock and limitations of UI-only confirmation.
+
 Sampling evidence is a dated validation record, not a live benchmark status.
 The selected trace rate is held only in memory and must be re-established after
 an integration reload or restart. Capture updates entities at completion;

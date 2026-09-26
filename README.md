@@ -14,12 +14,13 @@ Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low En
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental integration.** Version 0.2.0 adds opt-in machine controls.
+> **Experimental integration.** Version 0.3.0 adds opt-in attended cleaning.
 > Routine polling defaults to 30 seconds; bounded private traces have sustained
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
 > broader shot-transition validation remain pending. Boiler schedules are planning helpers;
-> schedules do not run automatically. Control transactions are simulation-tested,
-> not yet physically commissioned. Do not use these sensors as safety interlocks.
+> schedules do not run automatically. Steam-off has one verified command/readback
+> test; cleaning is simulation-tested, with live commissioning pending.
+> Do not use these sensors as safety interlocks.
 
 Latest evidence, **September 26, 2026**: 360/360 paired samples at 2.003 Hz,
 8 Hz in a separate short telemetry-only test, and 28 validated passive FF55 events.
@@ -63,10 +64,17 @@ verified. The Espresso dashboard explicitly marks it pending; no substitute shot
 button is shown. See [the paddle-binding evidence](docs/PADDLE_PROFILE.md).
 
 In **Settings → Devices & services → WENDOUGEE DATA S → Configure**, independently
-enable boiler control and stored-profile start. Both options default off.
+enable boiler control, stored-profile start or attended cleaning. All default off.
 
 - **Brew boiler / Steam boiler:** explicit on/off, fresh idle check, exact response
   echo and complete configuration readback. No temperature or other setting writes.
+- **Start cleaning:** reads and preserves the current cleaning time, standing time
+  and repetition count. The owner's app screenshots agree with the current 5 s /
+  5 s / 3 program, but the action is not hard-coded to it. The initial attended
+  pilot accepts programs up to 120 seconds, including standing intervals. It
+  observes cleaning and return to idle, verifies unchanged settings and locks
+  retries on uncertainty. Parameters remain editable in the official app, not HA.
+  See [cleaning setup, recovery and limits](docs/CLEANING_CONTROL.md).
 - **Start stored profile:** uses the profile already selected in the machine/app,
   **not necessarily the paddle-bound profile**. Requires brew enabled, no reported
   water alarm, supported mode 2 and fresh idle state. It neither selects nor uploads
@@ -115,11 +123,11 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | 0.2.0 installed; independent boiler switches opted in; app-profile start opted out; requested paddle trigger pending |
-| Verification baseline | **193 local tests passing:** 145 protocol/package + 48 HA tests, as of 2026-09-26 |
-| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.2.0 files installed through the ESPHome-proxy deployment path |
-| Deployment / release | 0.2.0 installed after a fresh full backup, archive verification and configuration check; telemetry recovered after restart; not a published HACS release |
-| Device controls | 0.2.0 opt-in boiler switches and stored mode-2 profile start; simulation-tested, attended hardware commissioning pending |
+| HA integration | 0.3.0 adds a separate attended-cleaning opt-in; app-profile start remains off and requested paddle trigger pending |
+| Verification baseline | **218 local tests passing:** 157 protocol/package + 61 HA tests, as of 2026-09-26 |
+| Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
+| Deployment / release | 0.3.0 installed after a fresh full backup, verified archive and configuration check; not a published HACS release |
+| Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; cleaning live test pending |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 

@@ -4,6 +4,13 @@ Source audit: 2026-09-20; live-read update: 2026-09-26. Target: Bobby's WENDOUGE
 
 ## What we have, and what remains
 
+**0.3.0 cleaning update:** A09 now has a guarded opt-in start using the current
+stored program unchanged. The owner's app screenshots show 5 s cleaning, 5 s
+standing and 3 repetitions, agreeing with the read-only decode. Parameter editing
+is still app-only; the pilot rejects programs over 120 seconds. Synthetic tests
+pass; no HA-initiated cleaning cycle has yet been performed. See
+[cleaning control](docs/CLEANING_CONTROL.md).
+
 **0.2.0 control implementation update:** B01/B02 now have opt-in boiler switches;
 A04 has an opt-in start-only button for the current active stored mode-2 profile.
 Only B01/B02 are enabled on the target: the owner specifically wants the separately
