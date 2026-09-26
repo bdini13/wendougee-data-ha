@@ -45,7 +45,8 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Run a controlled alternate-proxy A/B test before changing machine state. Proxy 2 receives the target reliably, and the corrected harness connects and completes service discovery.
 - [x] Complete a rollback-safe proxy firmware matrix on Proxy 2. ESPHome 2026.7.2 and 2026.9.0 both connected and returned valid telemetry at about 103 ms and 102 ms respectively; Proxy 2 was restored to verified 2026.9.0.
 - [x] Benchmark telemetry alone through Proxy 2. The bounded ladder accepted 2, 3, 4, 5 and 8 Hz, then rejected 10 Hz after sustaining about 8.01 reads/s; private raw evidence remains excluded from Git.
-- [ ] Confirm the installed HA entry recovers, then rerun its paired-read benchmark before changing the integration's selected rate.
+- [x] Confirm the installed HA entry recovers after a checked Core restart. All 22 enabled entities became available, and the rerun paired-read benchmark again selected 2 Hz.
+- [x] Complete the first private bounded hardware trace: 20 correlated idle samples over 10.00 seconds at 1.99 Hz, stored owner-only with raw evidence excluded from Git.
 - [ ] Capture one user-initiated normal shot at the selected 2 Hz complete-pair rate without sending a control command.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.

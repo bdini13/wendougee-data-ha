@@ -454,6 +454,29 @@ write, boiler, brew, cleaning, calibration, reset or firmware command was sent
 to the espresso machine. Proxy 2 firmware changes were limited to the approved
 test and restoration.
 
+### Home Assistant recovery and first successful private trace
+
+- Home Assistant's configuration check completed successfully, followed by a
+  normal Core restart. The host remained on HA 2026.9.1; no host reboot or
+  integration redeployment was needed.
+- After restart, all 22 enabled WENDOUGEE DATA S entities were available. One
+  entity remained `unknown` because its observed-history event has not yet
+  occurred; no entity was `unavailable`.
+- The approved paired-read benchmark was rerun through HA. It accepted 1 Hz and
+  2 Hz, then rejected 5 Hz for insufficient cadence after sustaining 2.22
+  complete telemetry/state pairs/s with a 441 ms mean and 532 ms maximum round
+  trip. The integration again selected 2 Hz.
+- `capture_read_only_trace` then completed for the first time: 20 correlated
+  telemetry/state samples over 10.00 seconds at 1.99 Hz. The owner-only file is
+  mode `0600`, marked `private_unreviewed`, and remains outside Git.
+- The idle trace held brew temperature from 92.3–92.6 °C and steam temperature
+  from 27.3–27.4 °C. Pressure, dispensed volume and elapsed brew time remained
+  zero; operating state remained `idle` with no unknown bits. These internally
+  consistent values are not a substitute for physical calibration.
+
+No control or configuration command was sent during recovery, benchmarking or
+trace capture.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -482,9 +505,6 @@ test and restoration.
 - Firmware/model-detail queries, official-app coexistence, deliberate
   disconnect recovery, disabled-entry behavior and long-duration polling have
   not been validated. One restart and one config-entry reload did succeed.
-- The installed HA entry has not yet been reloaded and observed after the
-  diagnostic correction, so its current recovery and selected in-memory sample
-  rate remain unconfirmed.
 - The short 8 Hz telemetry-only result does not establish sustained shot-load
   behavior or raise the HA paired-read benchmark's selected 2 Hz rate.
 - The direct Python/Bleak client remains untested on the hardware.
@@ -492,9 +512,8 @@ test and restoration.
 
 ## Recommended next gate
 
-Confirm that the installed HA entry recovers, rerun its paired-read benchmark,
-then run the selected-rate trace during one manually initiated normal shot and
-compare dynamic values with physical references. Keep 8 Hz as a provisional
+Run the selected 2 Hz paired trace during one manually initiated normal shot
+and compare dynamic values with physical references. Keep 8 Hz as a provisional
 telemetry-only ceiling until a longer shot-load test confirms it. Control work
 remains a separate, freshly approved phase.
 
