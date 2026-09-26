@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected HA benchmark selected 2 Hz for complete telemetry-plus-state pairs. A later apparent proxy connection regression was traced to the standalone diagnostic harness omitting the advertisement subscription that owns ESPHome proxy BLE connections. With that fixed, Proxy 2 connected, discovered services and read valid telemetry on both ESPHome 2026.7.2 and restored 2026.9.0; a separate telemetry-only ladder accepted 8 Hz and rejected 10 Hz for insufficient cadence. A configuration-checked HA Core restart restored all 22 enabled entities, the paired benchmark again selected 2 Hz, and a 10-second private trace completed 20 correlated samples. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected HA benchmark selected 2 Hz for complete telemetry-plus-state pairs. A later apparent proxy connection regression was traced to the standalone diagnostic harness omitting the advertisement subscription that owns ESPHome proxy BLE connections. With that fixed, Proxy 2 connected, discovered services and read valid telemetry on both ESPHome 2026.7.2 and restored 2026.9.0; a separate telemetry-only ladder accepted 8 Hz and rejected 10 Hz for insufficient cadence. A configuration-checked HA Core restart restored all 22 enabled entities, the paired benchmark again selected 2 Hz, a 10-second private trace completed 20 correlated samples, and a later three-minute idle soak completed all 360 requested pairs at 2.003 Hz. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
@@ -24,6 +24,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 - Opens a short connection for each poll and disconnects afterward; default interval is 30 seconds.
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.
+- Strictly validates both documented FF55 event-frame families and narrowly decodes the exact-machine periodic opcode-`0x83` binary marker without assigning semantics, constructing commands or changing the HA read transport. A 60-second event-only capture decoded all 19 alternating frames and measured an approximately six-second same-marker period.
 - Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 added UTC poll-health evidence; 0.1.0 adds identifier-free observed-activity state and its lower-bound limitation.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
 - Version 0.1.2 corrects the bounded read-only benchmark to exclude proxy connection setup from sampling time, use the normal 15-second session timeout, and test 1 → 2 → 5 → 10 Hz. It returns privacy-safe stage diagnostics even when no rate passes. The benchmark and private trace action serialize telemetry/state reads, require the literal confirmation `READ ONLY`, never retry an uncertain transaction, and expose no control command.
@@ -60,10 +61,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 |---|---|
 | Local DATA S transport | Expected GATT service/characteristics and one CRC-valid idle telemetry reply observed |
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
-| Python protocol and session layer | Implemented; synthetic fixtures and fake-transport tests |
+| Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.1.2 installed after backup/configuration check and a healthy restart; all 22 enabled entities recovered after a later checked restart; the HA paired benchmark selected 2 Hz and a 10-second private trace completed at 1.99 Hz; no write path is exposed |
-| Verification baseline | **146 local tests passing:** 106 protocol/package + 40 HA tests, as of 2026-09-26 |
+| HA integration | Version 0.1.2 installed after backup/configuration check and a healthy restart; all 22 enabled entities recovered after a later checked restart; the HA paired benchmark selected 2 Hz, a 10-second private trace completed at 1.99 Hz and a three-minute idle soak completed all 360 samples at 2.003 Hz; no write path is exposed |
+| Verification baseline | **157 local tests passing:** 117 protocol/package + 40 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.2 files installed through the ESPHome-proxy deployment path |
 | Deployment / release | 0.1.2 installed after a fresh full backup, archive verification, configuration check and healthy restart; 2 Hz benchmark passed; not a published HACS release |
 | Device controls | Four boiler-setting request shapes are offline-tested but unreachable from HA; live controls remain gated by supervised write/readback validation |
@@ -119,6 +120,8 @@ read-only polling still continues on its documented cadence.
 - [x] Add offline-tested, approval-gated sampling benchmark and private bounded trace capture.
 - [x] Complete a controlled second-proxy A/B test and correct the diagnostic harness's missing proxy-ownership subscription.
 - [x] Complete a rollback-safe ESPHome 2026.7.2/2026.9.0 matrix on Proxy 2; both versions connect and return valid telemetry, and Proxy 2 is restored to 2026.9.0.
+- [x] Add strict passive decoding for the locally observed opcode-`0x83` FF55 marker without exposing a command path.
+- [x] Complete a three-minute 2 Hz paired-read idle soak with all 360 samples returned.
 - [ ] Validate the selected high-rate sampling cadence and one manually initiated shot through the actual ESPHome proxy.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.

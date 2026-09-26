@@ -10,6 +10,7 @@ PROTOCOL_FILES = (
     "const.py",
     "controls.py",
     "crc.py",
+    "events.py",
     "modbus.py",
     "reads.py",
     "session.py",

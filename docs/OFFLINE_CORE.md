@@ -8,6 +8,7 @@ Implemented 2026-09-20. All verification in this pass used synthetic byte fixtur
 - `ReadResponseStream`: bounded fragment assembly and extraction of coalesced FC01/FC03 frames and exception replies; validates CRC, rejects corrupt headers, and fails closed without speculative resynchronization.
 - `validate_read_response`: checks slave, function, exact payload size, total length and CRC; raises a typed exception with the device's Modbus error code.
 - `state.py`: typed, immutable configuration and state. Boiler enable polarity and setting units are explicit. Unknown enum values stay unknown. All 37 configuration words and 24 status bits are retained in memory for private analysis; contradictory flags are not collapsed into a single apparently valid state.
+- `events.py`: passive-only FF55 framing and checksum validation for the two documented event families. It narrowly decodes the exact-machine opcode-`0x83` binary marker observed on 2026-09-26 without assigning a meaning, generating frames or exposing a write path.
 - `ReadSession`: injected transport, serialized requests, bounded setup/read/cleanup, immediate notification of disconnect while awaiting a response, no retries, and quarantine after errors/timeouts/in-flight cancellation.
 - Standalone Bleak adapter: waits for both subscriptions, wires disconnect callbacks, attempts cleanup after partial setup, and rejects any bytes outside the read allowlist.
 - Existing telemetry CLI still sends **only one telemetry request** when explicitly invoked with its read flag. A separate evidence command can send each of the four fixed reads once, but only after an immediate typed confirmation; see [EVIDENCE_COLLECTION.md](EVIDENCE_COLLECTION.md). There is no scan or connection on import.
@@ -20,13 +21,13 @@ The frame extractor understands coalesced frames, but the session expects exactl
 
 Timeout, cancellation after request ownership, response mismatch, device exception, send failure, or disconnect prevents further reads on the same session. A caller must close it and construct a new transport with a fresh connection. There is no automatic reconnect, polling or retry loop. Cancelling a reader that is still waiting for the request lock does not invalidate another reader's transaction.
 
-This is intentionally conservative until captures establish whether the machine emits unsolicited Modbus traffic. FF55 notifications are ignored, and no FF55 initialization command is sent.
+This is intentionally conservative until captures establish whether the machine emits unsolicited Modbus traffic. The read transport ignores FF55 notifications, and no FF55 initialization command is sent. Captured FF55 frames can be inspected separately with the passive parser; parsing them does not change session behavior.
 
 Modbus RTU read replies do not echo the requested register address or contain transaction IDs. A same-shaped unsolicited reply during a pending read cannot be authenticated as that read's response. Serialization and a fresh connection after uncertainty reduce ambiguity, but do not remove this protocol limitation. No implementation should claim complete response correlation on that basis alone.
 
 ## Tests
 
-The protocol/package suite contains 90 tests at the current checkpoint, covering existing CRC/telemetry functionality plus:
+The protocol/package suite contains 117 tests at the current checkpoint, covering existing CRC/telemetry functionality plus:
 
 - known request frames and allowlist enforcement, including rejecting a control frame before transmission;
 - configuration scaling/polarity, unknown values, state conflicts and unknown flags;
@@ -35,6 +36,7 @@ The protocol/package suite contains 90 tests at the current checkpoint, covering
 - serialization, duplicate/unsolicited/late responses, disconnect, timeout and cancellation;
 - setup/send/cleanup failures, hung operations and fresh-session recovery;
 - fake Bleak subscription ordering, write mode selection, disconnect forwarding and one-shot CLI workflow.
+- FF55 variant, length, reserved-byte and checksum validation, plus narrow binary heartbeat-marker decoding and malformed-frame rejection.
 
 Tests label their new fixtures synthetic. They do not recreate or claim to retain the previous native-helper capture. Run `python -m pytest` in the development environment; tests do not require the machine.
 

@@ -19,6 +19,8 @@ For the broader feature inventory, evidence levels, control ambiguities and rema
 - On 2026-09-21, Home Assistant 2026.9.1 discovered the same DATA S through an active ESPHome proxy and completed the four allowlisted reads once. All responses passed the integration's strict function, length and CRC checks. Decoded telemetry was consistent with an idle, cold machine; configuration reported both boiler enables off; alarm detection was enabled; and the operating-state bits decoded as idle with no unknown flags. The user had intentionally left the boilers off, but no physical-display comparison was possible. Raw frames remain private. See [the sanitized live-validation record](LIVE_VALIDATION_2026-09-21.md).
 - Later that day, integration 0.0.8 registered all 23 read-only entities on the target, remained healthy beyond its ten-minute configuration-refresh cadence and completed one config-entry reload. This validates a bounded HA/proxy lifecycle path, not physical field semantics or long-duration reliability.
 - On 2026-09-22, integration 0.0.9 was installed after another full backup. Its redacted schema-3 diagnostics advanced from two to four successful polls with zero failures, retained idle/boilers-off state and reported no unknown operating bits. This validates the new per-runtime health evidence across a short live interval, not an extended soak or physical semantics.
+- On 2026-09-26, a corrected ESPHome-proxy diagnostic session passively received nine checksum-valid, nine-byte FF55 opcode frames from the event characteristic without sending an FF55 initialization command. All used opcode `0x83`, a zero reserved byte, a one-byte payload and the observed `(sum(body) + 1) mod 256` checksum. The payload was a binary marker that alternated between `0` and `1`. A follow-on 60-second event-only subscription captured 19 more frames; all passed the independent decoder and alternated, with each marker recurring at an approximately six-second median period. One pair was delivered together after a longer gap, so exact source timing and marker meaning remain unknown. The fail-closed decoder validates this exact shape without assigning semantics or constructing commands.
+- A later 180-second private HA trace completed all 360 requested telemetry/state pairs at 2.003 Hz. No interval exceeded one second; the longest was 0.820 seconds. The idle machine remained at zero pressure, flow, volume and brew time with no water alarm or unknown state bits. Brew temperature ranged from 92.0–96.6 °C and steam temperature from 28.6–28.8 °C; these are internally consistent observations, not physical calibration.
 
 ## Upstream protocol consensus
 
@@ -116,7 +118,32 @@ Upstream reports two FF55 frame families on the event characteristic:[1]
 - opcode-oriented `FF 55 FF FF ...` commands/events
 - fixed-header `FF 55 02 59 20 00 ...` status/accessory frames
 
-Potential uses include heartbeat state, smart-scale/grinder interaction, session/name operations, and provisioning. This area is less completely mapped than Modbus and is not needed for the initial read-only HA integration.
+The local 2026-09-26 passive capture establishes the following exact-machine
+shape for nine opcode-oriented frames:
+
+```text
+FF 55 FF FF [opcode=83] [reserved=00] [length=01] [marker=00|01] [checksum]
+```
+
+The checksum is `(sum(all preceding bytes) + 1) mod 256`. The first capture did
+not retain timestamps. A follow-on 60-second event-only capture retained them:
+all 19 frames decoded and alternated, marker `0` recurred at a 6.019-second
+median period and marker `1` at a 5.972-second median period. The usual phase
+was marker `1`, marker `0` roughly two seconds later, then marker `1` roughly
+four seconds later. One pair was delivered together after a 6.42-second gap,
+so proxy delivery can obscure the source cadence. This periodic pattern is
+consistent with the upstream heartbeat label, but it does not establish marker
+meaning or a physical-state transition.
+
+The local parser validates both documented framing families and decodes only
+this narrow heartbeat marker; it rejects malformed lengths, checksums, reserved
+bytes and unknown prefixes. It is passive-only and constructs no FF55 request
+or control frame.
+
+Potential upstream uses include heartbeat state, smart-scale/grinder
+interaction, session/name operations, and provisioning. Direction and meaning
+conflicts remain unresolved, so the event stream is not yet exposed as an HA
+entity and no FF55 initialization command is sent.
 
 ## Compatibility status
 

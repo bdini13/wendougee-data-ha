@@ -12,8 +12,10 @@ Last reviewed: 2026-09-26. The goal is a well-understood, local-first WENDOUGEE 
 - [x] Build a self-contained ZIP and test it independently of the development checkout.
 - [x] Add a versioned private evidence envelope and approval-gated baseline reader.
 - [x] Add an explicitly confirmed four-read baseline action for HA's shared Bluetooth/proxy route.
+- [x] Add a passive-only FF55 decoder from exact-machine evidence, with strict checksum/length validation and no frame construction or write path.
+- [x] Capture a timestamped 60-second event-only window: 19/19 opcode-`0x83` frames decoded, the marker alternated, and each value recurred about every six seconds without any FF55 command.
 
-Evidence: 106 protocol/package tests plus 40 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
+Evidence: 117 protocol/package tests plus 40 HA framework tests at this checkpoint. One earlier native telemetry read and the 2026-09-21 HA-proxy baseline have different limits; see the [sanitized live record](docs/LIVE_VALIDATION_2026-09-21.md).
 
 ## 2. Hardware validation — next gate
 
@@ -47,6 +49,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Benchmark telemetry alone through Proxy 2. The bounded ladder accepted 2, 3, 4, 5 and 8 Hz, then rejected 10 Hz after sustaining about 8.01 reads/s; private raw evidence remains excluded from Git.
 - [x] Confirm the installed HA entry recovers after a checked Core restart. All 22 enabled entities became available, and the rerun paired-read benchmark again selected 2 Hz.
 - [x] Complete the first private bounded hardware trace: 20 correlated idle samples over 10.00 seconds at 1.99 Hz, stored owner-only with raw evidence excluded from Git.
+- [x] Complete a 180-second idle soak at the selected paired-read rate: all 360 samples completed at 2.003 Hz, with no interval over one second and private raw evidence excluded from Git.
 - [ ] Capture one user-initiated normal shot at the selected 2 Hz complete-pair rate without sending a control command.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.

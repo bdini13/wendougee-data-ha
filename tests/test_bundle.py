@@ -17,6 +17,7 @@ def test_bundle_is_self_contained_and_excludes_live_scanner_and_private_data(tmp
         assert prefix + "services.yaml" in names
         assert prefix + "images/wendougee-data-s-white-rose-gold.png" in names
         assert prefix + "_protocol/controls.py" in names
+        assert prefix + "_protocol/events.py" in names
         assert prefix + "_protocol/session.py" in names
         assert prefix + "_protocol/live.py" not in names
         for name in names:

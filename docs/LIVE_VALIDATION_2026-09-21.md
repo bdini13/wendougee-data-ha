@@ -446,8 +446,22 @@ this A/B session.
   for the single-telemetry-read path in this short test; it is not a guarantee
   for paired reads, shot conditions or long-duration operation.
 - The telemetry ladder also passively received nine event-characteristic
-  frames before sampling. Raw frames and device identifiers remain in
-  owner-only ignored evidence files and are not published here.
+  frames before sampling. All nine were checksum-valid, nine-byte opcode
+  frames using opcode `0x83`, a zero reserved byte and a one-byte binary marker
+  that alternated between `0` and `1`. The observed checksum is the low byte of
+  the sum of all preceding bytes plus one. Event timestamps were not retained,
+  so the marker's cadence and meaning remain unknown. A strict passive-only
+  parser now covers this evidence without constructing an FF55 command. Raw
+  frames and device identifiers remain in owner-only ignored evidence files
+  and are not published here.
+- A follow-on 60-second event-only subscription through Proxy 2 captured 19
+  additional frames without a Modbus request or FF55 command. All 19 passed the
+  new strict parser and the binary marker alternated throughout. Marker `0`
+  recurred at a 6.019-second median period and marker `1` at 5.972 seconds.
+  The usual phase was `1`, then `0` about two seconds later, then the next `1`
+  about four seconds later. One pair arrived together after a longer gap, so
+  proxy delivery can obscure exact device timing. The result supports the
+  upstream heartbeat label but does not establish marker semantics.
 
 Only allowlisted FC03 telemetry reads were sent in the matrix. No configuration
 write, boiler, brew, cleaning, calibration, reset or firmware command was sent
@@ -477,6 +491,26 @@ test and restoration.
 No control or configuration command was sent during recovery, benchmarking or
 trace capture.
 
+### Unattended 180-second idle soak
+
+- A second private trace requested 360 complete telemetry/state pairs over
+  180.00 seconds at the selected 2 Hz rate. All 360 samples completed at
+  2.003 Hz; the median interval was 0.508 seconds, the 95th percentile was
+  0.638 seconds, the maximum was 0.820 seconds and no interval exceeded one
+  second.
+- Round trips ranged from 337–729 ms with a 458 ms mean. Brew temperature
+  ranged from 92.0–96.6 °C and steam temperature from 28.6–28.8 °C. Pressure,
+  flow, dispensed volume, brew time, pump time, scale values and weight rate
+  remained zero. The machine stayed `idle`, with no water alarm or unknown
+  operating-state bits.
+- The private REST helper's original 45-second socket timeout expired because
+  the service call is synchronous, but Home Assistant continued and safely
+  completed the full trace. The ignored helper was adjusted to allow the
+  requested duration plus cleanup margin. The resulting owner-only file
+  remained mode `0600` and outside Git; this was not a sampling or BLE failure.
+
+No control, configuration or FF55 command was sent during this soak.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -487,9 +521,13 @@ trace capture.
   consistent values for this idle, boilers-off snapshot.
 - The one-shot capture and restart guard operated as designed.
 - The installed proxy path can sustain 2 Hz complete telemetry/state pairs in
-  a bounded idle HA benchmark without a reported protocol or transport
-  failure. The corrected standalone path additionally sustained 8 Hz for
-  telemetry alone on restored ESPHome 2026.9.0.
+  a bounded idle HA benchmark and a three-minute idle soak without a reported
+  protocol or transport failure. The corrected standalone path additionally
+  sustained 8 Hz for telemetry alone on restored ESPHome 2026.9.0.
+- The exact machine emits a checksum-valid, periodic opcode-`0x83` FF55 marker
+  without receiving FF55 initialization in these sessions. Its binary payload
+  alternates and has an approximately six-second same-marker period, but its
+  meaning remains unproven.
 - The apparent standalone connection regression was a diagnostic ownership
   error: an authenticated proxy client must also retain an advertisement
   subscription while it owns BLE links.
