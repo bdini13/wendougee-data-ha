@@ -365,8 +365,9 @@ investigation.
   Proxy 2 therefore had a weaker path, but still received roughly seven target
   advertisements per second—ample evidence that failure to notice the
   peripheral was not the active-connection blocker.
-- Both proxies then reproduced the same bounded connection-only timeout with
-  the exact configured public address. Proxy 2 also timed out in the client's
+- With the diagnostic harness later shown to be incomplete, both proxies then
+  reproduced the same bounded connection-only timeout with the exact configured
+  public address. Proxy 2 also timed out in the client's
   feature-mask-zero compatibility mode and with its V3 cache hint enabled.
   No characteristic discovery, subscription or machine request was sent.
 - Proxy 2's sanitized debug trace progressed through target discovery, scan
@@ -415,6 +416,44 @@ investigation.
 No GATT characteristic write, Modbus request or machine control was sent in
 this A/B session.
 
+### Diagnostic correction and rollback-safe firmware matrix
+
+- Source review showed that ESPHome's Bluetooth-proxy cleanup loop disconnects
+  reserved BLE links when no API connection owns the proxy's advertisement
+  subscription. The standalone connection and read probes authenticated to the
+  API and requested a device connection, but did not subscribe to
+  advertisements. Their immediate `Disconnect before connected` and subsequent
+  `GATTC_ConfigureMTU GATT_BUSY` logs were therefore caused by the diagnostic
+  harness, not evidence of an ESPHome or DATA S connection regression.
+- The probes were corrected to subscribe before requesting the connection and
+  to retain that subscription until after disconnect. Proxy selection is now
+  explicit so an A/B command cannot silently use Proxy 1's defaults.
+- Proxy 2 was changed only for the approved firmware matrix. Its exact private
+  configuration and rollback material were preserved. On ESPHome 2026.7.2 the
+  corrected connection-only probe reached `Connection open` and `Service
+  discovery complete`; one allowlisted telemetry read returned a CRC-valid
+  decoded response in 103.1 ms.
+- Proxy 2 was then rebuilt and restored to ESPHome 2026.9.0. Version, name and
+  Bluetooth-proxy feature mask were verified after reboot. The same corrected
+  connection-only probe completed, and the identical telemetry read returned a
+  CRC-valid response in 101.7 ms. The near-equal results do not support a
+  2026.7.2-versus-2026.9.0 regression on this path.
+- A bounded telemetry-only ladder on restored 2026.9.0 accepted 2, 3, 4, 5 and
+  8 Hz. The 8 Hz stage completed 24 samples in 3.00 seconds at 8.10 reads/s,
+  with a 122 ms mean and 269 ms maximum round trip. The next 10 Hz stage
+  completed 24 samples in 3.06 seconds at 8.01 reads/s and failed the 85%
+  cadence threshold. Eight hertz is therefore the fastest clean rate measured
+  for the single-telemetry-read path in this short test; it is not a guarantee
+  for paired reads, shot conditions or long-duration operation.
+- The telemetry ladder also passively received nine event-characteristic
+  frames before sampling. Raw frames and device identifiers remain in
+  owner-only ignored evidence files and are not published here.
+
+Only allowlisted FC03 telemetry reads were sent in the matrix. No configuration
+write, boiler, brew, cleaning, calibration, reset or firmware command was sent
+to the espresso machine. Proxy 2 firmware changes were limited to the approved
+test and restoration.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -425,9 +464,12 @@ this A/B session.
   consistent values for this idle, boilers-off snapshot.
 - The one-shot capture and restart guard operated as designed.
 - The installed proxy path can sustain 2 Hz complete telemetry/state pairs in
-  a bounded idle benchmark without a reported protocol or transport failure.
-  This is historical evidence from 2026-09-22; the same path could no longer
-  open an active BLE connection during the 2026-09-23 investigation.
+  a bounded idle HA benchmark without a reported protocol or transport
+  failure. The corrected standalone path additionally sustained 8 Hz for
+  telemetry alone on restored ESPHome 2026.9.0.
+- The apparent standalone connection regression was a diagnostic ownership
+  error: an authenticated proxy client must also retain an advertisement
+  subscription while it owns BLE links.
 
 ## What remains unproven
 
@@ -440,23 +482,21 @@ this A/B session.
 - Firmware/model-detail queries, official-app coexistence, deliberate
   disconnect recovery, disabled-entry behavior and long-duration polling have
   not been validated. One restart and one config-entry reload did succeed.
-- The new active-connection failure must be isolated before dynamic capture or
-  reliability testing resumes. Advertisement visibility alone does not prove
-  that the ESP32 can open a GATT connection.
+- The installed HA entry has not yet been reloaded and observed after the
+  diagnostic correction, so its current recovery and selected in-memory sample
+  rate remain unconfirmed.
+- The short 8 Hz telemetry-only result does not establish sustained shot-load
+  behavior or raise the HA paired-read benchmark's selected 2 Hz rate.
 - The direct Python/Bleak client remains untested on the hardware.
 - No real frame is approved as a public fixture yet.
 
 ## Recommended next gate
 
-Run a rollback-safe firmware matrix on Proxy 2, starting with ESPHome 2026.7.2
-as the published known-good original-ESP32 active-proxy baseline from issue
-18614. That report failed at a later phase than this DATA S path, so a working
-2026.7.2 result would localize a stack regression while another failure would
-not prove the machine protocol is at fault. Preserve the current 2026.9.0 image
-and configuration for exact restoration. Once the read path is stable, run the
-existing 2 Hz trace during one manually initiated normal shot and compare
-dynamic values with physical references. Control work remains a separate,
-freshly approved phase.
+Confirm that the installed HA entry recovers, rerun its paired-read benchmark,
+then run the selected-rate trace during one manually initiated normal shot and
+compare dynamic values with physical references. Keep 8 Hz as a provisional
+telemetry-only ceiling until a longer shot-load test confirms it. Control work
+remains a separate, freshly approved phase.
 
 [esphome-18609]: https://github.com/esphome/esphome/pull/18609
 [esphome-18614]: https://github.com/esphome/esphome/issues/18614

@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-09-23. The goal is a well-understood, local-first WENDOUGEE DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+Last reviewed: 2026-09-26. The goal is a well-understood, local-first WENDOUGEE DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
 
 ## 1. Research and offline foundation — implemented
 
@@ -41,12 +41,12 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Diagnose the first 0.1.1 benchmark failure and build 0.1.2 with connection setup excluded from the sampling window, a 15-second proxy session timeout, a 1 → 2 → 5 → 10 Hz ladder and returned stage diagnostics.
 - [x] Deploy 0.1.2 after a fresh full backup, checksum verification and configuration check; verify a healthy restart.
 - [x] Repeat the corrected read-only benchmark; select 2 Hz for complete telemetry/state pairs after 5 Hz sustained about 2.46 pairs/s and failed only the cadence threshold.
-- [ ] Restore repeatable active BLE connection establishment. On 2026-09-23 the exact target continued advertising at usable RSSI, the official app connected, and the ESP32 proxy had three free slots, but ESPHome 2026.9.0 never reached `Connection open` in bounded V3 connection-only attempts.
-- [x] Run a controlled alternate-proxy A/B test before changing machine state. On 2026-09-26 a second original ESP32 running ESPHome 2026.9.0 reproduced the connection-only timeout despite receiving about seven target advertisements per second. Its debug path reached `Connecting`, then reported `GATTC_ConfigureMTU GATT_BUSY`; no machine request was sent.
-- [x] Exclude mobile-app/single-central contention and stale runtime state: with nearby mobile Bluetooth disabled and both machine and Proxy 2 freshly power-cycled, a 60-second connection-only attempt still immediately reported `GATTC_ConfigureMTU GATT_BUSY` and never reached `Connection open`.
-- [ ] Test the rollback-safe proxy firmware matrix, starting with ESPHome 2026.7.2 as the published known-good original-ESP32 active-proxy baseline. Preserve the current 2026.9.0 image and configuration for exact restoration.
+- [x] Restore repeatable active BLE connection establishment in the standalone diagnostic path. ESPHome requires the owning API client to subscribe to advertisements; omitting that subscription caused the proxy cleanup loop to schedule the apparent immediate disconnect.
+- [x] Run a controlled alternate-proxy A/B test before changing machine state. Proxy 2 receives the target reliably, and the corrected harness connects and completes service discovery.
+- [x] Complete a rollback-safe proxy firmware matrix on Proxy 2. ESPHome 2026.7.2 and 2026.9.0 both connected and returned valid telemetry at about 103 ms and 102 ms respectively; Proxy 2 was restored to verified 2026.9.0.
+- [x] Benchmark telemetry alone through Proxy 2. The bounded ladder accepted 2, 3, 4, 5 and 8 Hz, then rejected 10 Hz after sustaining about 8.01 reads/s; private raw evidence remains excluded from Git.
+- [ ] Confirm the installed HA entry recovers, then rerun its paired-read benchmark before changing the integration's selected rate.
 - [ ] Capture one user-initiated normal shot at the selected 2 Hz complete-pair rate without sending a control command.
-- [ ] Benchmark telemetry alone only after a connection can be acquired without contending with Home Assistant; the first bounded secondary-client attempt stopped before GATT discovery.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.
