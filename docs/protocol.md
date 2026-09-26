@@ -22,6 +22,13 @@ For the broader feature inventory, evidence levels, control ambiguities and rema
 - On 2026-09-26, a corrected ESPHome-proxy diagnostic session passively received nine checksum-valid, nine-byte FF55 opcode frames from the event characteristic without sending an FF55 initialization command. All used opcode `0x83`, a zero reserved byte, a one-byte payload and the observed `(sum(body) + 1) mod 256` checksum. The payload was a binary marker that alternated between `0` and `1`. A follow-on 60-second event-only subscription captured 19 more frames; all passed the independent decoder and alternated, with each marker recurring at an approximately six-second median period. One pair was delivered together after a longer gap, so exact source timing and marker meaning remain unknown. The fail-closed decoder validates this exact shape without assigning semantics or constructing commands.
 - A later 180-second private HA trace completed all 360 requested telemetry/state pairs at 2.003 Hz. No interval exceeded one second; the longest was 0.820 seconds. The idle machine remained at zero pressure, flow, volume and brew time with no water alarm or unknown state bits. Brew temperature ranged from 92.0–96.6 °C and steam temperature from 28.6–28.8 °C; these are internally consistent observations, not physical calibration.
 
+Later local control evidence (2026-09-26): one explicitly approved, attended
+coil-155 cleaning press/release through HA produced cleaning then idle with all
+37 configuration words unchanged. The owner confirmed three physical repetitions
+and normal completion for the stored 5 s cleaning / 5 s standing / count 3 program.
+This verifies that start path once, not stop semantics or other programs. See
+[the cleaning validation record](CLEANING_CONTROL.md).
+
 ## Upstream protocol consensus
 
 LitaLite reports a custom service and two communication characteristics discovered through official-app analysis and live testing.[1] GeeFlow independently implements matching Modbus commands/registers and states that the DATA S is its tested physical machine.[4][5][6]

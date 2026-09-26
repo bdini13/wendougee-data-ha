@@ -112,6 +112,7 @@ recording the observed active-to-idle timestamp as **Last observed backflush**.
 See [cleaning implementation and limits](CLEANING_CONTROL.md).
 
 One attended coil-155 start produced cleaning then idle with unchanged settings
-on this DATA S. Physical repetition/timing confirmation, cancellation behavior and
-connection-loss behavior remain unverified. One successful start does not establish
-those other properties.
+on this DATA S. The owner confirmed all three physical repetitions and normal
+completion. Independent interval timing, other stored programs, cancellation
+behavior and connection-loss behavior remain unverified. One successful start
+does not establish those other properties.

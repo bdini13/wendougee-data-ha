@@ -76,7 +76,9 @@ One HA service invocation was sent at 18:14:04 UTC (14:14:04 EDT). It returned:
 - One start/release pair only; no retry, stop, boiler or profile command.
 
 This verifies one real HA-initiated cleaning-state transition and unchanged
-configuration. Owner confirmation of all three physical repetitions is still
-pending. It does not prove cleaning effectiveness, chemical suitability,
+configuration. The owner subsequently confirmed observing all three physical
+repetitions and successful normal completion. This completes the physical
+comparison for this one stored-program run; individual intervals were not
+independently timed. It does not prove cleaning effectiveness, chemical suitability,
 cancellation safety or loss-of-connection behavior. Future attended tests still
 need fresh readiness confirmation; deployment/setup/reload never starts cleaning.

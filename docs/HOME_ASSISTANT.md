@@ -8,8 +8,8 @@ the separate cleaning option and prepare the blind basket for attended use. The
 action observes the nominal program window and return to idle, and retains a
 persistent lock on any uncertain result. It neither retries nor sends a stop toggle.
 See [cleaning settings, limits and recovery](CLEANING_CONTROL.md). One attended
-live start observed cleaning then idle with unchanged settings; physical repetition
-confirmation remains pending. Installation does not run a cycle.
+live start observed cleaning then idle with unchanged settings; the owner confirmed
+all three physical repetitions and normal completion. Installation does not run a cycle.
 
 ## Existing boiler/profile controls
 
