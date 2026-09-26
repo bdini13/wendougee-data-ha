@@ -399,6 +399,18 @@ investigation.
   can remain in a sticky post-connection state that prevents a repeatable
   session. A machine power cycle with mobile Bluetooth still disabled is the
   next bounded discriminator.
+- Power-cycling the machine alone did not clear the failure. The proxy still
+  reported the existing Bluedroid `conn_id=3` in its immediate
+  `GATTC_ConfigureMTU GATT_BUSY` cleanup path.
+- The user then power-cycled Proxy 2 as well, left the freshly restarted
+  machine on and kept mobile Bluetooth disabled. One fresh connection-only
+  attempt used a 60-second client bound. The encrypted proxy API was healthy,
+  but Bluedroid again scheduled a disconnect immediately after `Connecting`,
+  logged `GATTC_ConfigureMTU GATT_BUSY conn_id = 3`, and never reached
+  `Connection open`. No characteristic read or write was issued.
+- This clean-state reproduction rules out a merely stale machine or proxy
+  session as a sufficient explanation. The one earlier `Connection open` was
+  real but transient; it has not been made repeatable.
 
 No GATT characteristic write, Modbus request or machine control was sent in
 this A/B session.
@@ -436,14 +448,15 @@ this A/B session.
 
 ## Recommended next gate
 
-Power-cycle the machine once with mobile Bluetooth still disabled, then run one
-fresh Proxy 2 connection-only attempt. If that cannot produce a repeatable API
-completion after the now-observed physical `Connection open`, compare a
-different BLE stack or a rollback-safe ESPHome/ESP-IDF firmware matrix; another
-original-ESP32 proxy running the same 2026.9.0 stack has already reproduced the
-failure. Once the read path is stable, run the existing 2 Hz trace during one
-manually initiated normal shot and compare dynamic values with physical
-references. Control work remains a separate, freshly approved phase.
+Run a rollback-safe firmware matrix on Proxy 2, starting with ESPHome 2026.7.2
+as the published known-good original-ESP32 active-proxy baseline from issue
+18614. That report failed at a later phase than this DATA S path, so a working
+2026.7.2 result would localize a stack regression while another failure would
+not prove the machine protocol is at fault. Preserve the current 2026.9.0 image
+and configuration for exact restoration. Once the read path is stable, run the
+existing 2 Hz trace during one manually initiated normal shot and compare
+dynamic values with physical references. Control work remains a separate,
+freshly approved phase.
 
 [esphome-18609]: https://github.com/esphome/esphome/pull/18609
 [esphome-18614]: https://github.com/esphome/esphome/issues/18614
