@@ -379,6 +379,27 @@ investigation.
   by the original-ESP32/ESPHome 2026.9.0 Bluedroid path. A test with all mobile
   app processes fully disconnected is the next non-mutating discriminator.
 
+### Mobile-central exclusion follow-up
+
+- After the official app was force-quit and Bluetooth was disabled on nearby
+  mobile devices, the next Proxy 2 V3 connection attempt advanced further: the
+  proxy logged `Connection open` and, during timeout cleanup, `Service discovery
+  complete`. This proves the ESP32 can establish a physical BLE link when the
+  mobile central is excluded.
+- The local API client did not receive a successful completion callback before
+  its 15-second bound. Its disconnect raced the late service discovery and the
+  proxy logged `GATTC_ConfigureMTU GATT_BUSY`. Therefore this attempt does not
+  establish a usable read session, but it invalidates the stronger claim that
+  the failure is always pre-open.
+- An immediate cached retry and a later fresh attempt with a 40-second bound
+  did not reopen the link. Both returned to the earlier `Connecting` → timeout
+  → `GATT_BUSY` cleanup path. No characteristic read or write was issued.
+- The evidence now supports two interacting factors: mobile/single-central
+  contention can block initial link establishment, and the machine/proxy pair
+  can remain in a sticky post-connection state that prevents a repeatable
+  session. A machine power cycle with mobile Bluetooth still disabled is the
+  next bounded discriminator.
+
 No GATT characteristic write, Modbus request or machine control was sent in
 this A/B session.
 
@@ -415,10 +436,11 @@ this A/B session.
 
 ## Recommended next gate
 
-First repeat one Proxy 2 connection-only attempt with the official mobile app
-fully terminated and no other central connected. If it still fails, compare a
+Power-cycle the machine once with mobile Bluetooth still disabled, then run one
+fresh Proxy 2 connection-only attempt. If that cannot produce a repeatable API
+completion after the now-observed physical `Connection open`, compare a
 different BLE stack or a rollback-safe ESPHome/ESP-IDF firmware matrix; another
-original-ESP32 proxy running the same 2026.9.0 stack has now reproduced the
+original-ESP32 proxy running the same 2026.9.0 stack has already reproduced the
 failure. Once the read path is stable, run the existing 2 Hz trace during one
 manually initiated normal shot and compare dynamic values with physical
 references. Control work remains a separate, freshly approved phase.
