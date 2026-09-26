@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected benchmark previously selected 2 Hz for complete telemetry-plus-state pairs through the installed ESPHome proxy; a later active-connection regression is under investigation and currently prevents reliable polling. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected benchmark previously selected 2 Hz for complete telemetry-plus-state pairs through the installed ESPHome proxy; a later pre-GATT active-connection failure now reproduced on two original-ESP32/ESPHome 2026.9.0 proxies and currently prevents reliable polling. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
 
 ## What it does
 
@@ -117,7 +117,8 @@ read-only polling still continues on its documented cadence.
 - [x] Add provisional read-only configuration and operating-state entities, disabled by default.
 - [x] Add persistent observed shot/water/backflush analytics and a built-in-card Espresso dashboard.
 - [x] Add offline-tested, approval-gated sampling benchmark and private bounded trace capture.
-- [ ] Restore repeatable active BLE connection establishment through a controlled second-central or alternate-proxy A/B test.
+- [x] Complete a controlled second-proxy A/B test; both original-ESP32/ESPHome 2026.9.0 proxies reproduce the pre-GATT timeout.
+- [ ] Restore repeatable active BLE connection establishment by excluding mobile-app contention, then testing a different BLE stack or rollback-safe proxy firmware matrix.
 - [ ] Validate the selected high-rate sampling cadence and one manually initiated shot through the actual ESPHome proxy.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.

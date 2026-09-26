@@ -340,6 +340,48 @@ No control, configuration, provisioning, reset, boiler, cleaning, valve,
 brew, calibration, bootloader or OTA command was sent during this
 investigation.
 
+## Controlled second-proxy A/B · 2026-09-26
+
+- A second original ESP32 was backed up and configured as
+  `ESP32 Bluetooth Proxy 2` with the official generic Bluetooth-proxy package
+  and ESPHome 2026.9.0. This board has a 26 MHz crystal, so the generic
+  40 MHz build produced an invalid-crystal warning and unusable runtime output.
+  Rebuilding for its detected 26 MHz crystal restored normal Wi-Fi, Bluetooth
+  scanning and the encrypted ESPHome API. The private pre-repair flash image,
+  API key and local configuration remain excluded from Git.
+- Both proxies advertised their ESPHome services over mDNS. Proxy 2 reported
+  the full Bluetooth-proxy feature mask, an active scanner and three free
+  connection slots. Home Assistant config-entry adoption was not inspected in
+  this session because the previously available authenticated browser session
+  had expired; mDNS visibility alone is not claimed as completed HA adoption.
+- Sequential 30-second raw, passive observations at the machine location gave
+  the following sanitized comparison:
+
+  | Path | All advertisements | Nearby devices | DATA S advertisements | DATA S RSSI min / mean / max |
+  | --- | ---: | ---: | ---: | ---: |
+  | Proxy 1 | 1,739 | 37 | 244 | -78 / -71.4 / -64 dBm |
+  | Proxy 2 | 1,513 | 30 | 207 | -94 / -84.7 / -81 dBm |
+
+  Proxy 2 therefore had a weaker path, but still received roughly seven target
+  advertisements per second—ample evidence that failure to notice the
+  peripheral was not the active-connection blocker.
+- Both proxies then reproduced the same bounded connection-only timeout with
+  the exact configured public address. Proxy 2 also timed out in the client's
+  feature-mask-zero compatibility mode and with its V3 cache hint enabled.
+  No characteristic discovery, subscription or machine request was sent.
+- Proxy 2's sanitized debug trace progressed through target discovery, scan
+  stop, client promotion and `Connecting`. ESP-IDF then logged
+  `GATTC_ConfigureMTU GATT_BUSY`; cleanup disconnected and freed the slot. It
+  never delivered a successful connection callback.
+- This A/B result rules out a unique failure of Proxy 1 and makes simple RSSI
+  loss unlikely as the primary cause. The remaining leading branches are an
+  already-owned/single-central machine connection and interoperability shared
+  by the original-ESP32/ESPHome 2026.9.0 Bluedroid path. A test with all mobile
+  app processes fully disconnected is the next non-mutating discriminator.
+
+No GATT characteristic write, Modbus request or machine control was sent in
+this A/B session.
+
 ## What this proves
 
 - HA shared Bluetooth can discover and connect to this DATA S through this
@@ -373,12 +415,11 @@ investigation.
 
 ## Recommended next gate
 
-First restore a repeatable active BLE connection without changing the machine:
-perform a controlled A/B test with another central or another ESP32 proxy,
-record the installed official-app and machine firmware versions, and compare
-the result with the current original-ESP32/ESPHome 2026.9.0 path. Any proxy
-firmware change requires a separately approved, rollback-safe maintenance
-window. Once the read path is stable, run the existing 2 Hz trace during one
+First repeat one Proxy 2 connection-only attempt with the official mobile app
+fully terminated and no other central connected. If it still fails, compare a
+different BLE stack or a rollback-safe ESPHome/ESP-IDF firmware matrix; another
+original-ESP32 proxy running the same 2026.9.0 stack has now reproduced the
+failure. Once the read path is stable, run the existing 2 Hz trace during one
 manually initiated normal shot and compare dynamic values with physical
 references. Control work remains a separate, freshly approved phase.
 
