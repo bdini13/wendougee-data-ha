@@ -32,14 +32,19 @@ implementation. No new live control evidence was obtained in this work.
 
 ## Current deployment and next evidence
 
+**Read-only evidence update:** a complete physical-paddle shot now shows raw state
+`0x000002` (profile), not the manual flag, during brewing. See the
+[2026-09-26 shot record](PADDLE_SHOT_2026-09-26.md). This identifies an observed
+state path; it does not establish a remote start command or validate the stored
+bank/mode selection. The remaining remote-trigger gate stays closed.
+
 0.2.0 enables only the brew/steam boiler switches on the target. The optional
 app-profile start implementation is off, and Espresso displays a pending note
 instead of the wrong shot button. No boiler or pump activation was performed.
 
-Next, capture one normal **user-operated paddle shot** with read-only telemetry
-and operating-state capture, alongside read-only identification of mode/binding
-and profile banks. This can identify the state path and recipe differences; it
-cannot by itself prove a remote trigger. Then correlate an official-app action
+The first normal **user-operated paddle shot** has been captured. Next perform
+read-only identification of mode/binding and profile banks. This can identify
+recipe differences but cannot by itself prove a remote trigger. Then correlate an official-app action
 explicitly intended for the bound recipe, or obtain exact-model protocol evidence,
 before implementing and supervising the remote activation test. Preserve both
 recipe banks and binding settings throughout; reject mode 4 and unknown modes.

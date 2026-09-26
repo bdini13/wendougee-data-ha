@@ -17,7 +17,7 @@ Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low En
 > **Experimental integration.** Version 0.2.0 adds opt-in machine controls.
 > Routine polling defaults to 30 seconds; bounded private traces have sustained
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
-> shot-transition validation remain pending. Boiler schedules are planning helpers;
+> broader shot-transition validation remain pending. Boiler schedules are planning helpers;
 > schedules do not run automatically. Control transactions are simulation-tested,
 > not yet physically commissioned. Do not use these sensors as safety interlocks.
 
@@ -28,6 +28,13 @@ diagnostic harness; both tested ESPHome versions worked after correction.
 See the [live record](docs/LIVE_VALIDATION_2026-09-21.md) for measurements and
 the [autonomous feature audit](research/AUTONOMOUS_AUDIT_2026-09-26.md) for new
 upstream findings, including terminal-shot timing and app-local device naming.
+
+**First full paddle-shot capture:** 360 pairs at 2 Hz, including idle → profile
+(`0x2`) → idle. Machine-reported results: 22.4 s, 9.5 bar peak pump pressure,
+66 mL settled pumped counter; cup weight was not measured. This revealed a
+last-shot finalization limitation: HA saved 64 mL before the counter settled,
+although cumulative water included all 66 mL. See the
+[reviewed shot record and next fix](docs/PADDLE_SHOT_2026-09-26.md).
 
 ## What it does
 
@@ -170,7 +177,8 @@ read-only polling still continues on its documented cadence.
 - [x] Complete a rollback-safe ESPHome 2026.7.2/2026.9.0 matrix on Proxy 2; both versions connect and return valid telemetry, and Proxy 2 is restored to 2026.9.0.
 - [x] Add strict passive decoding for the locally observed opcode-`0x83` FF55 marker without exposing a command path.
 - [x] Complete a three-minute 2 Hz paired-read idle soak with all 360 samples returned.
-- [ ] Validate the selected high-rate sampling cadence and one manually initiated shot through the actual ESPHome proxy.
+- [x] Capture one manually initiated paddle shot at the selected 2 Hz paired cadence through the ESPHome proxy; physical calibration remains pending.
+- [ ] Correct bounded post-shot finalization using the observed delayed terminal values without attributing later shots or cleaning to the previous shot.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [x] Add opt-in boiler enable switches and guarded app-selected stored-profile infrastructure (0.2.0); enable only boiler switches on this installation.

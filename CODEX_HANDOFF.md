@@ -6,6 +6,16 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Latest shot evidence · 2026-09-26:** a complete owner-operated paddle shot was
+captured read-only at 2 Hz (360 pairs over 180 s; all 720 frames revalidated).
+Paddle activity asserted raw state `0x2`, decoded profile, then returned idle.
+Final reported timer 22.4 s, peak pump pressure 9.5 bar, settled pumped counter
+66 mL; no cup weight was measured. Confirmed finalization limitation: last-shot
+volume saved 64 mL, while the counter reached 66 mL after idle; cumulative water
+did include the full 66 mL. No code/history correction or remote shot command was
+performed. Next: bounded terminal-sample finalization with regression tests.
+See `docs/PADDLE_SHOT_2026-09-26.md`; raw trace stays private and gitignored.
+
 **Latest live control evidence · 2026-09-26 17:28:24 UTC:** owner was home,
 reported steam on and explicitly requested off. One HA steam-off action succeeded;
 fresh baselines bracketed it. Steam-enable register 6 changed 0 → 1, brew stayed
