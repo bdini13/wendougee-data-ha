@@ -12,17 +12,18 @@ views:
             image: /local/espresso/wendougee-data-s-white-rose-gold.png
             alt_text: Original illustration of the white and rose-gold WENDOUGEE DATA S
           - type: markdown
-            content: >-
+            content: |-
               # WENDOUGEE DATA S
 
-              Local Bluetooth observability through Home Assistant. Activity totals
-              are explicitly **observed**, because the conservative polling interval
-              can miss short shots. No boiler, brew, cleaning, or other machine
-              control is enabled until its write and readback behavior passes an
-              attended validation.
+              Your espresso workspace · local Bluetooth monitoring
+
+              Routine readings refresh about every **30 seconds** by default.
+              Short shots can be missed; shot and water totals count only observed activity.
+
+              [Sampling evidence & capture guide](/espresso/evidence)
           - type: tile
             entity: binary_sensor.wendougee_data_reachable
-            name: Connection
+            name: Last poll connectivity
             icon: mdi:bluetooth-connect
             vertical: false
           - type: tile
@@ -32,19 +33,19 @@ views:
             vertical: false
           - type: tile
             entity: binary_sensor.wendougee_data_s_observed_shot_active
-            name: Shot active
+            name: Shot active · last observation
             icon: mdi:coffee-maker
             vertical: false
           - type: tile
             entity: binary_sensor.wendougee_data_s_observed_cleaning_active
-            name: Backflush active
+            name: Backflush active · last observation
             icon: mdi:shimmer
             vertical: false
 
       - type: grid
         cards:
           - type: heading
-            heading: Live machine
+            heading: Latest readings
             icon: mdi:gauge
           - type: sensor
             entity: sensor.wendougee_data_brew_temperature
@@ -66,7 +67,7 @@ views:
             detail: 2
           - type: tile
             entity: sensor.wendougee_data_pumped_volume
-            name: Current pumped volume
+            name: Reported pumped volume
             icon: mdi:water-plus
           - type: tile
             entity: sensor.wendougee_data_elapsed_brew_time
@@ -88,7 +89,7 @@ views:
             icon: mdi:clock-check-outline
           - type: tile
             entity: sensor.wendougee_data_s_last_observed_shot_volume
-            name: Last observed volume
+            name: Last observed pumped volume
             icon: mdi:cup-water
           - type: tile
             entity: sensor.wendougee_data_s_observed_shots_total
@@ -114,6 +115,11 @@ views:
           - type: heading
             heading: Daily trends
             icon: mdi:chart-bar
+          - type: markdown
+            content: |-
+              Daily bars show changes in **observed totals**. Pumped water is the
+              machine's reported volume; cup yield and total household water use
+              require separate measurements. Graph units follow Home Assistant.
           - type: statistics-graph
             title: Observed shots per day
             chart_type: bar
@@ -184,6 +190,21 @@ views:
             entity: sensor.wendougee_data_s_last_observed_backflush
             name: Last observed backflush
             icon: mdi:shimmer
+          - type: markdown
+            entity_id:
+              - sensor.wendougee_data_s_last_observed_backflush
+            content: |-
+              {% set backflush = states('sensor.wendougee_data_s_last_observed_backflush') %}
+              {% if backflush == 'unknown' %}
+              **No backflush has been observed yet.** This does not mean the machine has never been cleaned.
+              {% elif backflush == 'unavailable' %}
+              **Backflush history is currently unavailable.** Check connectivity above.
+              {% else %}
+              Last observed cleaning completion: {{ as_local(as_datetime(backflush)).strftime('%b %d, %Y at %I:%M %p') }}.
+              {% endif %}
+
+              Cleaning reminders are app-managed. A timestamp records an observed
+              cleaning-state transition; it cannot verify a physical cleaning result.
           - type: entities
             title: Backflush configuration
             entities:
@@ -197,3 +218,85 @@ views:
               - binary_sensor.wendougee_data_reachable
               - binary_sensor.wendougee_data_water_shortage
               - binary_sensor.wendougee_data_s_observed_cleaning_active
+
+  - title: Evidence & capture
+    path: evidence
+    icon: mdi:chart-timeline-variant
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sampling · verified September 26, 2026
+            icon: mdi:speedometer
+          - type: markdown
+            content: |-
+              ## Three different cadences
+
+              | Mode | Evidence |
+              | --- | --- |
+              | Routine dashboard | Default 30-second polling; short shots may be missed |
+              | Bounded HA trace | 2 Hz telemetry + state; 360/360 pairs over three idle minutes |
+              | Separate telemetry-only probe | 8 Hz passed a short test; 10 Hz missed cadence |
+
+              The 8 Hz result is a diagnostic measurement. Dashboard graphs retain
+              normal polling resolution, and private traces store their detailed
+              samples separately. Trace results are published to entities at completion.
+
+              Last idle soak: 2.003 pairs/s; longest sample interval 0.820 seconds.
+              Shot-load performance and physical units still need attended comparison.
+          - type: markdown
+            content: |-
+              ## Capture a normal shot
+
+              1. In **Developer tools → Actions**, run **Benchmark read-only sampling**
+                 for WENDOUGEE DATA S and enter `READ ONLY`.
+              2. Confirm a rate was selected. After an integration reload or restart,
+                 run the benchmark again because its selection is held in memory.
+              3. Run **Capture read-only trace** with `READ ONLY` and a 60–120 second
+                 duration. Start your normal shot manually while the action is running.
+              4. Let capture finish, then retain the returned private trace filename.
+
+              Traces contain raw protocol evidence and belong in private storage.
+              A caller timeout can occur while capture is still running; check for
+              completion before starting another capture.
+          - type: button
+            name: Open Developer tools → Actions
+            icon: mdi:flask-outline
+            tap_action:
+              action: navigate
+              navigation_path: /developer-tools/action
+            hold_action:
+              action: none
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Protocol understanding
+            icon: mdi:bluetooth
+          - type: markdown
+            content: |-
+              ## Confirmed on this machine
+
+              Telemetry, configuration and operating-state reads pass strict frame
+              validation through the ESPHome proxy. The periodic FF55 event carries
+              an alternating binary marker; 28 frames were decoded across two captures.
+              Each marker repeated roughly every six seconds in the timestamped test.
+
+              The marker's meaning remains unknown. It does not establish boiler
+              readiness, shot activity or a fault state.
+
+              ## Still to validate
+
+              Shot start/end timing, final pumped volume, scale behavior, physical
+              temperature comparison and app contention. Independent boiler schedules
+              remain planning helpers until control behavior is validated.
+          - type: button
+            name: Protocol, capability map & roadmap
+            icon: mdi:github
+            tap_action:
+              action: url
+              url_path: https://github.com/bdini13/wendougee-data-ha
+            hold_action:
+              action: none

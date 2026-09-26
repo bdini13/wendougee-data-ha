@@ -135,6 +135,12 @@ so proxy delivery can obscure the source cadence. This periodic pattern is
 consistent with the upstream heartbeat label, but it does not establish marker
 meaning or a physical-state transition.
 
+GeeFlow uses heartbeat receipt to refresh a smart-scale-search indication only
+when scale support is enabled; it does not decode the binary marker as a
+boiler-ready flag. This is an upstream usage clue, not local proof of accessory
+semantics. The [2026-09-26 autonomous audit](../research/AUTONOMOUS_AUDIT_2026-09-26.md)
+also records terminal-telemetry timing and app-local naming findings.
+
 The local parser validates both documented framing families and decodes only
 this narrow heartbeat marker; it rejects malformed lengths, checksums, reserved
 bytes and unknown prefixes. It is passive-only and constructs no FF55 request

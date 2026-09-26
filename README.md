@@ -14,7 +14,19 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental, not production-ready.** Version 0.1.2 is installed on the target HA 2026.9.1 host after a fresh full backup, checksum verification, successful configuration check and healthy restart. Its corrected HA benchmark selected 2 Hz for complete telemetry-plus-state pairs. A later apparent proxy connection regression was traced to the standalone diagnostic harness omitting the advertisement subscription that owns ESPHome proxy BLE connections. With that fixed, Proxy 2 connected, discovered services and read valid telemetry on both ESPHome 2026.7.2 and restored 2026.9.0; a separate telemetry-only ladder accepted 8 Hz and rejected 10 Hz for insufficient cadence. A configuration-checked HA Core restart restored all 22 enabled entities, the paired benchmark again selected 2 Hz, a 10-second private trace completed 20 correlated samples, and a later three-minute idle soak completed all 360 requested pairs at 2.003 Hz. The Espresso dashboard and its disabled-by-default schedule planners are installed. Do not use its sensors as safety interlocks. Boiler frame construction is offline-only: no remote brewing, boiler, cleaning, calibration, reset or firmware-update control is callable from Home Assistant.
+> **Experimental monitoring integration.** Version 0.1.2 is installed on HA 2026.9.1.
+> Routine polling defaults to 30 seconds; bounded private traces have sustained
+> 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
+> shot-transition validation remain pending. Boiler schedules are planning helpers;
+> live machine controls are not exposed. Do not use these sensors as safety interlocks.
+
+Latest evidence, **September 26, 2026**: 360/360 paired samples at 2.003 Hz,
+8 Hz in a separate short telemetry-only test, and 28 validated passive FF55 events.
+The apparent proxy regression was a missing advertisement subscription in the
+diagnostic harness; both tested ESPHome versions worked after correction.
+See the [live record](docs/LIVE_VALIDATION_2026-09-21.md) for measurements and
+the [autonomous feature audit](research/AUTONOMOUS_AUDIT_2026-09-26.md) for new
+upstream findings, including terminal-shot timing and app-local device naming.
 
 ## What it does
 
@@ -28,7 +40,7 @@ Local-first espresso-machine telemetry over Bluetooth Low Energy. Starting with 
 - Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 added UTC poll-health evidence; 0.1.0 adds identifier-free observed-activity state and its lower-bound limitation.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
 - Version 0.1.2 corrects the bounded read-only benchmark to exclude proxy connection setup from sampling time, use the normal 15-second session timeout, and test 1 → 2 → 5 → 10 Hz. It returns privacy-safe stage diagnostics even when no rate passes. The benchmark and private trace action serialize telemetry/state reads, require the literal confirmation `READ ONLY`, never retry an uncertain transaction, and expose no control command.
-- Includes a source-controlled, built-in-card Espresso dashboard with current state, recent activity, daily shot/water trends, maintenance history and inert boiler schedule planning helpers.
+- Includes a built-in-card Espresso dashboard with latest readings, recent activity, daily shot/water trends, maintenance history and inert boiler schedule planning helpers. An Evidence & capture tab explains measured rates, trace collection and remaining limits.
 
 **No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
 
@@ -59,11 +71,11 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 
 | Area | Evidence / status |
 |---|---|
-| Local DATA S transport | Expected GATT service/characteristics and one CRC-valid idle telemetry reply observed |
+| Local DATA S transport | GATT discovery, four allowlisted reads, proxy firmware comparison and bounded paired-read soak verified |
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | Version 0.1.2 installed after backup/configuration check and a healthy restart; all 22 enabled entities recovered after a later checked restart; the HA paired benchmark selected 2 Hz, a 10-second private trace completed at 1.99 Hz and a three-minute idle soak completed all 360 samples at 2.003 Hz; no write path is exposed |
+| HA integration | 0.1.2 installed; 22 enabled entities available after recovery; 2 Hz paired-read benchmark and three-minute idle soak passed |
 | Verification baseline | **157 local tests passing:** 117 protocol/package + 40 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host is HA 2026.9.1 with 0.1.2 files installed through the ESPHome-proxy deployment path |
 | Deployment / release | 0.1.2 installed after a fresh full backup, archive verification, configuration check and healthy restart; 2 Hz benchmark passed; not a published HACS release |
@@ -72,6 +84,9 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 
 The CI badge reports GitHub's workflow status, not an assertion that unpublished local changes have already passed remote CI.
+Documentation-only commits intentionally skip CI; use manual dispatch for a full
+run on demand. Code, dependency, dashboard and workflow changes still run both
+test environments. See [contributing and CI policy](CONTRIBUTING.md).
 
 ## Build and installation
 
@@ -144,7 +159,7 @@ Independent protocol validation and telemetry decoding
 Read-only entities + redacted diagnostics
 ```
 
-The source protocol package has no HA dependency. The build bundles only named original modules; it excludes the standalone BLE scanner. After a timeout or uncertain response, the session refuses further reads and requires a fresh connection. Modbus RTU lacks transaction IDs, so same-shaped unsolicited responses remain a protocol limitation—not something tests can eliminate.
+The source protocol package has no HA dependency. The build bundles only named original modules; it excludes the standalone BLE scanner. After a timeout or uncertain response, the session refuses further reads and requires a fresh connection. Modbus RTU lacks transaction IDs, so same-shaped unsolicited responses remain a protocol limitation. Telemetry and operating state are read sequentially; they are not an atomic snapshot, especially at a shot boundary.
 
 ## Development and checks
 
@@ -185,9 +200,11 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 | [Offline core](docs/OFFLINE_CORE.md) | Framing, session behavior and failure policy |
 | [Protocol reference](docs/protocol.md) | BLE/Modbus observations and candidates |
 | [Upstream inventory](research/UPSTREAM_SOURCES.md) | Pinned sources and license boundaries |
+| [Autonomous feature audit](research/AUTONOMOUS_AUDIT_2026-09-26.md) | New upstream findings, private replay results and next evidence gaps |
+| [Contributing](CONTRIBUTING.md) | Development checks, CI scope, labels and dashboard deployment |
 | [Contributor/agent handoff](CODEX_HANDOFF.md) | Implementation history and safety constraints |
 
-[Issue-label definitions](.github/labels.json) group work by area, evidence and risk—for example `area:protocol`, `area:home-assistant`, `needs:hardware-validation`, and `safety`. All 12 catalog labels were applied to the [GitHub repository](https://github.com/bdini13/wendougee-data-ha/labels) on 2026-09-20; existing labels were preserved. When reporting a bug, include software/firmware versions, expected versus observed behavior and sanitized diagnostics. Never post credentials or raw captures publicly.
+[Issue-label definitions](.github/labels.json) group work by area, evidence and risk—for example `area:protocol`, `area:home-assistant`, `needs:hardware-validation`, and `safety`. All 14 catalog labels are available on the [GitHub repository](https://github.com/bdini13/wendougee-data-ha/labels), including `area:dashboard` and `area:ci` added on 2026-09-26; existing labels were preserved. When reporting a bug, include software/firmware versions, expected versus observed behavior and sanitized diagnostics. Never post credentials or raw captures publicly.
 
 ## AI disclosure
 

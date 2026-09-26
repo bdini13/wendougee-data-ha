@@ -6,6 +6,24 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Current checkpoint · 2026-09-26:** installed integration remains 0.1.2 on HA
+2026.9.1. The proxy diagnostic failure was caused by the missing advertisement
+subscription that retains BLE ownership; corrected probes worked on both
+ESPHome 2026.7.2 and restored 2026.9.0. HA recovered after a checked restart,
+and a three-minute idle trace returned 360/360 paired samples at 2.003 Hz.
+A separate short telemetry-only probe accepted 8 Hz. The independent FF55
+parser validated 28 passive events; their binary marker semantics remain
+unknown. Local verification is 117 protocol/package plus 40 HA framework tests.
+
+The latest unattended pass analyzed existing evidence and upstream changes,
+updated the live storage-mode Espresso dashboard with an Evidence & capture tab,
+and optimized GitHub CI for documentation-only changes, duplicate branch runs
+and dependency downloads. It initiated no new machine test. See
+[the autonomous audit](research/AUTONOMOUS_AUDIT_2026-09-26.md) and
+[CI/deployment guidance](CONTRIBUTING.md). The older investigation entries below
+are historical. Next physical evidence: an attended normal shot with at least
+five seconds of post-shot capture to resolve terminal telemetry timing.
+
 - Mac project root: `~/Documents/Codex/CodexProjects/wendougee-data-ha`
 - Ignored upstream clones: `research/upstream/`
 - Ignored private captures: `research/artifacts/private/captures/`

@@ -25,6 +25,13 @@ The 2026-09-20 cross-source audit is recorded in [CAPABILITIES.md](../CAPABILITI
 
 ## Official applications
 
+Latest remote audit: **2026-09-26**. GeeFlow HEAD advanced to
+`cf5fe5f659e659718ca98430691503794001fb39`; its eight Wendougee protocol/controller
+files have identical Git blobs to the local `10f2d19` snapshot. New findings
+concern app-local renaming and terminal shot telemetry handling. LitaLite and
+Crema HEADs are unchanged. See [the autonomous audit](AUTONOMOUS_AUDIT_2026-09-26.md)
+for pinned evidence and limits; local reference checkouts were not changed.
+
 - Android package: `com.g472631889.stf`.[13]
 - The Google Play listing was updated 2026-02-14 but does not expose its
   version number in the storefront metadata.[13]

@@ -7,6 +7,25 @@ custom frontend card collection. It is installed as the sidebar dashboard
 ranges, so the same configuration remains accurate when HA converts °C/bar/mL
 to °F/psi/fluid ounces.
 
+The overview now labels connectivity/activity as last observations, clarifies
+the default 30-second refresh and describes pumped-water trends as observed
+machine volume. Unknown backflush history is explained without suggesting the
+machine has never been cleaned. The **Evidence & capture** tab records the dated
+2 Hz paired-read and 8 Hz telemetry-only results, distinguishes private traces
+from routine history graphs, and provides the read-only capture procedure.
+Its buttons navigate to tools/documentation; they do not invoke an action.
+
+Sampling evidence is a dated validation record, not a live benchmark status.
+The selected trace rate is held only in memory and must be re-established after
+an integration reload or restart. Capture updates entities at completion;
+detailed intermediate samples remain in the private trace file.
+
+On 2026-09-26 the updated two-view dashboard was saved through HA's Lovelace
+API after checking that the live configuration matched the previous source.
+The prior layout was backed up privately with owner-only permissions, and exact
+configuration readback succeeded. All three dynamic maintenance-text branches
+were rendered successfully by HA's template engine. No Core restart was needed.
+
 ## What it shows
 
 - current temperatures, pressure, volume, connectivity, alarm and activity;

@@ -10,6 +10,12 @@ Our Python package implements CRC, allowlisted read requests, strict response fr
 
 “100%” needs a bounded denominator: all user-facing functions in a recorded E-Bar version on a recorded DATA S firmware, plus explicitly inventoried unsupported/unknown functions. BLE access alone cannot establish complete firmware internals, undocumented service behavior, or control of mechanical hardware. This map is not yet an exhaustive inventory of the installed official app.
 
+The [2026-09-26 autonomous audit](research/AUTONOMOUS_AUDIT_2026-09-26.md)
+checks newer GeeFlow changes: its DATA S protocol files are unchanged, device
+renaming is app-local, and terminal telemetry timing needs explicit shot-boundary
+validation. All 12 unmapped positions in the saved idle telemetry block stayed
+zero; no new readiness or fault signal was established.
+
 ## Reading the map
 
 - **Impl**: executable upstream implementation; not proof every path was physically tested.

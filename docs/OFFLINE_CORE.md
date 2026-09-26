@@ -1,6 +1,10 @@
 # Offline read-only foundation
 
-Implemented 2026-09-20. All verification in this pass used synthetic byte fixtures and fake transports. **No Bluetooth connection, scan, machine command or hardware test was performed.** This does not validate any new field on the DATA S.
+The initial foundation was implemented offline on 2026-09-20 with synthetic
+fixtures and fake transports. Subsequent HA deployment, bounded live reads and
+passive event evidence are recorded in [the live-validation history](LIVE_VALIDATION_2026-09-21.md).
+This page describes the reusable protocol layer; offline tests alone do not
+validate physical field meanings.
 
 ## Implemented
 
@@ -13,7 +17,10 @@ Implemented 2026-09-20. All verification in this pass used synthetic byte fixtur
 - Standalone Bleak adapter: waits for both subscriptions, wires disconnect callbacks, attempts cleanup after partial setup, and rejects any bytes outside the read allowlist.
 - Existing telemetry CLI still sends **only one telemetry request** when explicitly invoked with its read flag. A separate evidence command can send each of the four fixed reads once, but only after an immediate typed confirmation; see [EVIDENCE_COLLECTION.md](EVIDENCE_COLLECTION.md). There is no scan or connection on import.
 
-The original telemetry parser and assembler remain available for compatibility. The live client now uses the stricter general read session; it does not use the old assembler for transport handling. No control API or HA entities were added.
+The original telemetry parser and assembler remain available for compatibility.
+The live client uses the stricter general read session rather than the old
+assembler for transport handling. The later HA integration consumes this layer;
+its transport still exposes only the fixed read allowlist.
 
 ## Deliberate failure policy
 
@@ -43,9 +50,9 @@ Tests label their new fixtures synthetic. They do not recreate or claim to retai
 ## Still pending
 
 - Supported-permission, real Python/Bleak validation; no bypass of macOS privacy controls.
-- Sanitized real fixtures with model/firmware/app provenance; the versioned private envelope is implemented, but no real capture exists yet.
+- Reviewed public fixtures with model/firmware/app provenance; real baseline and trace captures exist privately, but no raw frame is approved for publication.
 - Physical confirmation of units, configuration meanings, status flags and natural unsolicited traffic.
-- A continuous-polling/reconnect policy and soak tests; the present session is a reusable primitive, not a completed long-running coordinator.
-- The HA shared-Bluetooth adapter, config flow, entities, availability handling and integration tests were completed in a subsequent offline pass; see [HOME_ASSISTANT.md](HOME_ASSISTANT.md). Real deployment and Bluetooth validation remain pending.
+- Broader disconnect, contention and disable tests; HA polling and bounded idle soaks have succeeded, while these failure scenarios remain incomplete.
+- Physical validation of the deployed HA entities; see [HOME_ASSISTANT.md](HOME_ASSISTANT.md). The shared-Bluetooth adapter, config flow, availability handling and tests are implemented and the integration has completed live read-only validation.
 
 The next hardware session remains subject to immediate explicit approval under `AGENTS.md`; running the offline suite needs none.

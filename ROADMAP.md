@@ -51,6 +51,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Complete the first private bounded hardware trace: 20 correlated idle samples over 10.00 seconds at 1.99 Hz, stored owner-only with raw evidence excluded from Git.
 - [x] Complete a 180-second idle soak at the selected paired-read rate: all 360 samples completed at 2.003 Hz, with no interval over one second and private raw evidence excluded from Git.
 - [ ] Capture one user-initiated normal shot at the selected 2 Hz complete-pair rate without sending a control command.
+- [ ] Retain at least five seconds after that shot; resolve delayed terminal volume, reset/latching and sequential telemetry/state timing before claiming final shot totals.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
 - [ ] Review diagnostics and any third-party debug logs for identifier leakage.
@@ -78,4 +79,4 @@ Raw valves, PID/calibration, factory reset, bootloader and OTA remain research-o
 - [ ] Perform an independent code/safety review; review AI-assisted assumptions explicitly.
 - [ ] Publish a release only with accurate support and hardware-evidence claims.
 
-No dates are promised. Hardware access, protocol ambiguities and safety findings can change priorities. Use [the label catalog](.github/labels.json) to classify issues; its 12 labels are available on [GitHub](https://github.com/bdini13/wendougee-data-ha/labels) as of 2026-09-20.
+No dates are promised. Hardware access, protocol ambiguities and safety findings can change priorities. Use [the label catalog](.github/labels.json) to classify issues; its 14 labels are available on [GitHub](https://github.com/bdini13/wendougee-data-ha/labels) as of 2026-09-26.

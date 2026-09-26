@@ -1,6 +1,8 @@
 [
   {"name": "area:protocol", "color": "1D76DB", "description": "BLE framing, register semantics and protocol library"},
   {"name": "area:home-assistant", "color": "18BCF2", "description": "Discovery, entities, lifecycle and HA compatibility"},
+  {"name": "area:dashboard", "color": "C5A788", "description": "Espresso workspace, graphs, units and observation clarity"},
+  {"name": "area:ci", "color": "5319E7", "description": "GitHub Actions, dependency caching and workflow efficiency"},
   {"name": "area:documentation", "color": "0075CA", "description": "Guides, capability map, evidence and attribution"},
   {"name": "area:testing", "color": "5319E7", "description": "Fixtures, regression tests, CI and packaging checks"},
   {"name": "type:bug", "color": "D73A4A", "description": "A reproducible defect in implemented behavior"},
