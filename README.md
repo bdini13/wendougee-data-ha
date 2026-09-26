@@ -37,7 +37,7 @@ last-shot finalization limitation: HA saved 64 mL before the counter settled,
 although cumulative water included all 66 mL. See the
 [reviewed shot record and correction](docs/PADDLE_SHOT_2026-09-26.md).
 Version 0.3.1 corrects this in offline replay with a bounded 5 s terminal window
-at closely spaced samples. It is not yet deployed; live HA remains on 0.3.0.
+at closely spaced samples. It is installed; a new live shot comparison is pending.
 Normal 30 s polling cannot resolve the tail, and no stored history was rewritten.
 
 ## What it does
@@ -126,10 +126,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | 0.3.0 adds a separate attended-cleaning opt-in; app-profile start remains off and requested paddle trigger pending |
+| HA integration | 0.3.1 installed with bounded terminal-volume refinement and separate attended-cleaning opt-in; app-profile start remains off and requested paddle trigger pending |
 | Verification baseline | **237 local tests passing:** 157 protocol/package + 80 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
-| Deployment / release | 0.3.0 installed after a fresh full backup, verified archive and configuration check; not a published HACS release |
+| Deployment / release | 0.3.1 installed after a fresh full backup, verified archive and configuration check; 0.3.0 rollback retained, telemetry recovered; not a published HACS release |
 | Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; one cleaning run verified by telemetry, unchanged settings and owner-observed three repetitions/normal completion |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
@@ -190,7 +190,8 @@ read-only polling still continues on its documented cadence.
 - [x] Complete a three-minute 2 Hz paired-read idle soak with all 360 samples returned.
 - [x] Capture one manually initiated paddle shot at the selected 2 Hz paired cadence through the ESPHome proxy; physical calibration remains pending.
 - [x] Correct bounded post-shot finalization offline; regression guards exclude observed new activity, resets and long gaps. Existing full capture replays to 66 mL.
-- [ ] Deploy 0.3.1 and confirm finalization during another attended high-rate shot trace.
+- [x] Deploy 0.3.1 after a full backup and verify telemetry/history recovery.
+- [ ] Confirm finalization during another attended high-rate shot trace.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [x] Add opt-in boiler enable switches and guarded app-selected stored-profile infrastructure (0.2.0); enable only boiler switches on this installation.

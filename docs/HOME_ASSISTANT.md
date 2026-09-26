@@ -1,13 +1,14 @@
 # Experimental Home Assistant integration
 
-## 0.3.1 terminal shot-volume refinement (not yet deployed)
+## 0.3.1 terminal shot-volume refinement (installed)
 
 Closely spaced observations can refine last-shot volume for five seconds after
 first idle, while preserving the end timestamp and shot count. Attribution closes
 on new activity, reset/changed timer, unknown state, water alarm, backwards time
 or a sample gap over two seconds. This does not add automatic fast polling; the
 ordinary 30 s cadence cannot resolve the tail. Existing stored history is untouched.
-See [offline replay evidence and deployment gate](PADDLE_SHOT_2026-09-26.md).
+Deployment followed a full backup and passed configuration/runtime checks; a new
+live shot comparison remains pending. See [replay and deployment evidence](PADDLE_SHOT_2026-09-26.md).
 
 ## 0.3.0 attended cleaning
 

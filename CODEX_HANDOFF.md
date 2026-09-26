@@ -6,7 +6,7 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
-**0.3.1 offline finalization fix (not deployed):** added a fixed 5 s post-idle
+**0.3.1 finalization fix (installed):** added a fixed 5 s post-idle
 volume-refinement window, requiring consecutive samples no more than 2 s apart,
 unambiguous idle, no water alarm, monotonic volume and a latched unchanged timer.
 Resets, changed timer, new activity, unknown flags, backwards time or a long gap
@@ -15,9 +15,17 @@ accounting are unchanged; no live history is edited. The runtime window is not
 restored on reload. All 720 frames of the existing private paddle trace revalidated;
 offline replay now yields one shot, 66 mL last-shot and 66 mL total water.
 This does not improve ordinary 30 s polling or add automatic fast capture.
-Next: deploy the patch with rollback safeguards, then an attended read-only 2 Hz
-shot trace through at least 10 s after stopping. No machine connection or command
-was sent while developing this fix; installed HA remains 0.3.0.
+Installed after a fresh full HA backup (database included), verified archive,
+retained 0.3.0 rollback copy and successful configuration check. Restarted HA;
+runtime diagnostics report 0.3.1 loaded, two successful polls and zero failures.
+All 22 telemetry/activity entities and 33 Espresso dashboard references are
+available; dashboard configuration is unchanged and its template checks pass.
+Preserved three observed shots, 276 mL total water, the historical 64 mL shot and
+the confirmed cleaning timestamp. Boiler/cleaning opt-ins and both clear locks
+are unchanged; app-profile start remains off. All 237 tests pass (157 package +
+80 HA), as did both GitHub CI jobs for `c8255c1`. No control command or new shot
+test was sent. Next: an attended read-only 2 Hz shot trace through at least 10 s
+after stopping. Development was offline; deployment verified routine telemetry.
 
 **0.3.0 cleaning implementation:** owner approved adding a guarded cleaning action
 and supplied app screenshots showing cleaning 5 s / standing 5 s / count 3, matching

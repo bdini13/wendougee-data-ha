@@ -53,7 +53,7 @@ shot. No new fault, readiness, or heater-power field was identified.
 | 80.384 s | Idle | 22.4 s | 66 mL | 0.0 bar |
 
 The volume continued to settle for at least 1.536 s after the first observed idle
-state. The deployed activity tracker finalizes from the peak seen **while active**,
+state. The then-deployed activity tracker finalized from the peak seen **while active**,
 so it saved **64 mL**, under the settled machine counter by 2 mL for this shot.
 Its cumulative water accounting still processes positive idle deltas, so the total
 gained the full **66 mL**. HA's observed-shot count advanced from 2 to 3.
@@ -66,7 +66,7 @@ yield or silently edit the stored history.
 
 ## Next steps and boundaries
 
-### Offline correction · 0.3.1 (not deployed)
+### Offline correction · 0.3.1
 
 The tracker still records the end timestamp at first observed idle, but can refine
 the last-shot volume for a fixed five seconds after that transition. It accepts
@@ -87,9 +87,26 @@ private frames were not committed.
 
 The five-second window does not add polling, delay the idle timestamp or count
 water twice. Ordinary 30 s polling cannot resolve it: high-rate capture is still
-needed for this comparison. Code is prepared as 0.3.1; HA remains on 0.3.0.
+needed for this comparison.
 
-1. Deploy 0.3.1 with rollback safeguards, then verify with another attended 2 Hz
+### Deployment verification · 2026-09-26
+
+The owner approved backup and deployment. A fresh full HA backup included its
+database. The 0.3.1 archive checksum and installed activity-module checksum matched
+the local build; the prior 0.3.0 component was retained separately for rollback.
+Configuration validation passed before restarting HA. Runtime diagnostics then
+reported 0.3.1 loaded, two successful polls, no failures and idle state.
+All 22 telemetry/activity entities and 33 Espresso references were available;
+the unchanged dashboard matched its checked-in configuration and passed all three
+maintenance-template branch checks.
+
+History was preserved exactly: three observed shots, 276 mL total observed water,
+the prior 64 mL last-shot value and the 18:14:36 UTC backflush timestamp. Boiler and
+cleaning control options and uncertainty locks were unchanged; app-profile start
+remained disabled. No control action, new shot or historical correction occurred.
+Local verification: 237 passing tests; implementation GitHub CI passed both jobs.
+
+1. Verify the installed patch with another attended 2 Hz
    trace extending at least ten seconds past shot stop.
 2. Repeat with a measured cup weight and independent shot duration for comparison.
 3. Investigate the bound-profile mode/bank and remote trigger without changing
