@@ -4,6 +4,13 @@ Source audit: 2026-09-20; live-read update: 2026-09-26. Target: Bobby's WENDOUGE
 
 ## What we have, and what remains
 
+**0.3.1 shot/scale validation:** an attended 2 Hz paddle-shot capture verified HA
+recording the settled 66 mL pumped counter. BOOKOO Themis Ultra weight was forwarded
+through the machine; the owner's final 34.2 g display value appeared in telemetry.
+Weight-rate decoding produced implausible unsigned values; signedness/sentinels
+and register 1415's scale-related behavior need offline investigation. No final
+cup-yield algorithm is validated. See [the scale-shot record](docs/SCALE_SHOT_2026-09-26.md).
+
 **0.3.0 cleaning update:** A09 now has a guarded opt-in start using the current
 stored program unchanged. The owner's app screenshots show 5 s cleaning, 5 s
 standing and 3 repetitions, agreeing with the read-only decode. Parameter editing
@@ -74,8 +81,8 @@ All addresses below are **decimal**; FC denotes Modbus function code. Do not exe
 | S05 | Instantaneous flow | Impl: 1422 raw mL/s; scaling still requires calibration [G-parser], [L] | Native once + HA baseline, zero | Flow sensor, provisional |
 | S06 | Elapsed shot time | Conflict: 1405 / 10 seconds in LitaLite; GeeFlow parser retains raw integer [G-parser], [L] | Native once + HA baseline, zero | Duration sensor after unit check |
 | S07 | Pump-active time | Notes/Impl: 1417 seconds [L], [C] | Native once + HA baseline, zero | Duration sensor, provisional |
-| S08 | Scale weight | Impl: 1412 / 10 g [G-parser] | Native once + HA baseline, zero; no scale proof | Weight sensor |
-| S09 | Weight rate | Impl: 1423 / 10 g/s [G-parser]; negative/signed behavior unresolved | Native once + HA baseline, zero | Yield-rate sensor, gated |
+| S08 | Scale weight | Impl: 1412 / 10 g [G-parser] | Dynamic BOOKOO weight forwarded in one attended shot; owner-reported final 34.2 g also present in telemetry; final-yield selection unresolved | Weight sensor |
+| S09 | Weight rate | Impl: 1423 / 10 g/s [G-parser]; negative/signed behavior unresolved | BOOKOO trace includes implausible unsigned readings up to 6553.5 g/s; signed/sentinel investigation required, not valid flow evidence | Yield-rate sensor, gated |
 | S10 | Water shortage alarm asserted | Impl: 1406 nonzero [G-parser], [L] | Native once + HA baseline, false; alarm state untested | Problem binary sensor |
 | S11 | Idle/manual/profile/cleaning/free-variable state | Impl: masks in FC01 reply [G-parser]; see plan for offsets and conflicting flags | HA baseline idle; no unknown bits | Enumerated state sensor |
 | S12 | Heater enabled versus actively heating/ready | Impl: configuration 6/7 gives enable state [G-parser]; active heater/ready signals not established | HA baseline: both enables off; active/ready unknown | Enabled-state feedback; no invented ready flag |

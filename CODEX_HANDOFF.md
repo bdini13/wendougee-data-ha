@@ -6,6 +6,21 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.3.1 live shot/scale validation:** owner reported BOOKOO Themis Ultra connected
+to the machine and pulled a shot during a read-only capture. All 360 pairs/720
+frames validated at 2.0013 Hz. Active `0x2` → idle; timer 26.8 s, reported peak
+9.6 bar. Pumped counter 63 mL last active → 65 mL first idle → 66 mL after 2.150 s.
+HA saved 66 mL, count 3 → 4, water 276 → 342 mL; cleaning timestamp unchanged.
+This validates terminal refinement once on hardware. Owner reported final BOOKOO
+display weight 34.2 g, also present in forwarded machine telemetry; around stop
+the field was 33.6–34.8 g, then changed. Cup movement and independent time were
+not reported; do not infer a final-yield algorithm. Unsigned weight-rate readings
+wrap implausibly high; do not trust them
+for control. Register 1415 now varies and matches weight in 329/360 samples; its
+semantics remain unknown. First active pair retained old timer/counter before
+reset: stale initial telemetry is a separate attribution risk. No machine control
+was sent. See `docs/SCALE_SHOT_2026-09-26.md` for evidence and remaining questions.
+
 **0.3.1 finalization fix (installed):** added a fixed 5 s post-idle
 volume-refinement window, requiring consecutive samples no more than 2 s apart,
 unambiguous idle, no water alarm, monotonic volume and a latched unchanged timer.
@@ -24,8 +39,8 @@ Preserved three observed shots, 276 mL total water, the historical 64 mL shot an
 the confirmed cleaning timestamp. Boiler/cleaning opt-ins and both clear locks
 are unchanged; app-profile start remains off. All 237 tests pass (157 package +
 80 HA), as did both GitHub CI jobs for `c8255c1`. No control command or new shot
-test was sent. Next: an attended read-only 2 Hz shot trace through at least 10 s
-after stopping. Development was offline; deployment verified routine telemetry.
+test was sent during deployment. The subsequent attended shot above validates
+the new final value. Development was offline; deployment verified routine telemetry.
 
 **0.3.0 cleaning implementation:** owner approved adding a guarded cleaning action
 and supplied app screenshots showing cleaning 5 s / standing 5 s / count 3, matching

@@ -37,7 +37,10 @@ last-shot finalization limitation: HA saved 64 mL before the counter settled,
 although cumulative water included all 66 mL. See the
 [reviewed shot record and correction](docs/PADDLE_SHOT_2026-09-26.md).
 Version 0.3.1 corrects this in offline replay with a bounded 5 s terminal window
-at closely spaced samples. It is installed; a new live shot comparison is pending.
+at closely spaced samples. A second attended 2 Hz shot verified HA saving the
+settled 66 mL value. Forwarded BOOKOO telemetry included the owner's reported
+34.2 g final display value; automatic final-yield selection and weight-rate
+interpretation remain unresolved. See [the scale-shot evidence](docs/SCALE_SHOT_2026-09-26.md).
 Normal 30 s polling cannot resolve the tail, and no stored history was rewritten.
 
 ## What it does
@@ -191,7 +194,7 @@ read-only polling still continues on its documented cadence.
 - [x] Capture one manually initiated paddle shot at the selected 2 Hz paired cadence through the ESPHome proxy; physical calibration remains pending.
 - [x] Correct bounded post-shot finalization offline; regression guards exclude observed new activity, resets and long gaps. Existing full capture replays to 66 mL.
 - [x] Deploy 0.3.1 after a full backup and verify telemetry/history recovery.
-- [ ] Confirm finalization during another attended high-rate shot trace.
+- [x] Confirm finalization during another attended high-rate shot trace: HA saved the settled 66 mL value.
 - [ ] Complete the installed official-app feature inventory.
 - [ ] Introduce narrowly scoped controls: settings first, profile upload/readback next, attended brewing/cleaning last.
 - [x] Add opt-in boiler enable switches and guarded app-selected stored-profile infrastructure (0.2.0); enable only boiler switches on this installation.

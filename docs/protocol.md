@@ -29,6 +29,14 @@ and normal completion for the stored 5 s cleaning / 5 s standing / count 3 progr
 This verifies that start path once, not stop semantics or other programs. See
 [the cleaning validation record](CLEANING_CONTROL.md).
 
+An additional attended paddle shot with a BOOKOO Themis Ultra produced 360 valid
+paired samples at 2 Hz. The installed 0.3.1 tracker saved the settled 66 mL counter.
+Register 1412 changed with scale weight and included the owner's reported final
+34.2 g display value. Register 1423 produced implausible values under unsigned
+decoding (including raw 65535): signedness/sentinel semantics remain unresolved.
+Previously unmapped register 1415 varied and matched register 1412 in 329/360
+samples, without establishing its meaning. See [the scale-shot record](SCALE_SHOT_2026-09-26.md).
+
 ## Upstream protocol consensus
 
 LitaLite reports a custom service and two communication characteristics discovered through official-app analysis and live testing.[1] GeeFlow independently implements matching Modbus commands/registers and states that the DATA S is its tested physical machine.[4][5][6]

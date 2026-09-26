@@ -53,7 +53,10 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Capture one user-initiated normal paddle shot at 2 Hz without a control command: 360 valid pairs, profile state `0x2`, 22.4 s timer. See [shot record](docs/PADDLE_SHOT_2026-09-26.md).
 - [x] Fix last-shot finalization offline (0.3.1): existing capture now replays to 66 mL, with bounded attribution and regression guards for new activity, resets and long gaps.
 - [x] Deploy 0.3.1 after a full backup, retain 0.3.0 rollback and verify telemetry/history recovery.
-- [ ] Confirm the final value in a new attended high-rate shot trace, including at least 10 seconds after stopping.
+- [x] Confirm the final value in a new attended high-rate shot trace with over 10 seconds after stopping: HA saved 66 mL and total water advanced by exactly 66 mL.
+- [x] Compare forwarded BOOKOO weight with one owner-reported final display reading: 34.2 g, also observed in telemetry.
+- [ ] Investigate signed weight-rate/sentinels, final-yield selection and newly varying register 1415 without control writes.
+- [ ] Guard against stale previous-shot telemetry in the first active pair before the counter/timer resets; replay both private captures offline.
 - [ ] Retain at least five seconds after that shot; resolve delayed terminal volume, reset/latching and sequential telemetry/state timing before claiming final shot totals.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.

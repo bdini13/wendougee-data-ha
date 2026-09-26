@@ -7,8 +7,9 @@ first idle, while preserving the end timestamp and shot count. Attribution close
 on new activity, reset/changed timer, unknown state, water alarm, backwards time
 or a sample gap over two seconds. This does not add automatic fast polling; the
 ordinary 30 s cadence cannot resolve the tail. Existing stored history is untouched.
-Deployment followed a full backup and passed configuration/runtime checks; a new
-live shot comparison remains pending. See [replay and deployment evidence](PADDLE_SHOT_2026-09-26.md).
+Deployment followed a full backup and passed configuration/runtime checks. A
+subsequent attended 2 Hz shot verified saving the settled 66 mL value. See
+[replay/deployment evidence](PADDLE_SHOT_2026-09-26.md) and [the new live test](SCALE_SHOT_2026-09-26.md).
 
 ## 0.3.0 attended cleaning
 

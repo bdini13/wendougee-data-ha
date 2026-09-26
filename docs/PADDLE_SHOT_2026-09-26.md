@@ -106,8 +106,8 @@ cleaning control options and uncertainty locks were unchanged; app-profile start
 remained disabled. No control action, new shot or historical correction occurred.
 Local verification: 237 passing tests; implementation GitHub CI passed both jobs.
 
-1. Verify the installed patch with another attended 2 Hz
-   trace extending at least ten seconds past shot stop.
+1. Completed: a second attended 2 Hz trace extending over ten seconds past stop
+   verified HA recording the settled 66 mL value. See [the live scale-shot test](SCALE_SHOT_2026-09-26.md).
 2. Repeat with a measured cup weight and independent shot duration for comparison.
 3. Investigate the bound-profile mode/bank and remote trigger without changing
    the recipe. The paddle produced the profile flag, **not** the manual flag;
