@@ -6,6 +6,13 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Phone notifications installed:** four native automations from
+`scripts/boiler_notifications.py`, both requested phones, persistent input_text
+markers. Ready once per boiler per local day with own schedule enabled and fresh
+telemetry; off only a new verified scheduled result. Exact API readback and enabled
+state checked. No test push, machine command or restart. See
+`docs/BOILER_NOTIFICATIONS.md`; unrelated automations preserved and backed up.
+
 **0.5.1 installed and verified:** native read-only brew/
 steam schedule health, communication health, 30-shot private journal and SVG image
 platform. Four native-card Espresso views add compact boiler trends, selected-date/

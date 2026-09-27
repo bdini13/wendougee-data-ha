@@ -1,5 +1,7 @@
 # WENDOUGEE DATA S · Home Assistant
 
+Phone alerts: [schedule-gated boiler readiness and verified scheduled shutdown](docs/BOILER_NOTIFICATIONS.md).
+
 Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low Energy for the **WENDOUGEE DATA S**. Controls are experimental and require attended commissioning.
 
 [![Validate](https://github.com/bdini13/wendougee-data-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/bdini13/wendougee-data-ha/actions/workflows/validate.yml)
