@@ -38,7 +38,10 @@ and state_attr('{temperature}', 'unit_of_measurement') == state_attr('{target}',
 and t | float(0) >= target | float(999)
 and states('{marker}') not in ['unknown', 'unavailable']
 and states('{marker}') != now().date().isoformat() }}}}"""
-                message = f"WENDOUGEE DATA S: {boiler.title()} boiler reached its setpoint ({{{{ states('{temperature}') }}}} {{{{ state_attr('{temperature}', 'unit_of_measurement') }}}}; target {{{{ states('{target}') }}}})."
+                greeting = (
+                    "☕ Espresso time!" if boiler == "brew" else "💨 Ready to steam!"
+                )
+                message = f"{greeting} {boiler.title()} boiler is at temperature—your WENDOUGEE DATA S is ready for {'a shot' if boiler == 'brew' else 'milk duty'}! ({{{{ states('{temperature}') }}}} {{{{ state_attr('{temperature}', 'unit_of_measurement') }}}}; target {{{{ states('{target}') }}}})."
             else:
                 triggers = [
                     {
@@ -58,7 +61,7 @@ and trigger.from_state.attributes.get('last_verified_at') != trigger.to_state.at
 and 0 <= as_timestamp(now()) - as_timestamp(trigger.to_state.attributes.get('last_verified_at'), 0) < 120
 and states('{marker}') not in ['unknown', 'unavailable']
 and states('{marker}') != trigger.to_state.attributes.get('last_verified_at') }}}}"""
-                message = f"WENDOUGEE DATA S: {boiler.title()} boiler scheduled shutdown verified. The machine reports this boiler disabled; it may still be hot."
+                message = f"😴 Taking a coffee break! {boiler.title()} boiler scheduled shutdown verified on your WENDOUGEE DATA S. It may still be hot."
             result.append(
                 {
                     "id": f"espresso_{boiler}_{kind}_phone_notification",

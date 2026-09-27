@@ -52,6 +52,19 @@ def test_notifications_have_no_hardware_actions():
         assert all(a.get("continue_on_error") for a in config["actions"][1:])
 
 
+def test_friendly_copy_identifies_each_boiler():
+    configs = automations(["notify.mobile_app_example"])
+    messages = [c["actions"][1]["data"]["message"] for c in configs]
+    assert "☕ Espresso time!" in messages[0]
+    assert "Brew boiler" in messages[0]
+    assert "💨 Ready to steam!" in messages[2]
+    assert "Steam boiler" in messages[2]
+    for index, boiler in ((1, "Brew"), (3, "Steam")):
+        assert f"{boiler} boiler" in messages[index]
+        assert "scheduled shutdown verified" in messages[index]
+        assert "still be hot" in messages[index]
+
+
 @pytest.mark.asyncio
 async def test_off_requires_new_verified_scheduled_result(hass):
     from homeassistant.core import State

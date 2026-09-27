@@ -1,5 +1,10 @@
 # Boiler phone notifications
 
+Friendly copy distinguishes “☕ Espresso time! Brew boiler…” from “💨 Ready to
+steam! Steam boiler…”. Shutdown says “😴 Taking a coffee break!” and retains the
+boiler name, verified scheduled-shutdown wording and residual-heat warning.
+Only wording changed; schedule gates, recipients and deduplication are unchanged.
+
 `scripts/boiler_notifications.py` generates four native HA automations. Pass
 explicit companion-phone services to `automations(recipients)`; personal recipients
 stay outside Git. No machine commands, polling changes or restart are required.
