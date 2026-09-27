@@ -108,6 +108,14 @@ def test_boiler_power_and_schedule_share_one_card_without_bulk_toggle():
             f"input_datetime.espresso_{boiler}_off_time",
         } <= set(_entities(card))
         assert card["entities"][0]["name"] == "Boiler power · manual"
+        assert [r["entity"] for r in card["entities"][1:3]] == [
+            f"sensor.wendougee_data_{boiler}_target",
+            f"sensor.wendougee_data_{boiler}_temperature",
+        ]
+    top = dashboard["views"][0]["sections"][0]["cards"]
+    assert top[0]["type"] == "picture"
+    assert top[1]["entities"][0]["entity"].endswith("brew_boiler")
+    assert top[2]["entities"][0]["entity"].endswith("steam_boiler")
 
 
 def test_statistics_date_collection_uses_frontend_required_prefix():

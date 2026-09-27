@@ -32,3 +32,12 @@ credential and a localhost-only SSH tunnel; no browser profile or credential was
 retained. No power, schedule, shot, cleaning or benchmark control was clicked.
 Future dashboard work must include rendered screenshots and safe interaction
 checks, not just YAML/entity validation; this is now in AGENTS.md.
+
+## Boiler-card priority follow-up
+
+Moved both power/schedule cards immediately beneath the machine image and added
+reported setpoint plus measured temperature beneath each power switch. Captured
+phone/desktop overview and individual boiler cards; shortened titles and On/Off
+time labels after spotting truncation. Temperatures retain HA's selected display
+units and setpoints are explicitly read-only. All four tabs were rechecked for
+rendered errors, and date navigation was retested. No machine action was fired.

@@ -4,7 +4,8 @@
 date-collection configuration and checked all four tabs at mobile/desktop widths.
 
 Espresso dashboard: each boiler's manual power switch and daily schedule now
-share one card, with separately labeled controls and no bulk toggle.
+share one card directly beneath the machine image. Read-only current setpoint and
+measured temperature sit beneath each power switch; no bulk toggle is exposed.
 
 [Apple Home / Siri](docs/APPLE_HOME.md): “Espresso Machine” controls brew heating
 only; steam and brew/cleaning triggers are not exposed.

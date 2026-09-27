@@ -14,6 +14,46 @@ views:
           - type: picture
             image: /local/espresso/wendougee-data-s-white-rose-gold.png
             alt_text: Original illustration of the white and rose-gold WENDOUGEE DATA S
+          - type: entities
+            title: Brew boiler
+            show_header_toggle: false
+            entities:
+              - entity: switch.wendougee_data_s_brew_boiler
+                name: Boiler power · manual
+              - entity: sensor.wendougee_data_brew_target
+                name: Current setpoint · read only
+              - entity: sensor.wendougee_data_brew_temperature
+                name: Current temperature
+              - type: section
+                label: Daily schedule
+              - entity: input_boolean.espresso_brew_schedule_enabled
+                name: Schedule enabled
+              - entity: input_datetime.espresso_brew_on_time
+                name: On at
+              - entity: input_datetime.espresso_brew_off_time
+                name: Off at
+              - entity: sensor.wendougee_data_s_brew_schedule_health
+                name: Schedule status
+          - type: entities
+            title: Steam boiler
+            show_header_toggle: false
+            entities:
+              - entity: switch.wendougee_data_s_steam_boiler
+                name: Boiler power · manual
+              - entity: sensor.wendougee_data_steam_target
+                name: Current setpoint · read only
+              - entity: sensor.wendougee_data_steam_temperature
+                name: Current temperature
+              - type: section
+                label: Daily schedule
+              - entity: input_boolean.espresso_steam_schedule_enabled
+                name: Schedule enabled
+              - entity: input_datetime.espresso_steam_on_time
+                name: On at
+              - entity: input_datetime.espresso_steam_off_time
+                name: Off at
+              - entity: sensor.wendougee_data_s_steam_schedule_health
+                name: Schedule status
           - type: markdown
             content: |-
               # WENDOUGEE DATA S
@@ -85,9 +125,8 @@ views:
             icon: mdi:coffee-maker
           - type: markdown
             content: >-
-              Manual boiler power and daily schedules are together in the
-              Boiler power & schedules section. Measured temperatures and
-              reported targets are shown below.
+              Manual boiler power, current temperatures and daily schedules are
+              together beneath the machine image. Temperature trends are below.
           - type: markdown
             content: >-
               **Paddle-bound shot · pending validation.** The paddle stores its
@@ -208,7 +247,7 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Boiler power & schedules
+            heading: Schedule details & safety
             icon: mdi:radiator
           - type: markdown
             content: >-
@@ -216,7 +255,8 @@ views:
               enable or disable its schedule. Switches show verified enable settings,
               not heater-element activity. There is no remote emergency stop.
               Enabled schedules send guarded boiler on/off commands at the times
-              below, every day in Home Assistant's local timezone (America/New_York).
+              shown under the machine image, every day in Home Assistant's local
+              timezone (America/New_York).
               Keep machine power and Bluetooth available. Startup and edits do not
               replay missed times. A failed action pauses that boiler's schedule
               and raises an HA notification; the boiler may remain on. No automatic
@@ -228,38 +268,6 @@ views:
               - sensor.wendougee_data_steam_target
               - binary_sensor.wendougee_data_brew_heating_enabled
               - sensor.wendougee_data_brew_target
-          - type: entities
-            title: Brew boiler · power & schedule
-            show_header_toggle: false
-            entities:
-              - entity: switch.wendougee_data_s_brew_boiler
-                name: Boiler power · manual
-              - type: section
-                label: Daily schedule
-              - entity: input_boolean.espresso_brew_schedule_enabled
-                name: Schedule enabled
-              - entity: input_datetime.espresso_brew_on_time
-                name: Turn on at
-              - entity: input_datetime.espresso_brew_off_time
-                name: Turn off at
-              - entity: sensor.wendougee_data_s_brew_schedule_health
-                name: Schedule status
-          - type: entities
-            title: Steam boiler · power & schedule
-            show_header_toggle: false
-            entities:
-              - entity: switch.wendougee_data_s_steam_boiler
-                name: Boiler power · manual
-              - type: section
-                label: Daily schedule
-              - entity: input_boolean.espresso_steam_schedule_enabled
-                name: Schedule enabled
-              - entity: input_datetime.espresso_steam_on_time
-                name: Turn on at
-              - entity: input_datetime.espresso_steam_off_time
-                name: Turn off at
-              - entity: sensor.wendougee_data_s_steam_schedule_health
-                name: Schedule status
           - type: markdown
             content: |-
               {% for boiler in ['brew', 'steam'] %}

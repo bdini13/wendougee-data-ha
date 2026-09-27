@@ -6,6 +6,13 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Boiler card priority:** Brew and Steam power/schedule cards are now immediately
+after the machine image in the first section. Each has reported read-only setpoint
+and measured temperature directly beneath power, before the schedule controls.
+Stable entities/settings preserved; no actuation. Regression test asserts both
+card order and temperature-row placement. Live dashboard backup and exact readback
+completed; 281 tests pass.
+
 **Trends visual defect repaired:** frontend requires collection_key prefix
 `energy_`; changed all three linked cards to energy_espresso_trends. Reproduced
 the three errors in isolated Chrome, then captured/inspected all four tabs at
