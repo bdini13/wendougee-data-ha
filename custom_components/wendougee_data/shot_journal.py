@@ -114,9 +114,13 @@ class ShotJournal:
             self._started = now
             self._points = []
         current = self._current
-        if current is not None and active:
-            if self._last_at is not None and (now - self._last_at).total_seconds() > 2:
+        gap = (now - self._last_at).total_seconds() if self._last_at else None
+        if current is not None:
+            if gap is not None and not 0 <= gap <= 2:
                 current["coverage"] = "sparse"
+            if source != "capture":
+                current["source"] = "poll"
+        if current is not None and active:
             # Firmware can assert active before resetting old counters. Discard
             # that prefix; do not assign the previous shot's volume to this shot.
             if (
@@ -131,8 +135,6 @@ class ShotJournal:
             current["peak_bar"] = max(current["peak_bar"], telemetry.pressure_bar)
             current["pumped_ml"] = max(current["pumped_ml"], volume)
             current["samples"] += 1
-            if source != "capture":
-                current["source"] = "poll"
         if current is not None and (active or state.state == "idle"):
             if source == "capture" and current["source"] == "capture":
                 if len(self._points) < MAX_POINTS:
@@ -147,6 +149,13 @@ class ShotJournal:
                 else:
                     current["coverage"] = "truncated"
             if not active:
+                if (
+                    gap is not None
+                    and 0 <= gap <= 2
+                    and self._last_timer is not None
+                    and timer >= self._last_timer
+                ):
+                    current["duration_s"] = timer
                 current["ended_at"] = now.isoformat()
                 current["scale_at_stop_g"] = telemetry.scale_weight_grams
                 # Idle values may already be reset; the tracker separately

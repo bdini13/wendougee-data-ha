@@ -1,5 +1,10 @@
 # Espresso observability · 0.5.0
 
+Patch 0.5.1 labels a capture that ends mid-shot and finishes under routine polling
+as sparse/poll evidence, clearing its detailed curve. Closely spaced first-idle
+telemetry supplies the terminal timer only if it has not reset. Neither correction
+changes machine control or lifetime shot/water accounting.
+
 This release improves visibility, not the machine's control permissions. All new
 entities read cached state or bounded local storage. No new Bluetooth requests,
 write addresses, automatic captures or control retries are introduced.

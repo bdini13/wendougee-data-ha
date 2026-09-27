@@ -288,3 +288,30 @@ async def test_successful_schedule_never_publishes_false_failure(hass):
     assert "check_machine" not in states
     assert "paused" not in states
     assert "executing" in states
+
+
+async def test_capture_ending_mid_shot_does_not_claim_complete_curve(hass):
+    t = ActivityTracker(hass, "partial")
+    start = datetime(2026, 9, 27, tzinfo=UTC)
+    for seconds, state, source in [
+        (0, IDLE, "capture"),
+        (0.5, PROFILE, "capture"),
+        (1, PROFILE, "capture"),
+        (31, IDLE, "poll"),
+    ]:
+        t.observe(TELEMETRY, state, start + timedelta(seconds=seconds), source=source)
+    assert t.journal.records[-1]["source"] == "poll"
+    assert t.journal.records[-1]["coverage"] == "sparse"
+    assert not t.journal.latest_curve
+
+
+async def test_journal_uses_close_terminal_timer_but_never_reset_idle_timer(hass):
+    t = ActivityTracker(hass, "timer")
+    sample(t, 0, 0, IDLE, 0)
+    sample(t, 0.5, 10, PROFILE, 22)
+    sample(t, 1, 11, IDLE, 22.4)
+    assert t.journal.records[-1]["duration_s"] == 22.4
+    sample(t, 1.5, 1, PROFILE, 0.1)
+    sample(t, 2, 10, PROFILE, 10)
+    sample(t, 2.5, 0, IDLE, 0)
+    assert t.journal.records[-1]["duration_s"] == 10
