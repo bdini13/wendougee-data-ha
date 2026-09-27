@@ -6,6 +6,13 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Dashboard consolidation:** boiler switches moved into their respective daily
+schedule entities cards (manual power, schedule enable, times, health); duplicate
+power tiles removed. Bulk header toggles disabled. No entity IDs, machine settings
+or scheduling semantics changed. Live dashboard backed up, 41 references available,
+four current templates/three maintenance branches checked, exact saved readback
+verified. 280 tests pass (164 + 116); no actuation, restart or browser visual QA.
+
 **Apple Home configured (2026-09-27):** owner chose brew-only Siri control.
 Existing HomeKit bridge now explicitly includes its prior garage door and
 `switch.wendougee_data_s_brew_boiler`; that switch's registry friendly name is

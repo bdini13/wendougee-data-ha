@@ -1,5 +1,8 @@
 # WENDOUGEE DATA S · Home Assistant
 
+Espresso dashboard: each boiler's manual power switch and daily schedule now
+share one card, with separately labeled controls and no bulk toggle.
+
 [Apple Home / Siri](docs/APPLE_HOME.md): “Espresso Machine” controls brew heating
 only; steam and brew/cleaning triggers are not exposed.
 

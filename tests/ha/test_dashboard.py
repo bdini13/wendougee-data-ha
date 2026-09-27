@@ -85,3 +85,26 @@ def test_dashboard_has_native_observability_and_no_stale_schedule_claim():
     assert "energy-date-selection" in set(_card_types(dashboard))
     assert not any(t.startswith("custom:") for t in _card_types(dashboard))
     assert "final_yield_g" not in text  # No unvalidated yield presented as fact.
+
+
+def test_boiler_power_and_schedule_share_one_card_without_bulk_toggle():
+    dashboard = yaml.safe_load(Path("dashboards/espresso.yaml").read_text())
+    cards = [
+        card
+        for section in dashboard["views"][0]["sections"]
+        for card in section["cards"]
+    ]
+    for boiler in ("brew", "steam"):
+        switch = f"switch.wendougee_data_s_{boiler}_boiler"
+        matches = [card for card in cards if switch in set(_entities(card))]
+        assert len(matches) == 1
+        card = matches[0]
+        assert card["type"] == "entities"
+        assert card["show_header_toggle"] is False
+        assert {
+            switch,
+            f"input_boolean.espresso_{boiler}_schedule_enabled",
+            f"input_datetime.espresso_{boiler}_on_time",
+            f"input_datetime.espresso_{boiler}_off_time",
+        } <= set(_entities(card))
+        assert card["entities"][0]["name"] == "Boiler power · manual"

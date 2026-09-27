@@ -81,28 +81,13 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Machine controls
+            heading: Machine readings
             icon: mdi:coffee-maker
           - type: markdown
             content: >-
-              Experimental controls: commission while at the machine. Switches
-              show verified boiler enable settings, not heater-element activity.
-              There is no remote emergency stop. Enabled schedules are connected;
-              their health and next eligible action are shown above.
-          - type: tile
-            entity: switch.wendougee_data_s_brew_boiler
-            name: Brew boiler
-            tap_action:
-              action: more-info
-            features:
-              - type: toggle
-          - type: tile
-            entity: switch.wendougee_data_s_steam_boiler
-            name: Steam boiler
-            tap_action:
-              action: more-info
-            features:
-              - type: toggle
+              Manual boiler power and daily schedules are together in the
+              Boiler power & schedules section. Measured temperatures and
+              reported targets are shown below.
           - type: markdown
             content: >-
               **Paddle-bound shot · pending validation.** The paddle stores its
@@ -223,10 +208,13 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Boiler schedules and reported configuration
+            heading: Boiler power & schedules
             icon: mdi:radiator
           - type: markdown
             content: >-
+              Manual power controls boiler heating, not mains power, and does not
+              enable or disable its schedule. Switches show verified enable settings,
+              not heater-element activity. There is no remote emergency stop.
               Enabled schedules send guarded boiler on/off commands at the times
               below, every day in Home Assistant's local timezone (America/New_York).
               Keep machine power and Bluetooth available. Startup and edits do not
@@ -241,19 +229,37 @@ views:
               - binary_sensor.wendougee_data_brew_heating_enabled
               - sensor.wendougee_data_brew_target
           - type: entities
-            title: Brew boiler · daily schedule
+            title: Brew boiler · power & schedule
+            show_header_toggle: false
             entities:
-              - sensor.wendougee_data_s_brew_schedule_health
-              - input_boolean.espresso_brew_schedule_enabled
-              - input_datetime.espresso_brew_on_time
-              - input_datetime.espresso_brew_off_time
+              - entity: switch.wendougee_data_s_brew_boiler
+                name: Boiler power · manual
+              - type: section
+                label: Daily schedule
+              - entity: input_boolean.espresso_brew_schedule_enabled
+                name: Schedule enabled
+              - entity: input_datetime.espresso_brew_on_time
+                name: Turn on at
+              - entity: input_datetime.espresso_brew_off_time
+                name: Turn off at
+              - entity: sensor.wendougee_data_s_brew_schedule_health
+                name: Schedule status
           - type: entities
-            title: Steam boiler · daily schedule
+            title: Steam boiler · power & schedule
+            show_header_toggle: false
             entities:
-              - sensor.wendougee_data_s_steam_schedule_health
-              - input_boolean.espresso_steam_schedule_enabled
-              - input_datetime.espresso_steam_on_time
-              - input_datetime.espresso_steam_off_time
+              - entity: switch.wendougee_data_s_steam_boiler
+                name: Boiler power · manual
+              - type: section
+                label: Daily schedule
+              - entity: input_boolean.espresso_steam_schedule_enabled
+                name: Schedule enabled
+              - entity: input_datetime.espresso_steam_on_time
+                name: Turn on at
+              - entity: input_datetime.espresso_steam_off_time
+                name: Turn off at
+              - entity: sensor.wendougee_data_s_steam_schedule_health
+                name: Schedule status
           - type: markdown
             content: |-
               {% for boiler in ['brew', 'steam'] %}
