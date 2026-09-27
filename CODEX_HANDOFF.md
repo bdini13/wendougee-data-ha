@@ -6,6 +6,24 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**2026-09-27 profile-bank investigation completed:** 12 read-only FC01/FC03
+transactions through a temporary single-owner proxy session. Selectors 87/88=2;
+active header seven zeros (unsupported), bound recipe 65 mL, one terminal stage
+28 s / 9 bar / pressure priority / wait 0. Repeated bound header, selectors and
+37-word configuration matched; state idle. Private 0600 raw snapshot excluded
+from Git. New research-only profile_reads.py does not add HA services or writes.
+278 tests (164 + 114), lint/format/compile/JSON/diff checks passed. No profile
+activation/upload/binding, boiler or cleaning command sent. See
+`docs/PROFILE_BANKS_2026-09-27.md`.
+
+Ownership handoff caused HA setup_retry after the successful probe; integration
+reload did not recover. Configuration check and Core restart restored 0.5.1:
+loaded/healthy at 09:41:08 UTC, zero failed polls at initial verification, both
+boilers off, brew armed 06:30–09:00, steam disabled, all uncertainty locks clear,
+history unchanged. Existing full backup ea38f9a7 retained; no new component
+deployment. Avoid repeating standalone handoffs; future profile reads should
+use a separately tested bounded diagnostic through HA's existing coordinator.
+
 **Phone notifications installed:** four native automations from
 `scripts/boiler_notifications.py`, both requested phones, persistent input_text
 markers. Ready once per boiler per local day with own schedule enabled and fresh

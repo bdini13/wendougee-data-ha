@@ -1,5 +1,8 @@
 # WENDOUGEE DATA S · Home Assistant
 
+Research: [paddle-bound profile readback](docs/PROFILE_BANKS_2026-09-27.md)
+now identifies the stored recipe; remote paddle activation remains unverified.
+
 Phone alerts: [schedule-gated boiler readiness and verified scheduled shutdown](docs/BOILER_NOTIFICATIONS.md).
 
 Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low Energy for the **WENDOUGEE DATA S**. Controls are experimental and require attended commissioning.

@@ -1,5 +1,9 @@
 # Paddle-bound versus app-selected profile
 
+**2026-09-27 live read:** selectors 87/88 both 2; active header all zero;
+bound bank contains a 65 mL recipe with one terminal 28 s / 9 bar pressure stage.
+No activation command established. See [snapshot and limits](PROFILE_BANKS_2026-09-27.md).
+
 Owner clarification, 2026-09-26: the requested default-shot action must execute
 the recipe bound to the **physical paddle**, not whichever profile an app last
 uploaded for immediate execution. We must not silently substitute the latter.

@@ -15,6 +15,12 @@ See [app screenshot inventory](research/APP_SCREENSHOTS_2026-09-27.md) and
 
 ## What we have, and what remains
 
+**2026-09-27 profile readback:** selectors 87/88 both 2; active-bank header is
+all zero, while the bound bank contains volume target 65 mL and one terminal
+28 s / 9 bar pressure-priority stage. Configuration/selector checks unchanged.
+This is local read evidence, not remote-start proof or validated upload support.
+See [profile snapshot](docs/PROFILE_BANKS_2026-09-27.md).
+
 **0.3.1 shot/scale validation:** an attended 2 Hz paddle-shot capture verified HA
 recording the settled 66 mL pumped counter. BOOKOO Themis Ultra weight was forwarded
 through the machine; the owner's final 34.2 g display value appeared in telemetry.
