@@ -23,7 +23,32 @@ async def test_default_entry_cannot_call_controls(hass):
             await coordinator.async_set_boiler(BoilerSetting.BREW_ENABLED, True)
         with pytest.raises(HomeAssistantError, match="not enabled"):
             await coordinator.async_start_profile()
+        with pytest.raises(HomeAssistantError, match="not enabled"):
+            await coordinator.async_prepare_profile(AsyncMock())
         execute.assert_not_called()
+
+
+async def test_prepare_uncertainty_persists_and_never_calls_start(hass):
+    configured = entry()
+    configured.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        configured, options={"allow_profile_start": True}
+    )
+    coordinator = WendougeeCoordinator(hass, configured)
+    with (
+        patch(
+            f"custom_components.{DOMAIN}.coordinator.execute_profile_preparation",
+            side_effect=TimeoutError,
+        ) as prepare,
+        patch(f"custom_components.{DOMAIN}.coordinator.execute_profile") as start,
+    ):
+        with pytest.raises(HomeAssistantError, match="uncertain"):
+            await coordinator.async_prepare_profile(AsyncMock())
+        restored = WendougeeCoordinator(hass, configured)
+        await restored.async_load_control_state()
+        assert restored.profile_start_locked
+        prepare.assert_awaited_once()
+        start.assert_not_called()
 
 
 async def test_opt_in_registers_switches_and_button_without_control_on_setup(hass):

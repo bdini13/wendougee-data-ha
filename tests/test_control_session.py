@@ -10,6 +10,7 @@ from wendougee_data.control_session import (
     ControlRejected,
     ControlSession,
     command_request,
+    prepare_pilot_profile,
     set_boiler,
     start_stored_profile,
 )
@@ -41,6 +42,11 @@ class Machine:
         self.unrelated_change = False
         self.split = False
         self.alarm = False
+        self.active = [0] * 167
+        self.active[:7] = [1, 1, 1, 1, 65, 0, 0]
+        self.active[8:14] = [28, 90, 0, 0, 1, 0]
+        self.bound = self.active.copy()
+        self.corrupt_bound_on_upload = False
 
     async def open(self, on_data, on_disconnect):
         self.on_data = on_data
@@ -59,6 +65,18 @@ class Machine:
             if self.unrelated_change:
                 self.words[8] += 1
             reply = request if not self.bad_echo else append_crc(request[:5] + b"\x02")
+        elif fc == 16:
+            start = int.from_bytes(request[2:4], "big") - 2048
+            words = [
+                int.from_bytes(request[i : i + 2], "big")
+                for i in range(7, len(request) - 2, 2)
+            ]
+            self.active[start : start + len(words)] = words
+            if self.corrupt_bound_on_upload:
+                self.bound[166] += 1
+            reply = append_crc(request[:6])
+            if self.bad_echo:
+                reply = append_crc(request[:5] + b"\x01")
         elif fc == 5:
             if request[4] == 255 and self.drop_press:
                 return
@@ -67,8 +85,14 @@ class Machine:
             reply = request
         elif fc == 1:
             reply = append_crc(b"\x01\x01\x03" + self.bits.to_bytes(3, "little"))
+        elif int.from_bytes(request[2:4], "big") in (2048, 2173, 2560, 2685):
+            address = int.from_bytes(request[2:4], "big")
+            bank, base = (self.active, 2048) if address < 2560 else (self.bound, 2560)
+            count = int.from_bytes(request[4:6], "big")
+            reply = register_response(bank[address - base : address - base + count])
         elif request[2:4] == b"\x00\x57":
-            reply = register_response([self.mode])
+            count = int.from_bytes(request[4:6], "big")
+            reply = register_response([self.mode] * count)
         elif request[2:4] == b"\x00\x00":
             reply = register_response(self.words)
         else:
@@ -141,6 +165,63 @@ async def test_stored_profile_pulses_only_coil_150_and_verifies_state():
         "0105009600002de6",
     ]
     assert not any(r[1] in (6, 16) for r in machine.sent)
+
+
+@run_async
+async def test_empty_active_profile_never_starts_despite_mode_two():
+    machine = Machine()
+    machine.words[7] = 0
+    machine.active = [0] * 167
+    async with ControlSession(machine) as session:
+        with pytest.raises(ControlRejected, match="profile"):
+            await start_stored_profile(session)
+    assert all(r[1] in (1, 3) for r in machine.sent)
+
+
+@run_async
+async def test_prepare_backs_up_full_banks_and_never_activates():
+    machine = Machine()
+    machine.active = [0] * 167
+    machine.split = True
+    backups = []
+
+    async def backup(document):
+        assert all(r[1] in (1, 3) for r in machine.sent)
+        backups.append(document)
+
+    async with ControlSession(machine) as session:
+        result = await prepare_pilot_profile(session, backup)
+    assert result["started"] is False
+    assert result["write_count"] == 2
+    assert len(backups[0]["active"]) == len(backups[0]["bound"]) == 167
+    assert machine.active == machine.bound
+    assert [r for r in machine.sent if r[1] not in (1, 3)] == [
+        command_request(Command.PILOT_STAGE),
+        command_request(Command.PILOT_HEADER),
+    ]
+
+
+@run_async
+@pytest.mark.parametrize("failure", ["backup", "bound", "echo", "readback"])
+async def test_prepare_fails_closed_without_start_or_retry(failure):
+    machine = Machine()
+    machine.active = [0] * 167
+    machine.bad_echo = failure == "echo"
+    machine.corrupt_bound_on_upload = failure == "readback"
+    if failure == "bound":
+        machine.bound[9] = 150
+
+    async def backup(document):
+        if failure == "backup":
+            raise OSError("Storage failed")
+
+    async with ControlSession(machine) as session:
+        with pytest.raises((OSError, ValueError)):
+            await prepare_pilot_profile(session, backup)
+    assert not any(r[1] in (5, 6) for r in machine.sent)
+    assert len([r for r in machine.sent if r[1] == 16]) == (
+        1 if failure == "echo" else 2 if failure == "readback" else 0
+    )
 
 
 @run_async

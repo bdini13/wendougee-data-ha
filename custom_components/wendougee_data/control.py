@@ -10,6 +10,7 @@ from ._protocol.control_session import (
     ControlRejected,
     ControlSession,
     command_request,
+    prepare_pilot_profile,
     set_boiler,
     start_stored_profile,
 )
@@ -55,12 +56,40 @@ async def execute_profile(hass: HomeAssistant, address):
         Command.PROFILE_MODE,
         Command.PROFILE_PRESS,
         Command.PROFILE_RELEASE,
+        Command.ACTIVE_HEAD,
+        Command.ACTIVE_TAIL,
     }
     transport = HomeAssistantControlTransport(hass, address, commands)
     async with ControlSession(transport) as session:
         state = await start_stored_profile(session)
         telemetry = parse_telemetry_response(await session.transact(Command.TELEMETRY))
         return telemetry, state
+
+
+async def execute_profile_preparation(hass: HomeAssistant, address, backup):
+    """Dedicated finite upload transport with no brew/coil capability."""
+    commands = READ_COMMANDS | {
+        Command.PROFILE_MODES,
+        Command.ACTIVE_HEAD,
+        Command.ACTIVE_TAIL,
+        Command.BOUND_HEAD,
+        Command.BOUND_TAIL,
+        Command.PILOT_HEADER,
+        Command.PILOT_STAGE,
+    }
+    transport = HomeAssistantControlTransport(hass, address, commands)
+    async with ControlSession(transport) as session:
+        # The 23-byte header must fit one negotiated GATT write. Do not invent
+        # firmware-specific fragmentation or partially upload on a short MTU.
+        largest = max(len(command_request(c)) for c in commands)
+        if transport.client.mtu_size - 3 < largest:
+            raise ControlRejected("Negotiated Bluetooth payload too small for profile")
+        if (
+            "write-without-response" in transport.modbus.properties
+            and transport.modbus.max_write_without_response_size < largest
+        ):
+            raise ControlRejected("Bluetooth write limit too small for profile")
+        return await prepare_pilot_profile(session, backup)
 
 
 async def verify_idle(hass: HomeAssistant, address):

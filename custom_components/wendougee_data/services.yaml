@@ -164,3 +164,19 @@ capture_read_only_trace:
           max: 180
           step: 1
           unit_of_measurement: s
+prepare_9_bar_profile:
+  name: Prepare validated 9 bar pilot profile
+  description: >-
+    Copies only the exact observed 9 bar / 28 s / 65 mL paddle recipe into the
+    active app bank, with private backup and full readback. Does not start brewing
+    or alter the paddle binding. Requires profile-control opt-in and attendance.
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      required: true
+      selector:
+        text:

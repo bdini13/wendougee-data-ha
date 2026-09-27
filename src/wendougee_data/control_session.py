@@ -1,7 +1,7 @@
 """Explicit boiler-enable and stored-profile transactions, without retries.
 
-Only mode 2 of the already selected active profile is accepted. No profile,
-setpoint, mode selector or arbitrary address is writable.
+Profile pilot accepts only the observed one-stage 9 bar / 28 s / 65 mL recipe.
+Preparation and activation are separate; no binding, selector or arbitrary write.
 """
 
 import asyncio
@@ -29,6 +29,13 @@ class Command(Enum):
     TELEMETRY = (3, 1404, 22)
     STATE = (1, 182, 24)
     PROFILE_MODE = (3, 87, 1)
+    PROFILE_MODES = (3, 87, 2)
+    ACTIVE_HEAD = (3, 2048, 125)
+    ACTIVE_TAIL = (3, 2173, 42)
+    BOUND_HEAD = (3, 2560, 125)
+    BOUND_TAIL = (3, 2685, 42)
+    PILOT_HEADER = (16, 2048, (1, 1, 1, 1, 65, 0, 0))
+    PILOT_STAGE = (16, 2056, (28, 90, 0, 0, 1, 0))
     STEAM_ON = (6, 6, 0)
     STEAM_OFF = (6, 6, 1)
     BREW_ON = (6, 7, 0)
@@ -44,6 +51,14 @@ def command_request(command: Command) -> bytes:
     if not isinstance(command, Command):
         raise ValueError("Unknown control-session command")
     function, address, value = command.value
+    if function == 16:
+        return append_crc(
+            bytes((1, 16))
+            + address.to_bytes(2, "big")
+            + len(value).to_bytes(2, "big")
+            + bytes((2 * len(value),))
+            + b"".join(word.to_bytes(2, "big") for word in value)
+        )
     return append_crc(
         bytes((1, function)) + address.to_bytes(2, "big") + value.to_bytes(2, "big")
     )
@@ -82,7 +97,11 @@ class ControlSession(ReadSession):
             exception = frame[1] == function | 0x80
             if frame[0] != 1 or frame[1] not in (function, function | 0x80):
                 raise ValueError("Unexpected control response identity")
-            payload_size = (count + 7) // 8 if function == 1 else count * 2
+            payload_size = (
+                ((count + 7) // 8 if function == 1 else count * 2)
+                if function in (1, 3)
+                else 0
+            )
             length = 5 if exception else (payload_size + 5 if function in (1, 3) else 8)
             if len(frame) > length:
                 raise ValueError("Extra command response bytes")
@@ -95,6 +114,9 @@ class ControlSession(ReadSession):
             if function in (5, 6):
                 if frame != command_request(self._operation):
                     raise ValueError("Control response echo mismatch")
+            elif function == 16:
+                if frame != append_crc(command_request(self._operation)[:6]):
+                    raise ValueError("Profile write echo mismatch")
             elif frame[2] != payload_size:
                 raise ValueError("Control response byte count mismatch")
         except ValueError as error:
@@ -175,6 +197,7 @@ async def start_stored_profile(session: ControlSession) -> OperatingState:
         raise ControlRejected(
             "Only an already selected stored mode-2 profile is supported"
         )
+    validate_pilot(await read_profile_bank(session, bound=False))
     await _idle(session)
     try:
         await session.transact(Command.PROFILE_PRESS)
@@ -195,3 +218,99 @@ async def start_stored_profile(session: ControlSession) -> OperatingState:
             raise ValueError("Unexpected state after profile pulse")
         await asyncio.sleep(0.2)
     raise ValueError("Profile start was not confirmed; do not repeat the pulse")
+
+
+def _registers(frame: bytes) -> tuple[int, ...]:
+    return tuple(
+        int.from_bytes(frame[i : i + 2], "big") for i in range(3, len(frame) - 2, 2)
+    )
+
+
+async def read_profile_bank(session: ControlSession, *, bound: bool) -> tuple[int, ...]:
+    """Read the documented 167-word bank in two legal FC03 chunks."""
+    commands = (
+        (Command.BOUND_HEAD, Command.BOUND_TAIL)
+        if bound
+        else (Command.ACTIVE_HEAD, Command.ACTIVE_TAIL)
+    )
+    return _registers(await session.transact(commands[0])) + _registers(
+        await session.transact(commands[1])
+    )
+
+
+def validate_pilot(bank: tuple[int, ...]) -> None:
+    """No generalized recipe interpretation: match the attended pilot exactly."""
+    if (
+        len(bank) != 167
+        or bank[:7] != Command.PILOT_HEADER.value[2]
+        or bank[8:14] != Command.PILOT_STAGE.value[2]
+    ):
+        raise ControlRejected("Stored profile is not the verified 9 bar pilot recipe")
+
+
+async def prepare_pilot_profile(session: ControlSession, backup) -> dict:
+    """Copy only the exact known recipe into active storage, never activate.
+
+    Caller durably locks controls first. Backup must complete before any write.
+    No rollback/retry after uncertainty; full banks and configuration are checked.
+    """
+    await _idle(session)
+    config = await session.transact(Command.CONFIGURATION)
+    telemetry = parse_telemetry_response(await session.transact(Command.TELEMETRY))
+    if telemetry.water_level_alarm:
+        raise ControlRejected("Water shortage alarm is active")
+    modes = await session.transact(Command.PROFILE_MODES)
+    if _registers(modes) != (2, 2):
+        raise ControlRejected("Both profile selectors must already be mode 2")
+    active = await read_profile_bank(session, bound=False)
+    bound = await read_profile_bank(session, bound=True)
+    validate_pilot(bound)
+    await backup(
+        {
+            "active": active,
+            "bound": bound,
+            "configuration": _registers(config),
+            "modes": (2, 2),
+        }
+    )
+    # Recheck every backed-up word after storage I/O and immediately before writes.
+    if (
+        active != await read_profile_bank(session, bound=False)
+        or bound != await read_profile_bank(session, bound=True)
+        or modes != await session.transact(Command.PROFILE_MODES)
+        or config != await session.transact(Command.CONFIGURATION)
+    ):
+        raise ControlRejected("Profile or configuration changed before preparation")
+    await _idle(session)
+    expected = list(active)
+    expected[:7] = Command.PILOT_HEADER.value[2]
+    expected[8:14] = Command.PILOT_STAGE.value[2]
+    writes = 0
+    if tuple(expected) != active:
+        # Terminal stage first; header last. No selector or binding changes.
+        await session.transact(Command.PILOT_STAGE)
+        writes += 1
+        await session.transact(Command.PILOT_HEADER)
+        writes += 1
+    after = await read_profile_bank(session, bound=False)
+    unchanged = await read_profile_bank(session, bound=True)
+    if (
+        after != tuple(expected)
+        or unchanged != bound
+        or modes != await session.transact(Command.PROFILE_MODES)
+        or config != await session.transact(Command.CONFIGURATION)
+    ):
+        raise ValueError("Profile preparation full readback mismatch; do not retry")
+    state = decode_operating_state(await session.transact(Command.STATE))
+    if state.state != "idle":
+        raise ValueError("Machine left idle during preparation")
+    return {
+        "prepared": True,
+        "started": False,
+        "write_count": writes,
+        "bound_bank_unchanged": True,
+        "configuration_unchanged": True,
+        "target_ml": 65,
+        "pressure_bar": 9,
+        "stage_seconds": 28,
+    }

@@ -6,6 +6,17 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.6.0 guarded profile pilot implemented, hardware test deferred:** exact observed
+9 bar / 28 s / 65 mL active-bank preparation with private durable backup, two fixed
+FC16 writes, complete readback and no activation. Separate coil150 start now
+rejects empty/unsupported active headers. 288 tests pass (170 protocol + 118 HA).
+Full HA backup succeeded. Deployment encountered setup_retry (no valid telemetry)
+after restart and reload; profile opt-in was never enabled and preparation/start
+were never called. Restored the retained 0.5.1 component and restarted for recovery.
+Check live health before further work; do not infer that recovery or hardware
+validation succeeded. See docs/PROFILE_PILOT.md. Fresh attendance confirmation
+is required before any shot start; no speculative coil154 commands.
+
 **Boiler card priority:** Brew and Steam power/schedule cards are now immediately
 after the machine image in the first section. Each has reported read-only setpoint
 and measured temperature directly beneath power, before the schedule controls.

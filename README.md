@@ -1,5 +1,12 @@
 # WENDOUGEE DATA S · Home Assistant
 
+**0.6.0 attended profile pilot:** [guarded preparation and separate start](docs/PROFILE_PILOT.md)
+for only the observed 9 bar / 28 s / 65 mL recipe. This copies active storage with
+owner approval; it is not a direct remote paddle trigger.
+Hardware validation is pending: deployment encountered a telemetry reconnect
+failure before preparation, so the prior 0.5.1 component was restored. No recipe
+upload or shot-start command was sent in this attempt.
+
 [Dashboard visual QA](docs/DASHBOARD_VISUAL_QA_2026-09-27.md): repaired the Trends
 date-collection configuration and checked all four tabs at mobile/desktop widths.
 
@@ -124,12 +131,13 @@ enable boiler control, stored-profile start or attended cleaning. All default of
   observes cleaning and return to idle, verifies unchanged settings and locks
   retries on uncertainty. Parameters remain editable in the official app, not HA.
   See [cleaning setup, recovery and limits](docs/CLEANING_CONTROL.md).
-- **Start stored profile:** uses the profile already selected in the machine/app,
-  **not necessarily the paddle-bound profile**. Requires brew enabled, no reported
-  water alarm, supported mode 2 and fresh idle state. It neither selects nor uploads
-  a recipe. Be at the machine with portafilter and cup ready; reaching temperature
-  is not verified. This optional app-profile control is **not** the requested
-  paddle trigger and remains disabled on this installation.
+- **Prepare 9 bar profile:** explicitly backs up and copies only the exact observed
+  9 bar / 28 s / 65 mL recipe into the active bank; verifies both full banks and
+  unchanged configuration. Does not activate or alter paddle binding.
+- **Start stored profile:** a separate action; validates the exact pilot recipe in
+  the active bank, mode 2, brew enabled, no water alarm and fresh idle. Empty or
+  other recipes are rejected. Be beside the machine with cup and portafilter ready.
+  This is an app-style path, not a direct paddle trigger. See the pilot limits above.
 - A start with uncertain outcome locks further starts across reloads/restarts.
   Physically check the machine, then use `wendougee_data.acknowledge_profile_uncertainty`
   with `MACHINE CHECKED`; a fresh idle read is also required. Never retry blindly.

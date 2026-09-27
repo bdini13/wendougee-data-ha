@@ -125,6 +125,8 @@ def _write_private_capture(config_dir: Path, document: dict) -> None:
     with os.fdopen(descriptor, "w", encoding="utf-8") as output:
         json.dump(document, output, indent=2, sort_keys=True)
         output.write("\n")
+        output.flush()
+        os.fsync(output.fileno())
 
 
 def _write_private_trace(config_dir: Path, document: dict) -> str:
@@ -247,6 +249,36 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     async def start_cleaning(call: ServiceCall) -> dict:
         coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
         return await coordinator.async_start_cleaning()
+
+    async def prepare_profile(call: ServiceCall) -> dict:
+        coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
+
+        async def backup(document):
+            from homeassistant.util import dt as dt_util
+
+            document = {
+                **document,
+                "schema": "wendougee-data-profile-backup/v1",
+                "started_at_utc": dt_util.utcnow().isoformat(),
+            }
+            await hass.async_add_executor_job(
+                _write_private_trace, Path(hass.config.config_dir), document
+            )
+
+        return await coordinator.async_prepare_profile(backup)
+
+    hass.services.async_register(
+        DOMAIN,
+        "prepare_9_bar_profile",
+        prepare_profile,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("PREPARE 9 BAR PROFILE"),
+            }
+        ),
+        supports_response=SupportsResponse.ONLY,
+    )
 
     async def acknowledge_boiler_schedule(call: ServiceCall) -> None:
         coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])

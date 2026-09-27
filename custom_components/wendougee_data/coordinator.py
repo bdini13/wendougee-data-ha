@@ -31,7 +31,13 @@ from .const import (
     MIN_POLL_INTERVAL,
     device_id,
 )
-from .control import execute_boiler, execute_cleaning, execute_profile, verify_idle
+from .control import (
+    execute_boiler,
+    execute_cleaning,
+    execute_profile,
+    execute_profile_preparation,
+    verify_idle,
+)
 from .fast_capture import (
     RuntimeTrace,
     SamplingBenchmark,
@@ -141,12 +147,48 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             finally:
                 self._poll_task = None
 
+    async def async_prepare_profile(self, backup) -> dict:
+        """Explicit one-shot preparation; no delayed execution or automatic retry."""
+        self._require_control("allow_profile_start")
+        if self._connection_lock.locked():
+            raise HomeAssistantError("Bluetooth operation busy; preparation not queued")
+        if (
+            self.profile_start_locked
+            or self.cleaning_start_locked
+            or any(self.schedules.pending.values())
+        ):
+            raise HomeAssistantError("Previous control uncertain; preparation blocked")
+        async with self._connection_lock:
+            self._poll_task = asyncio.current_task()
+            try:
+                await self._save_profile_lock(True)
+                async with asyncio.timeout(90):
+                    result = await execute_profile_preparation(
+                        self.hass, self.address, backup
+                    )
+                await self._save_profile_lock(False)
+                return result
+            except ControlRejected as error:
+                await self._save_profile_lock(False)
+                raise HomeAssistantError(str(error)) from None
+            except Exception:
+                raise HomeAssistantError(
+                    "Profile preparation uncertain; starts locked. "
+                    "No retry or rollback was sent."
+                ) from None
+            finally:
+                self._poll_task = None
+
     async def async_start_profile(self) -> None:
         """Never queue a delayed start or repeat an uncertain toggle."""
         self._require_control("allow_profile_start")
         if self._connection_lock.locked():
             raise HomeAssistantError("Bluetooth operation busy; start was not queued")
-        if self.profile_start_locked or self.cleaning_start_locked:
+        if (
+            self.profile_start_locked
+            or self.cleaning_start_locked
+            or any(self.schedules.pending.values())
+        ):
             raise HomeAssistantError(
                 "Previous profile start is uncertain; inspect the machine "
                 "and acknowledge it first"
