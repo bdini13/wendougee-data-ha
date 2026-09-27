@@ -65,3 +65,23 @@ def test_dashboard_exposes_boilers_but_not_unverified_paddle_start():
 
     # Fixed gauge ranges become incorrect when HA converts °C/bar to °F/psi.
     assert "gauge" not in set(_card_types(dashboard))
+
+
+def test_dashboard_has_native_observability_and_no_stale_schedule_claim():
+    text = Path("dashboards/espresso.yaml").read_text()
+    dashboard = yaml.safe_load(text)
+    assert {"shots", "trends", "evidence"} <= {
+        v.get("path") for v in dashboard["views"]
+    }
+    assert "Schedule helpers remain inactive" not in text
+    assert (
+        "Shot-load performance and physical units still need attended comparison"
+        not in text
+    )
+    assert "sensor.wendougee_data_s_brew_schedule_health" in text
+    assert "sensor.wendougee_data_s_steam_schedule_health" in text
+    assert "image.wendougee_data_s_latest_captured_shot" in text
+    assert "trend-graph" in set(_card_types(dashboard))
+    assert "energy-date-selection" in set(_card_types(dashboard))
+    assert not any(t.startswith("custom:") for t in _card_types(dashboard))
+    assert "final_yield_g" not in text  # No unvalidated yield presented as fact.

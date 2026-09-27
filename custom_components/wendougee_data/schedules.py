@@ -2,7 +2,7 @@
 
 import asyncio
 from contextlib import suppress
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 from homeassistant.components import persistent_notification
 from homeassistant.core import callback
@@ -47,9 +47,11 @@ class BoilerSchedules:
         self.pending = dict.fromkeys(BOILERS, False)
         self.last_attempts = {}
         self.last_result = dict.fromkeys(BOILERS, "not_run")
+        self.last_verified = dict.fromkeys(BOILERS, None)
         self._timers = {}
         self._unsubscribe = None
         self._tasks = set()
+        self._running = set()
         self.stopped = False
 
     async def async_load(self):
@@ -57,12 +59,17 @@ class BoilerSchedules:
         if isinstance(saved, dict):
             self.pending = {b: bool(saved.get("pending", {}).get(b)) for b in BOILERS}
             self.last_attempts = dict(saved.get("last_attempts", {}))
+            for b in BOILERS:
+                self.last_result[b] = saved.get("last_result", {}).get(b, "not_run")
+                self.last_verified[b] = saved.get("last_verified", {}).get(b)
 
     async def _save(self, pending):
         await self.store.async_save(
             {
                 "pending": dict(pending),
                 "last_attempts": dict(self.last_attempts),
+                "last_result": dict(self.last_result),
+                "last_verified": dict(self.last_verified),
             }
         )
         self.pending = pending
@@ -119,6 +126,62 @@ class BoilerSchedules:
                     minute=at.minute,
                     second=at.second,
                 )
+        self.coordinator.async_update_listeners()
+
+    def status(self, boiler):
+        """Local scheduler health remains readable during a BLE outage."""
+        if boiler in self._running:
+            return "executing"
+        if self.pending[boiler]:
+            return "check_machine"
+        if (
+            not self._enabled(boiler)
+            and self.last_result[boiler] == "paused_check_machine"
+        ):
+            return "paused"
+        if not self._enabled(boiler):
+            return "disabled"
+        if self.coordinator.entry.options.get("allow_boiler_control") is not True:
+            return "control_disabled"
+        if self._times(boiler) is None:
+            return "invalid_times"
+        if (
+            self.coordinator.profile_start_locked
+            or self.coordinator.cleaning_start_locked
+        ):
+            return "blocked"
+        if len(self.hass.config_entries.async_entries("wendougee_data")) != 1:
+            return "blocked"
+        return "armed" if (boiler, True) in self._timers else "not_listening"
+
+    def next_edge(self, boiler):
+        """Display the next eligible edge, using HA's DST-aware time matcher.
+
+        This is informational only: it cannot enqueue or execute an action.
+        Already-attempted local dates are skipped just like the action guard.
+        """
+        if self.status(boiler) != "armed":
+            return None, None
+        now = dt_util.now()
+        candidates = []
+        for action, at in zip(("on", "off"), self._times(boiler), strict=True):
+            start = now + timedelta(microseconds=1)
+            candidate = dt_util.find_next_time_expression_time(
+                start, [at.second], [at.minute], [at.hour]
+            )
+            if (
+                self.last_attempts.get(f"{boiler}_{action}")
+                == candidate.date().isoformat()
+            ):
+                start = datetime.combine(
+                    candidate.date() + timedelta(days=1), time(), tzinfo=now.tzinfo
+                )
+                candidate = dt_util.find_next_time_expression_time(
+                    start, [at.second], [at.minute], [at.hour]
+                )
+            candidates.append((candidate, action))
+        at, action = min(candidates, key=lambda item: item[0].timestamp())
+        return action, at.isoformat()
 
     async def async_setup(self):
         await self.async_load()
@@ -140,6 +203,10 @@ class BoilerSchedules:
                 "listening": (b, True) in self._timers and (b, False) in self._timers,
                 "pending_uncertainty": self.pending[b],
                 "last_result": self.last_result[b],
+                "last_verified_at": self.last_verified[b],
+                "status": self.status(b),
+                "next_action": self.next_edge(b)[0],
+                "next_action_at": self.next_edge(b)[1],
                 "on_time": self.hass.states.get(helper(b, "on_time")).state
                 if self.hass.states.get(helper(b, "on_time"))
                 else None,
@@ -151,7 +218,12 @@ class BoilerSchedules:
         }
 
     async def _pause(self, boiler):
+        self._running.discard(boiler)
         self.last_result[boiler] = "paused_check_machine"
+        # Notification metadata must not weaken the existing uncertainty guard.
+        with suppress(OSError):
+            await self._save(dict(self.pending))
+        self.coordinator.async_update_listeners()
         persistent_notification.async_create(
             self.hass,
             f"The {boiler} schedule is paused: its action was not verified. "
@@ -218,6 +290,7 @@ class BoilerSchedules:
             day = dt_util.now().date().isoformat()
             if self.last_attempts.get(edge_key) == day:
                 return
+            self._running.add(boiler)
             self.pending[boiler] = True
             self.last_attempts[edge_key] = day
             await self._save(dict(self.pending))
@@ -230,8 +303,9 @@ class BoilerSchedules:
                 raise HomeAssistantError("Requested state not verified")
             c.configuration = configuration
             c.async_set_updated_data(c.data)
-            await self._save({**self.pending, boiler: False})
             self.last_result[boiler] = "verified_on" if enabled else "verified_off"
+            self.last_verified[boiler] = dt_util.utcnow().isoformat()
+            await self._save({**self.pending, boiler: False})
             persistent_notification.async_dismiss(
                 self.hass, f"wendougee_{boiler}_schedule"
             )
@@ -245,6 +319,8 @@ class BoilerSchedules:
                 )
             await self._pause(boiler)
         finally:
+            self._running.discard(boiler)
+            c.async_update_listeners()
             if acquired:
                 c._poll_task = None
                 c._connection_lock.release()
@@ -268,6 +344,8 @@ class BoilerSchedules:
                 c._poll_task = None
         # Owner must separately re-enable the helper; this never heats anything.
         self.last_result[boiler] = "acknowledged_still_disabled"
+        await self._save(dict(self.pending))
+        c.async_update_listeners()
 
     async def async_shutdown(self):
         self.stopped = True

@@ -1,0 +1,29 @@
+blueprint:
+  name: WENDOUGEE DATA S · boiler schedule failure alert
+  description: >-
+    Sends a user-selected notification action when a schedule reports failure.
+    Does not control the machine or retry an action. Choose your own recipient;
+    persistent Home Assistant notifications remain the primary built-in fallback.
+  domain: automation
+  input:
+    schedule_health:
+      name: Boiler schedule health sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              integration: wendougee_data
+    notification:
+      name: Notification action
+      description: Choose a phone notification action and enter your warning message.
+      selector:
+        action: {}
+triggers:
+  - trigger: state
+    entity_id: !input schedule_health
+    to: check_machine
+  - trigger: state
+    entity_id: !input schedule_health
+    to: paused
+actions: !input notification
+mode: single

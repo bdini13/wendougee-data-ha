@@ -37,7 +37,9 @@ for pinned evidence and limits; local reference checkouts were not changed.
   version number in the storefront metadata.[13]
 - The main iOS `Wendougee` listing, App Store ID `1663713132`, reports version
   3.1.2; the separate `wendougee e-bar` listing, App Store ID `6737214986`,
-  reports version 3.0.8. The user's installed app/version remains unknown.[14][15]
+  reports version 3.0.8. These storefront observations are not installed-version
+  evidence: owner screenshots subsequently show V3.1.5(260908); see
+  [the screenshot audit](APP_SCREENSHOTS_2026-09-27.md).[14][15]
 - LitaLite reports its protocol work used static analysis of official Android app v3.1.0 and a bundled Flutter/WebView debugging asset.[1]
 
 Do not commit an APK or extracted app contents. If static analysis is revisited, record app version, source, hashes, and legal/ethical purpose; keep artifacts private.

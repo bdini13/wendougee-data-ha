@@ -9,6 +9,7 @@ from homeassistant.helpers.storage import Store
 from ._protocol.state import OperatingState
 from ._protocol.telemetry import Telemetry
 from .const import DOMAIN
+from .shot_journal import ShotJournal
 
 STORAGE_VERSION = 1
 # Conservative attribution policy, not machine timing limits. The reviewed
@@ -35,6 +36,7 @@ class ActivityTracker:
         self.last_cleaning_utc: datetime | None = None
         self.shot_active = False
         self.cleaning_active = False
+        self.journal = ShotJournal()
         self._initialized = False
         self._previous_volume_ml: int | None = None
         self._current_shot_peak_volume_ml = 0
@@ -47,6 +49,7 @@ class ActivityTracker:
     def _as_dict(self) -> dict[str, Any]:
         """Return the durable, identifier-free activity state."""
         return {
+            "journal": self.journal.dump(),
             "observed_shots_total": self.observed_shots_total,
             "observed_pumped_water_ml": self.observed_pumped_water_ml,
             "last_shot_utc": (
@@ -63,6 +66,7 @@ class ActivityTracker:
         data = await self._store.async_load()
         if not isinstance(data, dict):
             return
+        self.journal.restore(data.get("journal"))
         shots = data.get("observed_shots_total")
         water = data.get("observed_pumped_water_ml")
         volume = data.get("last_shot_volume_ml")
@@ -95,10 +99,23 @@ class ActivityTracker:
         self._store.async_delay_save(self._as_dict, 1)
 
     def observe(
-        self, telemetry: Telemetry, state: OperatingState, now: datetime | None = None
+        self,
+        telemetry: Telemetry,
+        state: OperatingState,
+        now: datetime | None = None,
+        *,
+        source: str = "poll",
     ) -> bool:
         """Observe one validated sample and return whether durable state changed."""
         observed_at = now or datetime.now(UTC)
+        self.journal.observe(
+            telemetry,
+            state,
+            observed_at,
+            source=source,
+            previous_active=self.shot_active,
+            initialized=self._initialized,
+        )
         shot_active = bool(
             state.profile_active or state.manual_active or state.free_variable_active
         )
@@ -159,6 +176,18 @@ class ActivityTracker:
                 changed = True
 
         if shot_active:
+            if (
+                self.shot_active
+                and previous_volume is not None
+                and (
+                    volume_ml < previous_volume
+                    or (
+                        previous_brew_time is not None
+                        and brew_time < previous_brew_time
+                    )
+                )
+            ):
+                self._current_shot_peak_volume_ml = 0
             self._current_shot_peak_volume_ml = max(
                 self._current_shot_peak_volume_ml, volume_ml
             )
@@ -184,6 +213,24 @@ class ActivityTracker:
             # Total water already accounts for this delta above; do not add twice.
             self.last_shot_volume_ml = volume_ml
             changed = True
+
+        if (
+            self.last_shot_utc is not None
+            and self.last_shot_volume_ml is not None
+            and changed
+            and not shot_active
+            and (
+                self.last_shot_utc == observed_at
+                or self._shot_tail_started_at is not None
+            )
+        ):
+            self.journal.refine_volume(
+                self.last_shot_utc,
+                self.last_shot_volume_ml,
+                telemetry,
+                observed_at,
+                source,
+            )
 
         if self.cleaning_active and not cleaning_active:
             self.last_cleaning_utc = observed_at

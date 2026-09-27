@@ -1,6 +1,23 @@
 # Roadmap
 
-Last reviewed: 2026-09-26. The goal is a well-understood, local-first WENDOUGEE DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+Last reviewed: 2026-09-27. The goal is a well-understood, local-first WENDOUGEE DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+
+## Espresso workspace · 0.5.0
+
+- [x] Read-only schedule-health sensors, next eligible edge and persistent verified results.
+- [x] Communication freshness and failure warnings that survive machine unavailability.
+- [x] Native compact boiler trends, separate measured/target values, rose-gold accents.
+- [x] Bounded local 30-shot journal and native image chart for explicit captures only.
+- [x] Date-selectable trends, weekly shots and monthly observed pumped water.
+- [x] Backflush age and read-only engineering settings; remove stale schedule/shot text.
+- [x] Optional notification blueprint, with no automatic recipient selection.
+- [x] Audit owner screenshots from app V3.1.5(260908); keep firmware label provisional.
+- [ ] Select the owner's phone recipient and validate actual notification delivery.
+- [ ] Verify the first scheduled boiler cycle before a separate HA 2026.9.3 upgrade.
+- [ ] Validate final-yield selection; do not treat first-idle scale reading as final yield.
+
+See [observability design](docs/OBSERVABILITY.md). New UI evidence does not authorize
+or validate new machine controls.
 
 ## 1. Research and offline foundation — implemented
 
@@ -19,7 +36,8 @@ Evidence: 117 protocol/package tests plus 40 HA framework tests at this checkpoi
 
 ## 2. Hardware validation — next gate
 
-- [ ] Record machine model, firmware and installed official-app version, without publishing identifiers.
+- [x] Record DATA S model and installed app V3.1.5(260908), without publishing identifiers.
+- [ ] Independently establish installed machine firmware (OTA label alone is insufficient).
 - [ ] Reproduce the telemetry read through the Python client with supported Bluetooth permissions.
 - [ ] Compare temperatures, pressure, timing, flow and scale values with appropriate physical references.
 - [ ] Save reviewed, sanitized fixtures with provenance; distinguish captured and synthetic data.
@@ -56,7 +74,7 @@ Exit criterion: repeatable reads with documented limits, physical comparisons an
 - [x] Confirm the final value in a new attended high-rate shot trace with over 10 seconds after stopping: HA saved 66 mL and total water advanced by exactly 66 mL.
 - [x] Compare forwarded BOOKOO weight with one owner-reported final display reading: 34.2 g, also observed in telemetry.
 - [ ] Investigate signed weight-rate/sentinels, final-yield selection and newly varying register 1415 without control writes.
-- [ ] Guard against stale previous-shot telemetry in the first active pair before the counter/timer resets; replay both private captures offline.
+- [x] Guard against stale previous-shot volume in an active counter/timer reset (0.5.0 synthetic regression tests); reviewed private replay is recorded in the deployment notes.
 - [ ] Retain at least five seconds after that shot; resolve delayed terminal volume, reset/latching and sequential telemetry/state timing before claiming final shot totals.
 - [ ] Test deliberate disconnects, unavailable state, app contention and bounded polling load under failure.
 - [ ] Run a soak test and verify unload/disable stops polling and releases connections.
@@ -75,7 +93,7 @@ Exit criterion: documented recovery behavior and a usable monitoring integration
 
 - [ ] Validate conservative setting ranges, polarity, response correlation, readback and persistence.
 - [x] Implement opt-in boiler enable switches and a stored mode-2 profile start button, with synthetic transaction tests and fail-closed guards (0.2.0, requested by owner).
-- [ ] Commission those controls with supervised exact-machine write/readback and shot observation before routine use; temperature controls and scheduling remain withheld.
+- [ ] Complete supervised control commissioning; temperature writes remain withheld. Daily boiler-enable schedules are connected, with first hardware cycle still pending.
 - [ ] Resolve remote activation of the **paddle-bound** recipe specifically. The optional app-selected-profile action remains disabled on the target; it is not the requested default-shot control.
 - [ ] Validate profile layout, slot capacity and complete readback; keep upload separate from activation.
 - [ ] Resolve toggle-versus-stop semantics and app/physical-control races before brew/clean actions.

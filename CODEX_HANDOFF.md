@@ -6,6 +6,19 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.5.0 implementation (deployment verification pending):** native read-only brew/
+steam schedule health, communication health, 30-shot private journal and SVG image
+platform. Four native-card Espresso views add compact boiler trends, selected-date/
+weekly/monthly statistics, backflush age, stale-text corrections and read-only
+engineering settings. Existing scale weight may be enabled for display, but no
+final-yield algorithm or weight-rate fix is claimed. Active counter/timer reset
+discards the stale first-active prefix. No polling-rate or control allowlist change.
+Schedule next-edge display uses HA's DST matcher; results/verification timestamps
+persist in the existing schedule store. Failure locks and no-retry rules remain.
+Optional phone blueprint needs an owner-selected recipient; no test push sent.
+App screenshots establish V3.1.5(260908); OTA label is not proof of installed firmware.
+See `docs/OBSERVABILITY.md` and `research/APP_SCREENSHOTS_2026-09-27.md`.
+
 **0.4.0 scheduling implementation:** owner requested connecting existing helpers.
 Native daily local-time listeners now call existing guarded boiler transactions.
 Owner settings to preserve: brew enabled 06:30–09:00, steam disabled 07:00–09:00;

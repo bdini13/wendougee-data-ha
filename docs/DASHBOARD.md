@@ -1,5 +1,12 @@
 # Espresso dashboard
 
+**0.5.0:** four native-card views now cover Overview, Shots, Trends and Evidence.
+Schedule-health/communication sensors, a bounded 30-shot journal, native captured
+shot image, selectable trend dates, backflush age and read-only engineering settings
+are described in [observability](OBSERVABILITY.md). The text below records earlier
+deployment checkpoints. Historical totals are retained without inventing journal
+entries; detailed curves require an explicit successful read-only capture.
+
 `dashboards/espresso.yaml` is the source-controlled Home Assistant dashboard for
 the **WENDOUGEE DATA S**. It uses only built-in cards, so it does not require a
 custom frontend card collection. It is installed as the sidebar dashboard

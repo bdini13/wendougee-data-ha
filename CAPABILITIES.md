@@ -1,6 +1,17 @@
 # WENDOUGEE DATA S capability map
 
-Source audit: 2026-09-20; live-read update: 2026-09-26. Target: Bobby's WENDOUGEE DATA S; firmware and installed E-Bar version not yet recorded. This is a research baseline, **not a declaration that these controls work safely on this machine**.
+Source audit: 2026-09-20; app/UI update: 2026-09-27. Target: WENDOUGEE DATA S;
+installed app V3.1.5(260908), installed firmware still unresolved. This is a research
+baseline, **not a declaration that these controls work safely on this machine**.
+
+**Current implementation override:** older source-audit paragraphs and table read
+checkpoints below are historical evidence, not the current deployment inventory.
+0.4.0 connected boiler-enable schedules. 0.5.0 adds read-only schedule health,
+bounded shot journal/captured curves and dashboard observability. Steam-off and
+one stored cleaning start have attended proof; temperature/mode writes, physical
+paddle activation, raw pumps/valves and final-yield selection remain unverified.
+See [app screenshot inventory](research/APP_SCREENSHOTS_2026-09-27.md) and
+[observability](docs/OBSERVABILITY.md).
 
 ## What we have, and what remains
 

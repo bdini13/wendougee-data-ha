@@ -14,7 +14,8 @@ Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low En
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental integration.** Version 0.4.0 connects guarded daily boiler schedules.
+> **Experimental integration.** Version 0.5.0 adds schedule health and shot observability
+> to the guarded daily boiler schedules introduced in 0.4.0.
 > Routine polling defaults to 30 seconds; bounded private traces have sustained
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
 > broader shot-transition validation remain pending. Enabled schedules now operate
@@ -43,13 +44,40 @@ settled 66 mL value. Forwarded BOOKOO telemetry included the owner's reported
 interpretation remain unresolved. See [the scale-shot evidence](docs/SCALE_SHOT_2026-09-26.md).
 Normal 30 s polling cannot resolve the tail, and no stored history was rewritten.
 
+### Espresso workspace · 0.5.0
+
+- **Overview:** separate measured/target boiler temperatures, native compact trends,
+  white/rose-gold section accent, local schedule health, next eligible action,
+  last verified result, communication freshness and attention warnings.
+- **Shots:** newest 30 observed summaries, retaining timer, observed peak pressure,
+  pumped mL and scale reading at first idle. Cup yield is **not inferred**.
+  Detailed curves appear only after explicit read-only capture; no automatic
+  high-rate polling or remote shot start was added.
+- **Trends:** date-selectable statistics plus weekly shot and monthly water bars.
+- **Maintenance/evidence:** days since observed backflush, stored cleaning settings,
+  read-only engineering settings and the updated app-feature inventory.
+- A native HA **image entity** serves a bounded local SVG shot chart, without
+  custom frontend cards or publicly saved capture files. Existing totals remain
+  unchanged; old totals are not fabricated into historical journal entries.
+- Optional [phone-alert blueprint](blueprints/automation/wendougee_data/schedule_failure.yaml)
+  forwards failures to a user-selected notification action. It never controls
+  equipment and does not pick recipients automatically.
+
+See [observability behavior, setup and limitations](docs/OBSERVABILITY.md).
+This update does not enable temperature writes, heating-mode changes, M-key
+recording, paddle activation, raw pumps/valves, firmware updates or factory reset.
+The [screenshot audit](research/APP_SCREENSHOTS_2026-09-27.md) distinguishes these
+app-visible features from validated BLE support.
+
 ## What it does
 
 - Discovers connectable `WDG_Data_*` machines through **Home Assistant's shared Bluetooth stack**.
 - Requires confirmation before starting periodic read-only telemetry requests.
 - Separately opts into independent brew/steam boiler switches and a guarded button
   for the currently selected stored mode-2 shot profile. Setup never activates them.
-- Version 0.1.0 registers 30 read-only entities: the original 23 telemetry/configuration/state entities plus observed shot/cleaning activity, persistent observed totals and last-event timestamps.
+- Registers 35 read-only entities, including four local observability sensors and
+  a native captured-shot image. Provisional measurements/settings remain disabled
+  by default; opt-in controls are separate.
 - Opens a short connection for each poll and disconnects afterward; default interval is 30 seconds.
 - Makes measurements unavailable after a failed read and starts a fresh session on a later poll.
 - Rejects unexpected responses and arbitrary commands; cleans up after partial setup, cancellation and unload.

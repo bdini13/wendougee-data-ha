@@ -21,6 +21,19 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entity import WendougeeEntity
 
+OBSERVABILITY_DESCRIPTIONS = (
+    SensorEntityDescription(
+        key="brew_schedule", name="Brew schedule health", icon="mdi:calendar-clock"
+    ),
+    SensorEntityDescription(
+        key="steam_schedule", name="Steam schedule health", icon="mdi:calendar-clock"
+    ),
+    SensorEntityDescription(
+        key="poll_health", name="Communication health", icon="mdi:bluetooth-connect"
+    ),
+    SensorEntityDescription(key="shot_history", name="Shot history", icon="mdi:coffee"),
+)
+
 DESCRIPTIONS = (
     SensorEntityDescription(
         key="brew_boiler_temperature_celsius",
@@ -225,6 +238,58 @@ async def async_setup_entry(
             *STATE_DESCRIPTIONS,
         )
     )
+    async_add_entities(
+        WendougeeObservationSensor(entry, d) for d in OBSERVABILITY_DESCRIPTIONS
+    )
+
+
+class WendougeeObservationSensor(WendougeeEntity, SensorEntity):
+    """Local evidence stays visible even when the machine is unreachable.
+
+    History attributes are excluded from Recorder: bounded private storage owns
+    the journal, avoiding copying every old record on every new observation.
+    """
+
+    _unrecorded_attributes = frozenset({"records"})
+
+    def __init__(self, entry, description):
+        super().__init__(entry, description.key)
+        self.entity_description = description
+
+    @property
+    def available(self):
+        return not self.coordinator.stopped
+
+    @property
+    def native_value(self):
+        key = self.entity_description.key
+        c = self.coordinator
+        if key.endswith("_schedule"):
+            return c.schedules.status(key.split("_")[0])
+        if key == "poll_health":
+            return "healthy" if c.last_update_success else "read_failed"
+        return len(c.activity.journal.records)
+
+    @property
+    def extra_state_attributes(self):
+        key = self.entity_description.key
+        c = self.coordinator
+        if key.endswith("_schedule"):
+            return c.schedules.diagnostics()[key.split("_")[0]]
+        if key == "poll_health":
+            return {
+                "last_successful_poll": c.last_successful_poll_utc,
+                "last_failed_poll": c.last_failed_poll_utc,
+                "consecutive_failures": c.consecutive_failed_polls,
+                "poll_interval_seconds": c.update_interval.total_seconds(),
+                "cleaning_uncertainty": c.cleaning_start_locked,
+                "profile_uncertainty": c.profile_start_locked,
+            }
+        return {
+            "records": list(reversed(c.activity.journal.records)),
+            "retention": 30,
+            "final_yield_validated": False,
+        }
 
 
 class WendougeeSensor(WendougeeEntity, SensorEntity):

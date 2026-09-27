@@ -563,7 +563,7 @@ async def test_all_measurements_units_disabled_defaults_and_stable_ids(
         entities = er.async_entries_for_config_entry(
             entity_registry, configured.entry_id
         )
-        assert len(entities) == 30
+        assert len(entities) == 35
         assert sum(item.disabled_by is not None for item in entities) == 17
         identities = {item.unique_id: item.entity_id for item in entities}
         assert all(ADDRESS not in identity for identity in identities)

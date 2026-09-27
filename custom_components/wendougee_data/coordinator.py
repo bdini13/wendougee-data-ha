@@ -383,6 +383,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
                         sample.telemetry,
                         sample.operating_state,
                         now=sample.observed_at_utc,
+                        source="capture",
                     )
                 if trace.samples:
                     latest = trace.samples[-1]

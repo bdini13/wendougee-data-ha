@@ -7,6 +7,9 @@ views:
     max_columns: 4
     sections:
       - type: grid
+        background:
+          color: "#b8846f"
+          opacity: 12
         cards:
           - type: picture
             image: /local/espresso/wendougee-data-s-white-rose-gold.png
@@ -20,7 +23,40 @@ views:
               Routine readings refresh about every **30 seconds** by default.
               Short shots can be missed; shot and water totals count only observed activity.
 
-              [Sampling evidence & capture guide](/espresso/evidence)
+              [Shots](/espresso/shots) · [Trends](/espresso/trends) · [Evidence & capture](/espresso/evidence)
+          - type: tile
+            entity: sensor.wendougee_data_s_communication_health
+            name: Communication
+            state_content:
+              - state
+              - last_successful_poll
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.wendougee_data_s_communication_health
+                state: read_failed
+            card:
+              type: markdown
+              content: >-
+                **Read failed — measurements may be stale.** Do not infer boiler-off
+                from an unavailable entity. Check the machine if an off action failed.
+          - type: tile
+            entity: sensor.wendougee_data_s_brew_schedule_health
+            name: Brew schedule
+            state_content: [state, next_action, next_action_at]
+          - type: tile
+            entity: sensor.wendougee_data_s_steam_schedule_health
+            name: Steam schedule
+            state_content: [state, next_action, next_action_at]
+          - type: markdown
+            content: |-
+              {% for boiler in ['brew', 'steam'] %}
+              {% set e = 'sensor.wendougee_data_s_' ~ boiler ~ '_schedule_health' %}
+              {% if states(e) in ['check_machine', 'paused', 'blocked', 'invalid_times', 'not_listening', 'unavailable', 'unknown'] %}
+              **{{ boiler | title }} schedule needs attention: {{ states(e) }}.**
+              Check the machine; a failed off action can leave it heating. No automatic retry.
+              {% endif %}
+              {% endfor %}
           - type: tile
             entity: binary_sensor.wendougee_data_reachable
             name: Last poll connectivity
@@ -51,7 +87,8 @@ views:
             content: >-
               Experimental controls: commission while at the machine. Switches
               show verified boiler enable settings, not heater-element activity.
-              There is no remote emergency stop. Schedule helpers remain inactive.
+              There is no remote emergency stop. Enabled schedules are connected;
+              their health and next eligible action are shown above.
           - type: tile
             entity: switch.wendougee_data_s_brew_boiler
             name: Brew boiler
@@ -75,18 +112,26 @@ views:
           - type: heading
             heading: Latest readings
             icon: mdi:gauge
-          - type: sensor
+          - type: tile
             entity: sensor.wendougee_data_brew_temperature
-            name: Brew temperature
-            graph: line
-            hours_to_show: 1
-            detail: 2
-          - type: sensor
+            name: Brew measured temperature
+            features:
+              - type: trend-graph
+                hours_to_show: 1
+                detail: true
+          - type: tile
+            entity: sensor.wendougee_data_brew_target
+            name: Brew reported target · read only
+          - type: tile
             entity: sensor.wendougee_data_steam_temperature
-            name: Steam temperature
-            graph: line
-            hours_to_show: 1
-            detail: 2
+            name: Steam measured temperature
+            features:
+              - type: trend-graph
+                hours_to_show: 1
+                detail: true
+          - type: tile
+            entity: sensor.wendougee_data_steam_target
+            name: Steam reported target · read only
           - type: sensor
             entity: sensor.wendougee_data_pump_pressure
             name: Pump pressure
@@ -198,15 +243,28 @@ views:
           - type: entities
             title: Brew boiler · daily schedule
             entities:
+              - sensor.wendougee_data_s_brew_schedule_health
               - input_boolean.espresso_brew_schedule_enabled
               - input_datetime.espresso_brew_on_time
               - input_datetime.espresso_brew_off_time
           - type: entities
             title: Steam boiler · daily schedule
             entities:
+              - sensor.wendougee_data_s_steam_schedule_health
               - input_boolean.espresso_steam_schedule_enabled
               - input_datetime.espresso_steam_on_time
               - input_datetime.espresso_steam_off_time
+          - type: markdown
+            content: |-
+              {% for boiler in ['brew', 'steam'] %}
+              {% set e = 'sensor.wendougee_data_s_' ~ boiler ~ '_schedule_health' %}
+              **{{ boiler | title }}:** {{ state_attr(e, 'last_result') or 'No result' }}.
+              {% set at = state_attr(e, 'last_verified_at') %}
+              Last verified action: {{ as_local(as_datetime(at)).strftime('%b %d, %I:%M %p') if at else 'Not yet recorded' }}.
+              {% endfor %}
+
+              Times follow Home Assistant's local timezone, including daylight saving.
+              A future edge is not a guarantee of successful execution.
 
       - type: grid
         cards:
@@ -253,10 +311,16 @@ views:
               **Backflush history is currently unavailable.** Check connectivity above.
               {% else %}
               Last observed cleaning completion: {{ as_local(as_datetime(backflush)).strftime('%b %d, %Y at %I:%M %p') }}.
+              **{{ ((now() - as_datetime(backflush)).total_seconds() / 86400) | round(1) }} days since observed backflush.**
               {% endif %}
 
               Cleaning reminders are app-managed. A timestamp records an observed
               cleaning-state transition; it cannot verify a physical cleaning result.
+          - type: markdown
+            content: >-
+              Schedule failures create Home Assistant notifications. Optional phone
+              forwarding uses the supplied notification blueprint and your selected
+              recipient; phone delivery is not automatically configured.
           - type: entities
             title: Backflush configuration
             entities:
@@ -270,6 +334,108 @@ views:
               - binary_sensor.wendougee_data_reachable
               - binary_sensor.wendougee_data_water_shortage
               - binary_sensor.wendougee_data_s_observed_cleaning_active
+
+  - title: Shots
+    path: shots
+    icon: mdi:chart-bell-curve-cumulative
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        background:
+          color: "#b8846f"
+          opacity: 12
+        cards:
+          - type: heading
+            heading: Latest captured shot
+          - type: picture-entity
+            entity: image.wendougee_data_s_latest_captured_shot
+            show_name: false
+            show_state: false
+          - type: markdown
+            content: >-
+              Curves appear after an explicit read-only capture completes. Axes use
+              bar, mL and g, independently of HA's preferred display units. Gaps over
+              two seconds are not connected. A later poll-only shot clears the old
+              curve so it cannot be mistaken for the latest shot. No automatic
+              high-rate capture or remote shot start is enabled.
+          - type: entities
+            title: Latest observations · not final cup yield
+            entities:
+              - sensor.wendougee_data_scale_weight
+              - sensor.wendougee_data_elapsed_brew_time
+              - sensor.wendougee_data_s_last_observed_shot_volume
+          - type: markdown
+            content: >-
+              BOOKOO weight forwarding matched your reported 34.2 g once. The scale
+              reading at first idle is not a validated final yield. Weight-rate
+              decoding remains unresolved and is deliberately absent here.
+      - type: grid
+        cards:
+          - type: heading
+            heading: Recent observed shots · up to 30
+          - type: markdown
+            content: |-
+              {% set records = state_attr('sensor.wendougee_data_s_shot_history', 'records') or [] %}
+              {% if not records %}
+              No journal entries yet. New observations are retained from this version onward;
+              historical totals are preserved but are not converted into invented records.
+              {% else %}
+              | Ended (local) | Timer s | Peak bar | Water mL | Scale at stop g | Evidence |
+              | --- | ---: | ---: | ---: | ---: | --- |
+              {% for r in records %}
+              | {{ as_local(as_datetime(r.ended_at)).strftime('%m/%d %H:%M') }} | {{ r.duration_s }} | {{ r.peak_bar }} | {{ r.pumped_ml }} | {{ r.scale_at_stop_g if r.scale_at_stop_g is not none else '—' }} | {{ r.source }} / {{ r.coverage }} |
+              {% endfor %}
+              {% endif %}
+
+              Sparse polling may miss shots or their peaks. These are observations,
+              not the app's cloud records or a complete machine history.
+
+  - title: Trends
+    path: trends
+    icon: mdi:chart-bar
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: energy-date-selection
+            collection_key: espresso_trends
+          - type: statistics-graph
+            title: Observed shots · selected dates
+            chart_type: bar
+            energy_date_selection: true
+            collection_key: espresso_trends
+            stat_types: [change]
+            entities: [sensor.wendougee_data_s_observed_shots_total]
+          - type: statistics-graph
+            title: Observed pumped water · selected dates
+            chart_type: bar
+            energy_date_selection: true
+            collection_key: espresso_trends
+            stat_types: [change]
+            entities: [sensor.wendougee_data_s_observed_pumped_water_total]
+          - type: markdown
+            content: >-
+              The date selector navigates statistics, not energy consumption.
+              Water means observed machine-pumped volume, not cup yield, steam
+              consumption or household water use. Missing observations cannot be recovered.
+      - type: grid
+        cards:
+          - type: statistics-graph
+            title: Weekly observed shots
+            chart_type: bar
+            period: week
+            days_to_show: 84
+            stat_types: [change]
+            entities: [sensor.wendougee_data_s_observed_shots_total]
+          - type: statistics-graph
+            title: Monthly observed pumped water
+            chart_type: bar
+            period: month
+            days_to_show: 365
+            stat_types: [change]
+            entities: [sensor.wendougee_data_s_observed_pumped_water_total]
 
   - title: Evidence & capture
     path: evidence
@@ -297,7 +463,8 @@ views:
               samples separately. Trace results are published to entities at completion.
 
               Last idle soak: 2.003 pairs/s; longest sample interval 0.820 seconds.
-              Shot-load performance and physical units still need attended comparison.
+              Two attended paddle traces completed at 2 Hz. The scale-equipped shot
+              verified settled 66 mL recording; final-yield selection remains unresolved.
           - type: markdown
             content: |-
               ## Capture a normal shot
@@ -341,10 +508,24 @@ views:
 
               ## Still to validate
 
-              Shot start/end timing, final pumped volume, scale behavior, physical
+              Final scale-yield selection, weight-rate signedness, physical
               temperature comparison and app contention. Boiler scheduling is wired
               with readback and failure locks; first scheduled hardware operation
               still needs verification. Schedule failure is not an emergency stop.
+          - type: entities
+            title: Read-only engineering settings
+            entities:
+              - sensor.wendougee_data_heating_mode_setting
+              - sensor.wendougee_data_manual_time_setting
+              - sensor.wendougee_data_manual_pressure_setting
+              - binary_sensor.wendougee_data_water_alarm_detection_enabled
+          - type: markdown
+            content: >-
+              App screenshots: V3.1.5(260908), Full speed heating, M-key 9 bar / 30 s,
+              Constant pressure 9bar shown bound. These observations do not validate
+              new write commands. Water-alarm enable is separate from an active
+              shortage alarm. Pump/solenoid engineering toggles, firmware updates,
+              factory reset and unverified paddle activation remain excluded.
           - type: button
             name: Protocol, capability map & roadmap
             icon: mdi:github

@@ -29,7 +29,13 @@ from .const import (
 from .coordinator import WendougeeCoordinator
 from .fast_capture import RuntimeTrace, SamplingBenchmark
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH, Platform.BUTTON]
+PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.SWITCH,
+    Platform.BUTTON,
+    Platform.IMAGE,
+]
 CONFIG_SCHEMA = vol.Schema(
     {
         vol.Optional(DOMAIN): vol.Schema(
