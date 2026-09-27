@@ -6,6 +6,15 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Trends visual defect repaired:** frontend requires collection_key prefix
+`energy_`; changed all three linked cards to energy_espresso_trends. Reproduced
+the three errors in isolated Chrome, then captured/inspected all four tabs at
+390×844 and 1440×1000: zero rendered errors. Previous/Next navigation tested;
+both linked graphs queried the prior local day and populated. 281 tests pass.
+Dashboard backed up/readback verified; no actuation. Screenshot QA is now required
+in AGENTS.md. See docs/DASHBOARD_VISUAL_QA_2026-09-27.md. CUA still times out;
+private browser harness uses isolated Chrome and a localhost SSH tunnel instead.
+
 **Dashboard consolidation:** boiler switches moved into their respective daily
 schedule entities cards (manual power, schedule enable, times, health); duplicate
 power tiles removed. Bulk header toggles disabled. No entity IDs, machine settings

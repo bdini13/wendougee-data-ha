@@ -406,19 +406,19 @@ views:
       - type: grid
         cards:
           - type: energy-date-selection
-            collection_key: espresso_trends
+            collection_key: energy_espresso_trends
           - type: statistics-graph
             title: Observed shots · selected dates
             chart_type: bar
             energy_date_selection: true
-            collection_key: espresso_trends
+            collection_key: energy_espresso_trends
             stat_types: [change]
             entities: [sensor.wendougee_data_s_observed_shots_total]
           - type: statistics-graph
             title: Observed pumped water · selected dates
             chart_type: bar
             energy_date_selection: true
-            collection_key: espresso_trends
+            collection_key: energy_espresso_trends
             stat_types: [change]
             entities: [sensor.wendougee_data_s_observed_pumped_water_total]
           - type: markdown

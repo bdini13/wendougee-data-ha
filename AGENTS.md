@@ -33,6 +33,13 @@ Follow the "First Codex task" section in `CODEX_HANDOFF.md`. Do not connect to h
 
 ## Verification before completion
 
+- For dashboard changes, capture and inspect every affected tab at phone and
+  desktop widths in the actual HA frontend. Check rendered card errors and test
+  safe navigation/date controls. Entity existence and template/API checks alone
+  are insufficient. Do not actuate boilers, brew or cleaning for UI validation.
+  If browser access fails, report visual QA as blocked rather than complete.
+  Keep authenticated screenshots private; never commit personal sidebar details.
+
 - Run all tests.
 - Run Python compilation and JSON validation.
 - Run formatting/lint checks configured by the project.

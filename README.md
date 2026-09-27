@@ -1,5 +1,8 @@
 # WENDOUGEE DATA S · Home Assistant
 
+[Dashboard visual QA](docs/DASHBOARD_VISUAL_QA_2026-09-27.md): repaired the Trends
+date-collection configuration and checked all four tabs at mobile/desktop widths.
+
 Espresso dashboard: each boiler's manual power switch and daily schedule now
 share one card, with separately labeled controls and no bulk toggle.
 

@@ -108,3 +108,18 @@ def test_boiler_power_and_schedule_share_one_card_without_bulk_toggle():
             f"input_datetime.espresso_{boiler}_off_time",
         } <= set(_entities(card))
         assert card["entities"][0]["name"] == "Boiler power · manual"
+
+
+def test_statistics_date_collection_uses_frontend_required_prefix():
+    dashboard = yaml.safe_load(Path("dashboards/espresso.yaml").read_text())
+    trends = next(v for v in dashboard["views"] if v["path"] == "trends")
+    linked = [
+        card
+        for section in trends["sections"]
+        for card in section["cards"]
+        if "collection_key" in card
+    ]
+    assert len(linked) == 3
+    keys = {card["collection_key"] for card in linked}
+    assert len(keys) == 1
+    assert next(iter(keys)).startswith("energy_")
