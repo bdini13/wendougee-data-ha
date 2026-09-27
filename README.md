@@ -1,5 +1,8 @@
 # WENDOUGEE DATA S · Home Assistant
 
+[Apple Home / Siri](docs/APPLE_HOME.md): “Espresso Machine” controls brew heating
+only; steam and brew/cleaning triggers are not exposed.
+
 Research: [paddle-bound profile readback](docs/PROFILE_BANKS_2026-09-27.md)
 now identifies the stored recipe; remote paddle activation remains unverified.
 

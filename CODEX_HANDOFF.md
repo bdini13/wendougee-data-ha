@@ -6,6 +6,14 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**Apple Home configured (2026-09-27):** owner chose brew-only Siri control.
+Existing HomeKit bridge now explicitly includes its prior garage door and
+`switch.wendougee_data_s_brew_boiler`; that switch's registry friendly name is
+Espresso Machine, stable ID and device name unchanged. Diagnostic readback shows
+the named switch accessory and two paired clients; bridge loaded. No steam,
+shot/clean action exposure, actuation or Core restart. Private prechange backup.
+Owner still needs to confirm Apple Home sync/Siri recognition. See docs/APPLE_HOME.md.
+
 **2026-09-27 profile-bank investigation completed:** 12 read-only FC01/FC03
 transactions through a temporary single-owner proxy session. Selectors 87/88=2;
 active header seven zeros (unsupported), bound recipe 65 mL, one terminal stage
