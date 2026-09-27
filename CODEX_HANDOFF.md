@@ -6,7 +6,7 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
-**0.5.0 implementation (deployment verification pending):** native read-only brew/
+**0.5.1 installed and verified:** native read-only brew/
 steam schedule health, communication health, 30-shot private journal and SVG image
 platform. Four native-card Espresso views add compact boiler trends, selected-date/
 weekly/monthly statistics, backflush age, stale-text corrections and read-only
@@ -18,6 +18,26 @@ persist in the existing schedule store. Failure locks and no-retry rules remain.
 Optional phone blueprint needs an owner-selected recipient; no test push sent.
 App screenshots establish V3.1.5(260908); OTA label is not proof of installed firmware.
 See `docs/OBSERVABILITY.md` and `research/APP_SCREENSHOTS_2026-09-27.md`.
+
+Full backup `ea38f9a7` completed without job errors, database included,
+390840320 bytes. Retained 0.4.0 and 0.5.0 component rollback copies under
+`/config/.wendougee_data_rollback/`. 0.5.1 archive SHA-256
+`92726bf05ac7626ee1968b5849ffbd2bdeceb87afde008df5e710fbb2007e8d0`.
+Configuration checks and restarts succeeded; final runtime loaded 0.5.1, zero
+failed polls at initial verification, brew armed 06:30–09:00 (next on 06:30 EDT),
+steam disabled, both boilers off and locks clear. Preserved four shots, 342 mL,
+last shot 66 mL and cleaning timestamp. All 41 dashboard references available;
+exact saved four-view config matches source. Enabled only five existing read-only
+entities (scale weight, heating mode, manual time/pressure, alarm enable); weight
+rate remains disabled. Native image endpoint and four current templates, three
+maintenance branches and populated synthetic journal rendering passed. CUA timed
+out; do not claim browser visual QA. Both CI jobs passed for `20a2475` and `36e6605`.
+268 local tests (157 + 111); both old private captures revalidated all 720 frames
+each, replaying 66 mL and timers 22.4/26.8 s with no live history import. Patch 0.5.1
+corrects mixed capture/poll completion and terminal timer. No new hardware control
+test, phone push or HA Core upgrade. First scheduled cycle remains pending.
+New journal is deliberately empty until a new observation; do not fabricate old
+records or count a replay as a fresh shot. See deployment record for limitations.
 
 **0.4.0 scheduling implementation:** owner requested connecting existing helpers.
 Native daily local-time listeners now call existing guarded boiler transactions.

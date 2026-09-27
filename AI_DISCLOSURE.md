@@ -18,6 +18,15 @@ At the 2026-09-22 checkpoint, version 0.1.0 is installed on the target HA host a
 
 ## Runtime and data
 
+The 2026-09-27 observability release was also AI-assisted: original schedule-health
+and shot-journal code, numeric SVG chart rendering, native dashboard configuration,
+notification blueprint, synthetic regression tests and documentation. Verification
+included 268 local tests, GitHub CI, offline replay of two private captures and
+read-only production API checks. Browser automation timed out, so no rendered
+dashboard visual QA is claimed. No new hardware-control test was performed for
+this release. See the README for current installed support rather than the older
+historical checkpoint above.
+
 The integration itself does not call an AI model or require an AI account. Telemetry parsing and device communication run locally through Home Assistant/Bluetooth; there is no AI telemetry-upload feature. Dependency installation, GitHub and development tools have their own network behavior—this statement is about the integration's runtime, not every tool used to develop it.
 
 Never put credentials, raw device identifiers, unredacted captures or private HA state in public issues, commits or AI prompts intended for public sharing. Review third-party logs manually before sharing. Address-derived hashes are not a guarantee of anonymity.

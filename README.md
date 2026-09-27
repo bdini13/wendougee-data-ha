@@ -14,7 +14,7 @@ Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low En
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental integration.** Version 0.5.0 adds schedule health and shot observability
+> **Experimental integration.** Version 0.5.1 adds schedule health and shot observability
 > to the guarded daily boiler schedules introduced in 0.4.0.
 > Routine polling defaults to 30 seconds; bounded private traces have sustained
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
@@ -159,15 +159,20 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | 0.4.0 installed with connected daily boiler schedules, terminal-volume refinement and attended cleaning; app-profile start remains off and requested paddle trigger pending |
-| Verification baseline | **253 local tests passing:** 157 protocol/package + 96 HA tests, as of 2026-09-26 |
+| HA integration | 0.5.1 installed: connected schedules with health/next-edge display, bounded shot journal and native capture image; app-profile start remains off and requested paddle trigger pending |
+| Verification baseline | **268 local tests passing:** 157 protocol/package + 111 HA tests, as of 2026-09-27; both implementation CI runs passed |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
-| Deployment / release | 0.4.0 installed after a fresh full backup, verified archive and configuration check; 0.3.1 rollback retained, telemetry recovered; not a published HACS release |
+| Deployment / release | 0.5.1 installed after full backup and checked staged deployments; 0.4.0/0.5.0 rollback copies retained; 41 dashboard references available; not a published HACS release |
 | Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; one cleaning run verified by telemetry, unchanged settings and owner-observed three repetitions/normal completion |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
 
 The CI badge reports GitHub's workflow status, not an assertion that unpublished local changes have already passed remote CI.
+
+The [0.5.1 deployment record](docs/OBSERVABILITY_DEPLOYMENT_2026-09-27.md)
+records read-only verification, two offline capture replays, preserved schedules
+and history, backup/rollback details, and the unavailable browser visual check.
+Phone forwarding is installed as an optional blueprint but awaits a recipient.
 Documentation-only commits intentionally skip CI; use manual dispatch for a full
 run on demand. Code, dependency, dashboard and workflow changes still run both
 test environments. See [contributing and CI policy](CONTRIBUTING.md).

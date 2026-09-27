@@ -6,6 +6,10 @@ shot image, selectable trend dates, backflush age and read-only engineering sett
 are described in [observability](OBSERVABILITY.md). The text below records earlier
 deployment checkpoints. Historical totals are retained without inventing journal
 entries; detailed curves require an explicit successful read-only capture.
+The 0.5.1 deployment is verified with 41 available entity references, exact
+dashboard readback and server-side template/image checks; see
+[the deployment record](OBSERVABILITY_DEPLOYMENT_2026-09-27.md). Browser visual QA
+was unavailable. Phone forwarding still requires a user-selected recipient.
 
 `dashboards/espresso.yaml` is the source-controlled Home Assistant dashboard for
 the **WENDOUGEE DATA S**. It uses only built-in cards, so it does not require a
