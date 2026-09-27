@@ -17,7 +17,17 @@ physical-check acknowledgement plus fresh idle before re-enabling. Diagnostics
 report live listener status. No separate HA automation or manual trigger is exposed.
 All 253 tests pass (157 package + 96 HA), including actual local-time callback,
 separate on/off and fallback-hour deduplication. No live boiler command was sent.
-Deployment verification pending. See `docs/BOILER_SCHEDULES.md`.
+Installed after full backup, checksum/config validation and retained 0.3.1
+rollback; both implementation CI jobs passed. Runtime confirms brew enabled and
+both 06:30/09:00 listeners registered, steam disabled; both results `not_run` and
+locks clear. Found six helper `initial` overrides that reset preferences at boot;
+removed them via HA update APIs without replacing IDs or touching other helpers.
+Restored owner settings; a second complete restart verified persistence: brew
+enabled/listening 06:30–09:00, steam disabled, both results still `not_run`, no
+uncertainty locks, both boilers off and all 22 telemetry entities available.
+Dashboard saved
+and verified with 31 available references. No boiler command was fired. One
+isolated polling failure recovered. See `docs/BOILER_SCHEDULES.md`.
 
 **0.3.1 live shot/scale validation:** owner reported BOOKOO Themis Ultra connected
 to the machine and pulled a shot during a read-only capture. All 360 pairs/720

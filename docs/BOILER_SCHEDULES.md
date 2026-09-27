@@ -10,6 +10,13 @@ The owner's requested configuration is **brew on 06:30, off 09:00**, with steam
 disabled (its saved 07:00–09:00 times are preserved). HA uses `America/New_York`,
 including daylight-saving changes, rather than fixed EST year-round.
 
+The six existing storage helpers had explicit `initial` values from their earlier
+planning-only setup. Those values reset brew to disabled/07:00 at restart. They
+were removed through HA's helper-update APIs (same IDs, other helpers unchanged),
+and the owner's 06:30–09:00/on and steam-off preferences restored. Do not add
+`initial` overrides when creating these helpers if user choices should survive
+restart; use normal HA restore-state behavior instead.
+
 ## What happens at an edge
 
 1. Verify enablement, configured edge, exactly one machine entry, and no prior
@@ -63,3 +70,20 @@ bounded lock wait, storage failure, cancellation, restart uncertainty and recove
 The on/off transport already has protocol tests and one attended steam-off
 readback validation. **No new live boiler command was sent during this work; the
 first scheduled brew on/off cycle still requires live verification.**
+
+Deployment: fresh full backup with database, verified 0.4.0 archive and installed
+file checksum, successful HA configuration check, retained 0.3.1 rollback copy.
+Runtime diagnostics confirm brew enabled/listening at 06:30 and 09:00, steam
+disabled/not listening, no uncertainty locks and both results `not_run`. Existing
+shot/water/cleaning history and machine settings are preserved. The Espresso
+dashboard has 31 resolved/available references and exact saved-config readback;
+three maintenance-template branches pass. Local tests: 253 (157 package + 96 HA);
+both implementation CI jobs passed. One isolated routine poll failure recovered
+before verification; this is not extended reliability/soak evidence.
+
+A second complete restart after removing helper startup overrides verified the
+owner's settings persisted: brew enabled with both 06:30/09:00 listeners, steam
+disabled without listeners, both pending markers false and both results `not_run`.
+All 22 telemetry entities recovered, with both boilers still off and history
+unchanged. The first poll after this restart succeeded; no schedule command was
+sent during either restart or helper migration.

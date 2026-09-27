@@ -131,10 +131,10 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Physical value comparison | Pending; the native-helper reading was not compared with the machine display |
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
-| HA integration | 0.3.1 installed with bounded terminal-volume refinement and separate attended-cleaning opt-in; app-profile start remains off and requested paddle trigger pending |
+| HA integration | 0.4.0 installed with connected daily boiler schedules, terminal-volume refinement and attended cleaning; app-profile start remains off and requested paddle trigger pending |
 | Verification baseline | **253 local tests passing:** 157 protocol/package + 96 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
-| Deployment / release | 0.3.1 installed after a fresh full backup, verified archive and configuration check; 0.3.0 rollback retained, telemetry recovered; not a published HACS release |
+| Deployment / release | 0.4.0 installed after a fresh full backup, verified archive and configuration check; 0.3.1 rollback retained, telemetry recovered; not a published HACS release |
 | Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; one cleaning run verified by telemetry, unchanged settings and owner-observed three repetitions/normal completion |
 
 The earlier hardware read used a native CoreBluetooth helper. The later HA-proxy baseline validates this integration's read path, but not calibration, unattended reliability or any control path. See the [sanitized live-validation record](docs/LIVE_VALIDATION_2026-09-21.md) and [60-item capability map](CAPABILITIES.md) for limits, source revisions, conflicts and unknowns.
