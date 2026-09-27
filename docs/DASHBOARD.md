@@ -43,7 +43,7 @@ were rendered successfully by HA's template engine. No Core restart was needed.
 - daily changes in the persistent observed-shot and observed-water totals;
 - recent temperature, pressure, connectivity and cleaning history;
 - reported boiler targets/enables and cleaning configuration;
-- independent brew/steam desired schedule helpers, clearly marked inactive.
+- independent brew/steam daily schedule toggles and times, connected in 0.4.0.
 
 Cleaning due dates are intentionally not read from the machine. Current
 upstream evidence implements daily/deep reminders as application-local state;
@@ -58,11 +58,12 @@ water consumption.
 
 ## Schedule safety boundary
 
-The desired schedule defaults to 07:00–09:00 in Home Assistant's
-`America/New_York` timezone. The helpers do not call the machine. No schedule
-automation should be enabled until supervised tests establish, on the local DATA
-S, the boiler-write polarity, response correlation, complete readback,
-persistence, concurrent-app behavior and failure recovery. A network-controlled
+The owner selected brew 06:30–09:00 in Home Assistant's `America/New_York`
+timezone; steam remains disabled with 07:00–09:00 stored. In 0.4.0 the helpers
+drive guarded daily enable/disable edges; see [schedule operation](BOILER_SCHEDULES.md).
+First scheduled brew operation, power-cycle persistence, concurrent-app behavior
+and real fault recovery remain unverified. A failed off edge may leave heating
+enabled: watch HA's failure notification and check the machine. A network-controlled
 boiler is not a hardware safety interlock.
 
 ## Artwork

@@ -1,7 +1,8 @@
 # Boiler scheduling and control safety design
 
-Status: **0.3.0 adds guarded attended cleaning to the 0.2.0 opt-in controls**.
-The dashboard schedule helpers remain inert planning inputs. Transactions have
+Status: **0.4.0 connects independent daily boiler schedules to guarded controls**.
+The existing helper toggles/times now arm native HA local-time listeners. See
+[schedule behavior and failure recovery](BOILER_SCHEDULES.md). Transactions have
 synthetic protocol and HA framework coverage; one live steam-off readback and
 one attended cleaning-to-idle/unchanged-settings test passed. Broader commissioning
 remains pending.
@@ -39,7 +40,8 @@ have no physical-presence confirmation. Never schedule shot starts.
 Remaining attended checks: separate boiler on/off with unrelated settings stable,
 physical enable feedback, selected-profile/paddle relationship, press release,
 actual shot start/finish, app contention, power-cycle persistence and fault recovery.
-No automatic heating schedule or target-temperature control is enabled by this work.
+Daily heating enable/disable schedules are connected in 0.4.0. Target-temperature
+control remains unimplemented; no schedule changes setpoints.
 
 ## Independently implemented protocol facts
 
@@ -83,14 +85,14 @@ Persistence across machine power cycles, official-app contention and two-client
 races still require separate tests. A network automation is never a hardware
 emergency stop.
 
-## Schedule behavior after validation
+## Schedule behavior in 0.4.0
 
-The desired initial schedule is independently configurable for brew and steam:
+Schedules are independently configurable for brew and steam:
 
 - timezone: Home Assistant local timezone (`America/New_York` on the target);
-- on time: 07:00;
+- owner-requested brew on time: 06:30; steam's retained time: 07:00;
 - off time: 09:00;
-- default enabled state: off until supervised commissioning;
+- owner's brew helper is enabled; steam stays disabled;
 - no startup catch-up that could unexpectedly heat the machine after a restart;
 - no repeated setpoint writes at every schedule edge;
 - no boiler-on action while brewing, cleaning, unreachable or ambiguous;

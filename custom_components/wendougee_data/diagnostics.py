@@ -40,6 +40,7 @@ async def async_get_config_entry_diagnostics(
             "cleaning_start_locked": coordinator.cleaning_start_locked,
         },
         "last_update_success": coordinator.last_update_success,
+        "boiler_schedules": coordinator.schedules.diagnostics(),
         "last_error": coordinator.last_error,
         "poll_interval_seconds": coordinator.update_interval.total_seconds(),
         "poll_health": {

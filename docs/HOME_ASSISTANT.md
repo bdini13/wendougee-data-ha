@@ -1,5 +1,12 @@
 # Experimental Home Assistant integration
 
+## 0.4.0 connected boiler schedules
+
+Existing brew/steam helper toggles and times now arm future daily local-time edges
+inside the integration. Startup/helper edits never heat immediately. Verified
+readback, durable uncertainty and failure notifications guard each action.
+No temperature writes. See [setup, requirements and recovery](BOILER_SCHEDULES.md).
+
 ## 0.3.1 terminal shot-volume refinement (installed)
 
 Closely spaced observations can refine last-shot volume for five seconds after
@@ -174,6 +181,6 @@ Do not install the standalone package's constrained Bleak dependencies into the 
 
 Test coverage includes confirmation, duplicate/unsupported discovery, manual selection, all 30 entity registrations, disabled defaults, stable IDs across reloads, persistent activity restoration, conservative transition counting, failure/recovery, setup retry, unload cancellation, split runtime/configuration polling, GATT validation, the fixed four-read baseline, serialized fast sampling, fail-closed rate selection, private owner-only trace storage, subscription cleanup and privacy-safe diagnostics. Packaging tests compare generated code with its original source, include the original project artwork and exclude capture/scanner files.
 
-The matching source-controlled dashboard is documented in [DASHBOARD.md](DASHBOARD.md). Its schedule helpers are inert; the boiler transaction and schedule requirements are in [CONTROL_DESIGN.md](CONTROL_DESIGN.md).
+The matching dashboard is documented in [DASHBOARD.md](DASHBOARD.md). In 0.4.0 its schedule helpers are connected; see [schedule requirements](BOILER_SCHEDULES.md) and [transaction design](CONTROL_DESIGN.md).
 
 The next meaningful gate is an attended, read-only physical comparison followed by deliberate disconnect, app-contention and extended soak testing. This document does not grant approval for any control write.

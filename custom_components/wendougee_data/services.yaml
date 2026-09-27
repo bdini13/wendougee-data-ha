@@ -20,6 +20,34 @@ capture_read_only_baseline:
       selector:
         text:
 
+acknowledge_boiler_schedule:
+  name: Acknowledge boiler schedule uncertainty
+  description: >-
+    After physically checking the machine, verify fresh idle and clear this
+    boiler's persistent schedule lock. Does not heat, stop, retry a missed edge,
+    or re-enable the schedule. Re-enable its dashboard toggle separately.
+  fields:
+    config_entry_id:
+      name: Integration entry
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    boiler:
+      name: Boiler
+      required: true
+      selector:
+        select:
+          options:
+            - brew
+            - steam
+    confirmation:
+      name: Confirmation
+      required: true
+      example: MACHINE CHECKED
+      selector:
+        text:
+
 start_cleaning:
   name: Start stored cleaning program
   description: >-

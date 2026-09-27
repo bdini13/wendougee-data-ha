@@ -178,15 +178,16 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Boiler configuration and desired schedule
+            heading: Boiler schedules and reported configuration
             icon: mdi:radiator
           - type: markdown
             content: >-
-              Schedule helpers are planning inputs only. They do not control the
-              machine until the DATA S write polarity, acknowledgment, full readback,
-              persistence, contention, and failure behavior are validated while
-              attended. Target plan: 7:00 AM–9:00 AM America/New_York, independently
-              enabled for each boiler.
+              Enabled schedules send guarded boiler on/off commands at the times
+              below, every day in Home Assistant's local timezone (America/New_York).
+              Keep machine power and Bluetooth available. Startup and edits do not
+              replay missed times. A failed action pauses that boiler's schedule
+              and raises an HA notification; the boiler may remain on. No automatic
+              retries. These schedules do not change temperature setpoints.
           - type: entities
             title: Reported configuration
             entities:
@@ -195,19 +196,17 @@ views:
               - binary_sensor.wendougee_data_brew_heating_enabled
               - sensor.wendougee_data_brew_target
           - type: entities
-            title: Brew boiler plan · inactive
+            title: Brew boiler · daily schedule
             entities:
               - input_boolean.espresso_brew_schedule_enabled
               - input_datetime.espresso_brew_on_time
               - input_datetime.espresso_brew_off_time
-              - input_number.espresso_brew_target_temperature
           - type: entities
-            title: Steam boiler plan · inactive
+            title: Steam boiler · daily schedule
             entities:
               - input_boolean.espresso_steam_schedule_enabled
               - input_datetime.espresso_steam_on_time
               - input_datetime.espresso_steam_off_time
-              - input_number.espresso_steam_target_temperature
 
       - type: grid
         cards:
@@ -343,8 +342,9 @@ views:
               ## Still to validate
 
               Shot start/end timing, final pumped volume, scale behavior, physical
-              temperature comparison and app contention. Independent boiler schedules
-              remain planning helpers until control behavior is validated.
+              temperature comparison and app contention. Boiler scheduling is wired
+              with readback and failure locks; first scheduled hardware operation
+              still needs verification. Schedule failure is not an emergency stop.
           - type: button
             name: Protocol, capability map & roadmap
             icon: mdi:github

@@ -67,6 +67,8 @@ Exit criterion: documented recovery behavior and a usable monitoring integration
 
 ## 4. Carefully gated controls
 
+- [x] Connect independent brew/steam daily helper schedules to guarded enable/disable transactions, with no startup catch-up, durable uncertainty and failure notification (0.4.0).
+- [ ] Verify the first actual scheduled brew 06:30 on / 09:00 off cycle; steam stays disabled.
 - [x] Implement opt-in attended cleaning with fresh stored-parameter reads, unchanged settings, exact pulse echoes, full-window observation and durable uncertainty guard (0.3.0).
 - [x] Perform one supervised cleaning start after fresh readiness approval; observe cleaning then idle and verify all configuration unchanged (2026-09-26).
 - [x] Compare the successful cleaning-state test with the owner's physical observation: all three repetitions and normal completion confirmed (2026-09-26).

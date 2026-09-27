@@ -14,11 +14,11 @@ Local-first espresso-machine telemetry and opt-in controls over Bluetooth Low En
 ![Original illustration of the white and rose-gold WENDOUGEE DATA S](custom_components/wendougee_data/images/wendougee-data-s-white-rose-gold.png)
 
 > [!WARNING]
-> **Experimental integration.** Version 0.3.0 adds opt-in attended cleaning.
+> **Experimental integration.** Version 0.4.0 connects guarded daily boiler schedules.
 > Routine polling defaults to 30 seconds; bounded private traces have sustained
 > 2 Hz telemetry/state pairs for three idle minutes. Physical comparisons and
-> broader shot-transition validation remain pending. Boiler schedules are planning helpers;
-> schedules do not run automatically. Steam-off has one verified command/readback
+> broader shot-transition validation remain pending. Enabled schedules now operate
+> automatically; first scheduled brew-cycle verification is pending. Steam-off has one verified command/readback
 > test; one attended cleaning start/return-to-idle and unchanged-settings test passed.
 > Do not use these sensors as safety interlocks.
 
@@ -57,7 +57,7 @@ Normal 30 s polling cannot resolve the tail, and no stored history was rewritten
 - Exports allowlisted diagnostics without device addresses, names, hashes or raw packets. Version 0.0.9 added UTC poll-health evidence; 0.1.0 adds identifier-free observed-activity state and its lower-bound limitation.
 - Offers a separately confirmed one-shot action for the four fixed private evidence reads.
 - Version 0.1.2 corrects the bounded read-only benchmark to exclude proxy connection setup from sampling time, use the normal 15-second session timeout, and test 1 → 2 → 5 → 10 Hz. It returns privacy-safe stage diagnostics even when no rate passes. The benchmark and private trace action serialize telemetry/state reads, require the literal confirmation `READ ONLY`, never retry an uncertain transaction, and expose no control command.
-- Includes a built-in-card Espresso dashboard with latest readings, recent activity, daily shot/water trends, maintenance history and inert boiler schedule planning helpers. An Evidence & capture tab explains measured rates, trace collection and remaining limits.
+- Includes a built-in-card Espresso dashboard with latest readings, recent activity, daily shot/water trends, maintenance history and independent daily boiler schedules. An Evidence & capture tab explains measured rates, trace collection and remaining limits.
 
 **No runtime cloud account, AI service or manufacturer backend is required.** Initial dependency installation may require internet access. Normal polling reads telemetry and operating state together; every twentieth poll also refreshes configuration and water-alarm-enable state. A separate approval-gated HA action returns the same four fixed read-only responses as the private evidence CLI; it exposes no arbitrary request or control path.
 
@@ -95,7 +95,9 @@ The underlying shot command is a start/stop toggle, so no remote stop button or
 automatic retry is exposed. HA's `button.press` invokes the optional app-profile
 entity directly once enabled; there is no service-level physical-presence check.
 Do not enable it as a substitute for paddle execution or automate shot starts.
-Boiler schedules remain inert.
+Boiler schedules now use the existing enable/time helpers: future daily edges only,
+verified readback, persistent uncertainty locks and notification on failure. No
+setpoint writes or automatic retries. [Setup and limits](docs/BOILER_SCHEDULES.md).
 See [control behavior and commissioning limits](docs/CONTROL_DESIGN.md).
 
 ### Available entities
@@ -130,7 +132,7 @@ All readings remain provisional until physical comparison. Pumped volume is not 
 | Python protocol and session layer | Implemented; synthetic fixtures, fake-transport tests and exact-machine passive FF55 framing evidence |
 | Evidence collection | One private four-read HA-proxy baseline completed; sanitized results documented, physical comparison pending |
 | HA integration | 0.3.1 installed with bounded terminal-volume refinement and separate attended-cleaning opt-in; app-profile start remains off and requested paddle trigger pending |
-| Verification baseline | **237 local tests passing:** 157 protocol/package + 80 HA tests, as of 2026-09-26 |
+| Verification baseline | **253 local tests passing:** 157 protocol/package + 96 HA tests, as of 2026-09-26 |
 | Tested HA environment | Framework tests: HA 2026.9.3 / Python 3.14.7; target host HA 2026.9.1, ESPHome-proxy path |
 | Deployment / release | 0.3.1 installed after a fresh full backup, verified archive and configuration check; 0.3.0 rollback retained, telemetry recovered; not a published HACS release |
 | Device controls | Independent boilers; guarded cleaning start; optional app-profile infrastructure remains off. Steam-off readback verified once; one cleaning run verified by telemetry, unchanged settings and owner-observed three repetitions/normal completion |
@@ -251,7 +253,7 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 | Document | Purpose |
 |---|---|
 | [HA guide](docs/HOME_ASSISTANT.md) | Entities, installation, polling and compatibility limits |
-| [Espresso dashboard](docs/DASHBOARD.md) | Current/recent shots, daily trends, maintenance and inert schedule planning |
+| [Espresso dashboard](docs/DASHBOARD.md) | Current/recent shots, daily trends, maintenance and guarded daily schedules |
 | [Capability map](CAPABILITIES.md) | Known, implemented, conflicting and unknown functions |
 | [Control design](docs/CONTROL_DESIGN.md) | Boiler write evidence, transaction invariants and scheduling safety boundary |
 | [Validation plan](docs/VALIDATION_PLAN.md) | Efficient test batches and evidence requirements |

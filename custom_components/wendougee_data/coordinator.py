@@ -38,6 +38,7 @@ from .fast_capture import (
     benchmark_runtime_sampling,
     capture_runtime_trace,
 )
+from .schedules import BoilerSchedules
 
 _LOGGER = logging.getLogger(__name__)
 CONFIGURATION_REFRESH_POLLS = 20
@@ -88,6 +89,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self._control_store = Store(
             hass, 1, f"wendougee_data.controls.{device_id(self.address)}", private=True
         )
+        self.schedules = BoilerSchedules(self)
 
     async def async_load_control_state(self) -> None:
         """An uncertain toggle stays blocked across reloads and restarts."""
@@ -394,6 +396,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
     async def async_shutdown(self) -> None:
         """Cancel future polls and await an in-flight session's cleanup on unload."""
         self.stopped = True
+        await self.schedules.async_shutdown()
         await super().async_shutdown()
         task = self._poll_task
         if task is not None and task is not asyncio.current_task():

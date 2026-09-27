@@ -242,6 +242,23 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
         coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
         return await coordinator.async_start_cleaning()
 
+    async def acknowledge_boiler_schedule(call: ServiceCall) -> None:
+        coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
+        await coordinator.schedules.async_acknowledge(call.data["boiler"])
+
+    hass.services.async_register(
+        DOMAIN,
+        "acknowledge_boiler_schedule",
+        acknowledge_boiler_schedule,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("boiler"): vol.In(("brew", "steam")),
+                vol.Required("confirmation"): vol.Equal("MACHINE CHECKED"),
+            }
+        ),
+    )
+
     async def acknowledge_cleaning_uncertainty(call: ServiceCall) -> None:
         coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
         await coordinator.async_acknowledge_cleaning_uncertainty()
@@ -352,6 +369,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             coordinator.take_cached_baseline_frames()
         entry.runtime_data = coordinator
+        await coordinator.schedules.async_setup()
         entry.async_on_unload(entry.add_update_listener(_async_options_updated))
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     except BaseException:

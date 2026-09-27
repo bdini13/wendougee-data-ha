@@ -6,6 +6,19 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.4.0 scheduling implementation:** owner requested connecting existing helpers.
+Native daily local-time listeners now call existing guarded boiler transactions.
+Owner settings to preserve: brew enabled 06:30–09:00, steam disabled 07:00–09:00;
+timezone America/New_York. No startup/edit catch-up, no setpoint writes, no retries.
+At most 5 s lock wait, then fresh state/config guards and exact/full readback.
+Per-boiler pending marker and per-edge date saved before hardware access; uncertain
+actions pause that helper and notify, remain locked across reloads, and need
+physical-check acknowledgement plus fresh idle before re-enabling. Diagnostics
+report live listener status. No separate HA automation or manual trigger is exposed.
+All 253 tests pass (157 package + 96 HA), including actual local-time callback,
+separate on/off and fallback-hour deduplication. No live boiler command was sent.
+Deployment verification pending. See `docs/BOILER_SCHEDULES.md`.
+
 **0.3.1 live shot/scale validation:** owner reported BOOKOO Themis Ultra connected
 to the machine and pulled a shot during a read-only capture. All 360 pairs/720
 frames validated at 2.0013 Hz. Active `0x2` → idle; timer 26.8 s, reported peak
