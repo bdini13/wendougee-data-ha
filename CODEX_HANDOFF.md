@@ -6,6 +6,23 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**September 29 owner confirmation:** scheduling, both phones' notifications and
+brew-only Siri control are working without reported issues; do not repeatedly
+request commissioning of those paths. Work now targets profile reliability.
+
+**0.6.1:** separate durable preparation lock blocks remote brew/preparation only;
+legacy activation locks remain conservative and are not automatically migrated.
+Read-only `audit_profile_reads` service uses HA's coordinator/finite read-only
+transport, returns first failed stage/category, never clears locks. 293 tests
+(172 protocol + 121 HA) pass. Full backup f3aba830 completed with no job errors,
+database included (410531840 bytes); prior component retained for rollback.
+See docs/PROFILE_PILOT.md for semantics and live evidence.
+Installed and healthy; one live read-only audit failed at active_head/timeout
+(FC03 2048 count125), after successful idle/selectors. Normal polling recovered,
+zero failed polls since load, locks clear, profile opt-in off, brew schedule armed.
+No upload or activation. Next: smaller bank-read comparison through the same HA
+shared route, not a standalone proxy ownership handoff. Do not guess a root cause.
+
 **0.6.0 guarded profile pilot implemented, hardware test deferred:** exact observed
 9 bar / 28 s / 65 mL active-bank preparation with private durable backup, two fixed
 FC16 writes, complete readback and no activation. Separate coil150 start now

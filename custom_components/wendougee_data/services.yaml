@@ -89,6 +89,24 @@ acknowledge_cleaning_uncertainty:
       selector:
         text:
 
+audit_profile_reads:
+  name: Diagnose read-only profile access
+  description: >-
+    Reads idle state, selectors and both complete profile banks once. Stops at
+    the first failed step and reports only a safe stage and failure category.
+    Never uploads, activates, retries or clears uncertainty locks.
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: wendougee_data
+    confirmation:
+      required: true
+      example: READ ONLY
+      selector:
+        text:
+
 acknowledge_profile_uncertainty:
   name: Acknowledge uncertain profile start
   description: >-

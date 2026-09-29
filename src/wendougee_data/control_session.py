@@ -24,6 +24,17 @@ class ControlRejected(ValueError):
     """A fresh precondition failed before any machine control was attempted."""
 
 
+def failure_kind(error: Exception) -> str:
+    """Finite privacy-safe categories; never expose backend exception text."""
+    if isinstance(error, TimeoutError):
+        return "timeout"
+    if isinstance(error, DeviceException):
+        return "device_exception"
+    if isinstance(error, ValueError):
+        return "protocol_or_validation"
+    return "transport_or_internal"
+
+
 class Command(Enum):
     CONFIGURATION = (3, 0, 37)
     TELEMETRY = (3, 1404, 22)
@@ -236,6 +247,44 @@ async def read_profile_bank(session: ControlSession, *, bound: bool) -> tuple[in
     return _registers(await session.transact(commands[0])) + _registers(
         await session.transact(commands[1])
     )
+
+
+async def audit_profile_reads(session: ControlSession) -> dict:
+    """One bounded diagnostic, stopping on first failure; no writes or retries."""
+    frames = {}
+    commands = (
+        Command.STATE,
+        Command.PROFILE_MODES,
+        Command.ACTIVE_HEAD,
+        Command.ACTIVE_TAIL,
+        Command.BOUND_HEAD,
+        Command.BOUND_TAIL,
+    )
+    for command in commands:
+        try:
+            frames[command] = await session.transact(command)
+            if (
+                command == Command.STATE
+                and decode_operating_state(frames[command]).state != "idle"
+            ):
+                raise ControlRejected("Machine is not idle")
+        except Exception as error:
+            return {
+                "read_only": True,
+                "successful": False,
+                "stage": command.name.lower(),
+                "failure_kind": failure_kind(error),
+            }
+    return {
+        "read_only": True,
+        "successful": True,
+        "stage": "complete",
+        "failure_kind": None,
+        "active_words": len(_registers(frames[Command.ACTIVE_HEAD]))
+        + len(_registers(frames[Command.ACTIVE_TAIL])),
+        "bound_words": len(_registers(frames[Command.BOUND_HEAD]))
+        + len(_registers(frames[Command.BOUND_TAIL])),
+    }
 
 
 def validate_pilot(bank: tuple[int, ...]) -> None:

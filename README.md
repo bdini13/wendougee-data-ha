@@ -1,11 +1,21 @@
 # WENDOUGEE DATA S · Home Assistant
 
+**0.6.1 reliability update:** recipe-preparation uncertainty now has its own
+persistent lock: it blocks remote brewing, not independently guarded boiler
+schedules. Uncertain activation and cleaning remain conservative schedule guards.
+A bounded `audit_profile_reads` action identifies failed read steps without
+uploads, activation, retries, raw data export or lock clearing.
+
+Owner confirmation, September 29: daily boiler scheduling, phone notifications
+and brew-boiler Siri control have been working without reported issues.
+
 **0.6.0 attended profile pilot:** [guarded preparation and separate start](docs/PROFILE_PILOT.md)
 for only the observed 9 bar / 28 s / 65 mL recipe. This copies active storage with
 owner approval; it is not a direct remote paddle trigger.
-Hardware validation is pending: deployment encountered a telemetry reconnect
-failure before preparation, so the prior 0.5.1 component was restored. No recipe
-upload or shot-start command was sent in this attempt.
+Hardware upload/start validation remains pending. The September 29 read-only
+diagnostic succeeded at idle/selector reads, then timed out reading the first
+125 words of active storage. 0.6.1 is installed; routine telemetry recovered,
+schedules remain armed and remote shot control remains disabled.
 
 [Dashboard visual QA](docs/DASHBOARD_VISUAL_QA_2026-09-27.md): repaired the Trends
 date-collection configuration and checked all four tabs at mobile/desktop widths.

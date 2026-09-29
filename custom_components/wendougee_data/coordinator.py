@@ -36,6 +36,7 @@ from .control import (
     execute_cleaning,
     execute_profile,
     execute_profile_preparation,
+    execute_profile_read_audit,
     verify_idle,
 )
 from .fast_capture import (
@@ -91,6 +92,8 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         self.last_sampling_benchmark: SamplingBenchmark | None = None
         self.entry = entry
         self.profile_start_locked = False
+        self.profile_preparation_locked = False
+        self.last_profile_read_audit = None
         self.cleaning_start_locked = False
         self._control_store = Store(
             hass, 1, f"wendougee_data.controls.{device_id(self.address)}", private=True
@@ -101,6 +104,9 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         """An uncertain toggle stays blocked across reloads and restarts."""
         saved = await self._control_store.async_load()
         self.profile_start_locked = bool(saved and saved.get("profile_start_locked"))
+        self.profile_preparation_locked = bool(
+            saved and saved.get("profile_preparation_locked")
+        )
         self.cleaning_start_locked = bool(saved and saved.get("cleaning_start_locked"))
 
     async def _save_profile_lock(self, locked: bool) -> None:
@@ -110,10 +116,25 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         await self._control_store.async_save(
             {
                 "profile_start_locked": locked,
+                "profile_preparation_locked": self.profile_preparation_locked,
                 "cleaning_start_locked": self.cleaning_start_locked,
             }
         )
         self.profile_start_locked = locked
+        self.async_update_listeners()
+
+    async def _save_preparation_lock(self, locked: bool) -> None:
+        """Recipe uncertainty blocks brewing, not independently guarded boilers."""
+        if locked:
+            self.profile_preparation_locked = True
+        await self._control_store.async_save(
+            {
+                "profile_start_locked": self.profile_start_locked,
+                "profile_preparation_locked": locked,
+                "cleaning_start_locked": self.cleaning_start_locked,
+            }
+        )
+        self.profile_preparation_locked = locked
         self.async_update_listeners()
 
     def _require_control(self, option: str) -> None:
@@ -154,6 +175,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             raise HomeAssistantError("Bluetooth operation busy; preparation not queued")
         if (
             self.profile_start_locked
+            or self.profile_preparation_locked
             or self.cleaning_start_locked
             or any(self.schedules.pending.values())
         ):
@@ -161,21 +183,36 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
         async with self._connection_lock:
             self._poll_task = asyncio.current_task()
             try:
-                await self._save_profile_lock(True)
+                await self._save_preparation_lock(True)
                 async with asyncio.timeout(90):
                     result = await execute_profile_preparation(
                         self.hass, self.address, backup
                     )
-                await self._save_profile_lock(False)
+                await self._save_preparation_lock(False)
                 return result
             except ControlRejected as error:
-                await self._save_profile_lock(False)
+                await self._save_preparation_lock(False)
                 raise HomeAssistantError(str(error)) from None
             except Exception:
                 raise HomeAssistantError(
                     "Profile preparation uncertain; starts locked. "
                     "No retry or rollback was sent."
                 ) from None
+            finally:
+                self._poll_task = None
+
+    async def async_audit_profile_reads(self) -> dict:
+        """Read only, no opt-in or lock clearing; serialize with existing polling."""
+        if self.stopped or self._connection_lock.locked():
+            raise HomeAssistantError("Bluetooth operation busy; diagnostic not queued")
+        async with self._connection_lock:
+            self._poll_task = asyncio.current_task()
+            try:
+                async with asyncio.timeout(100):
+                    self.last_profile_read_audit = await execute_profile_read_audit(
+                        self.hass, self.address
+                    )
+                return self.last_profile_read_audit
             finally:
                 self._poll_task = None
 
@@ -186,6 +223,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             raise HomeAssistantError("Bluetooth operation busy; start was not queued")
         if (
             self.profile_start_locked
+            or self.profile_preparation_locked
             or self.cleaning_start_locked
             or any(self.schedules.pending.values())
         ):
@@ -240,6 +278,7 @@ class WendougeeCoordinator(DataUpdateCoordinator[Telemetry]):
             {
                 "profile_start_locked": self.profile_start_locked,
                 "cleaning_start_locked": locked,
+                "profile_preparation_locked": self.profile_preparation_locked,
             }
         )
         self.cleaning_start_locked = locked

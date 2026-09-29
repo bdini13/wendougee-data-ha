@@ -2,6 +2,37 @@
 
 ## Validation status
 
+September 29 reliability patch (0.6.1): preparation now persists a separate
+`profile_preparation_locked` flag. Remote start and repeat preparation reject
+either profile lock. Boiler schedules continue to check activation/cleaning and
+their own uncertainty, but not recipe-preparation uncertainty; fresh idle/alarm
+checks and full boiler configuration readback are unchanged. Old ambiguous
+`profile_start_locked` records are deliberately not automatically reclassified.
+The existing physical-check acknowledgement clears activation uncertainty only;
+recipe uncertainty requires investigation/readback, not merely an idle check.
+
+New `audit_profile_reads` action requires `READ ONLY` and reads idle state,
+selectors and both complete banks through HA's shared serialized transport. Its
+finite allowlist contains only FC01/FC03. First failure ends the run with a safe
+stage/category; no addresses, raw replies, recipes or backend error text are
+returned. A successful audit does not validate recipe contents or clear locks.
+The latest result is available in diagnostics for this runtime. No automatic
+retry or polling cadence change. Profile backup writes now explicitly fsync.
+
+Live September 29 result: `active_head` / `timeout`, after successful state and
+selector reads. This isolates the first large bank request (FC03, 2048, count
+125), not the underlying machine/transport cause. No automatic smaller-read
+fallback was attempted, and no machine control was sent. Post-diagnostic routine
+polls succeeded with zero failed polls since load; both locks remained clear,
+profile opt-in off, brew schedule armed for 09:00 local and steam schedule off.
+Next evidence: bounded smaller reads of the same bank, maintaining full-bank
+readback requirements before any future upload. Do not bypass verification.
+
+Deployment: full backup f3aba830, retained 0.6.0 rollback, successful config check
+and restart. Archive SHA-256:
+`7d8821ab8af95b600bc58c5cb3102893e728da6a42a3ce7c9a5fad1fe4e2280d`.
+293 tests passed (172 protocol + 121 HA), plus lint/format/compile/JSON/diff checks.
+
 September 27: 170 protocol and 118 HA tests pass, including backup-before-write,
 full readback, corrupt echo/bank rejection and durable uncertainty locking.
 Full HA backup completed successfully before deployment. Live setup could not

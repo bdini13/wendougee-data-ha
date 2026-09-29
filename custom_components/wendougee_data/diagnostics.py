@@ -23,6 +23,7 @@ async def async_get_config_entry_diagnostics(
     activity = coordinator.activity
     return {
         "schema_version": 4,
+        "profile_read_audit": coordinator.last_profile_read_audit,
         "read_only": not any(
             entry.options.get(key) is True
             for key in (
@@ -35,6 +36,7 @@ async def async_get_config_entry_diagnostics(
             "boiler_control_enabled": entry.options.get("allow_boiler_control") is True,
             "profile_start_enabled": entry.options.get("allow_profile_start") is True,
             "profile_start_locked": coordinator.profile_start_locked,
+            "profile_preparation_locked": coordinator.profile_preparation_locked,
             "cleaning_control_enabled": entry.options.get("allow_cleaning_control")
             is True,
             "cleaning_start_locked": coordinator.cleaning_start_locked,

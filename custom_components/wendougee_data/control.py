@@ -9,7 +9,9 @@ from ._protocol.control_session import (
     Command,
     ControlRejected,
     ControlSession,
+    audit_profile_reads,
     command_request,
+    failure_kind,
     prepare_pilot_profile,
     set_boiler,
     start_stored_profile,
@@ -20,6 +22,31 @@ from ._protocol.telemetry import parse_telemetry_response
 from .bluetooth import HomeAssistantReadTransport
 
 READ_COMMANDS = frozenset({Command.CONFIGURATION, Command.TELEMETRY, Command.STATE})
+
+
+async def execute_profile_read_audit(hass, address):
+    """Transport cannot send control packets, even if diagnostic logic regresses."""
+    commands = frozenset(
+        {
+            Command.STATE,
+            Command.PROFILE_MODES,
+            Command.ACTIVE_HEAD,
+            Command.ACTIVE_TAIL,
+            Command.BOUND_HEAD,
+            Command.BOUND_TAIL,
+        }
+    )
+    transport = HomeAssistantControlTransport(hass, address, commands)
+    try:
+        async with ControlSession(transport) as session:
+            return await audit_profile_reads(session)
+    except Exception as error:
+        return {
+            "read_only": True,
+            "successful": False,
+            "stage": "connection_or_cleanup",
+            "failure_kind": failure_kind(error),
+        }
 
 
 class HomeAssistantControlTransport(HomeAssistantReadTransport):

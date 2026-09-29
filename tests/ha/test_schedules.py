@@ -54,11 +54,26 @@ async def test_setup_and_helper_edits_never_actuate(hass):
         assert not coordinator.schedules.diagnostics()["brew"]["listening"]
 
 
+async def test_preparation_lock_survives_without_blocking_boiler_schedule(hass):
+    coordinator = await configured(hass)
+    await coordinator._save_preparation_lock(True)
+    restored = WendougeeCoordinator(hass, coordinator.entry)
+    await restored.async_load_control_state()
+    assert restored.profile_preparation_locked
+    assert not restored.profile_start_locked
+    await restored.schedules.async_setup()
+    assert restored.schedules.status("brew") == "armed"
+    restored.profile_start_locked = True
+    assert restored.schedules.status("brew") == "blocked"
+    await restored.schedules.async_shutdown()
+
+
 @pytest.mark.parametrize("enabled,hour,minute", [(True, 6, 30), (False, 9, 0)])
 async def test_edge_verifies_feedback_and_persists_no_duplicate(
     hass, enabled, hour, minute
 ):
     coordinator = await configured(hass)
+    await coordinator._save_preparation_lock(True)
     words = list(CONFIGURATION_VALUES)
     words[7] = 0 if enabled else 1
     now = MORNING.replace(hour=hour, minute=minute)
@@ -73,6 +88,8 @@ async def test_edge_verifies_feedback_and_persists_no_duplicate(
         assert not coordinator.schedules.pending["brew"]
         restored = WendougeeCoordinator(hass, coordinator.entry)
         await restored.schedules.async_load()
+        await restored.async_load_control_state()
+        assert restored.profile_preparation_locked
         await restored.schedules.async_run("brew", enabled)
         assert execute.await_count == 1
     assert hass.states.is_state("input_boolean.espresso_brew_schedule_enabled", "on")

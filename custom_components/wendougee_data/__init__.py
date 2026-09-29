@@ -141,6 +141,8 @@ def _write_private_trace(config_dir: Path, document: dict) -> str:
     with os.fdopen(descriptor, "w", encoding="utf-8") as output:
         json.dump(document, output, indent=2, sort_keys=True)
         output.write("\n")
+        output.flush()
+        os.fsync(output.fileno())
     return file_name
 
 
@@ -266,6 +268,23 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
             )
 
         return await coordinator.async_prepare_profile(backup)
+
+    async def audit_profile(call: ServiceCall) -> dict:
+        coordinator = _loaded_coordinator(hass, call.data["config_entry_id"])
+        return await coordinator.async_audit_profile_reads()
+
+    hass.services.async_register(
+        DOMAIN,
+        "audit_profile_reads",
+        audit_profile,
+        schema=vol.Schema(
+            {
+                vol.Required("config_entry_id"): str,
+                vol.Required("confirmation"): vol.Equal("READ ONLY"),
+            }
+        ),
+        supports_response=SupportsResponse.ONLY,
+    )
 
     hass.services.async_register(
         DOMAIN,

@@ -9,6 +9,7 @@ from wendougee_data.control_session import (
     Command,
     ControlRejected,
     ControlSession,
+    audit_profile_reads,
     command_request,
     prepare_pilot_profile,
     set_boiler,
@@ -27,6 +28,32 @@ def run_async(test):
         return asyncio.run(test(*args, **kwargs))
 
     return run
+
+
+@run_async
+async def test_profile_audit_is_read_only_and_reports_exact_failed_step():
+    from unittest.mock import AsyncMock
+
+    session = AsyncMock()
+    session.transact.side_effect = TimeoutError("private address and packet")
+    result = await audit_profile_reads(session)
+    assert result == {
+        "read_only": True,
+        "successful": False,
+        "stage": "state",
+        "failure_kind": "timeout",
+    }
+    session.transact.assert_awaited_once_with(Command.STATE)
+
+
+@run_async
+async def test_profile_audit_complete_banks_without_any_control():
+    machine = Machine()
+    async with ControlSession(machine) as session:
+        result = await audit_profile_reads(session)
+    assert result["successful"]
+    assert result["active_words"] == result["bound_words"] == 167
+    assert all(request[1] in (1, 3) for request in machine.sent)
 
 
 class Machine:

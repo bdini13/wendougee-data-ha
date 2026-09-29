@@ -16,6 +16,36 @@ from .test_integration import BASELINE_FRAMES, CONFIGURATION_VALUES, TELEMETRY, 
 pytestmark = pytest.mark.asyncio
 
 
+async def test_profile_read_audit_never_clears_locks_or_enables_controls(hass):
+    coordinator = WendougeeCoordinator(hass, entry())
+    coordinator.profile_preparation_locked = True
+    expected = {
+        "read_only": True,
+        "successful": False,
+        "stage": "active_head",
+        "failure_kind": "timeout",
+    }
+    with patch(
+        f"custom_components.{DOMAIN}.coordinator.execute_profile_read_audit",
+        return_value=expected,
+    ):
+        assert await coordinator.async_audit_profile_reads() == expected
+    assert coordinator.profile_preparation_locked
+    assert not coordinator.entry.options.get("allow_profile_start")
+
+
+async def test_private_profile_backup_is_fsynced_before_return(hass, tmp_path):
+    from custom_components.wendougee_data import _write_private_trace
+
+    with patch("custom_components.wendougee_data.os.fsync") as sync:
+        await hass.async_add_executor_job(
+            _write_private_trace,
+            tmp_path,
+            {"started_at_utc": "2026-09-29T12:00:00+00:00"},
+        )
+        sync.assert_called_once()
+
+
 async def test_default_entry_cannot_call_controls(hass):
     coordinator = WendougeeCoordinator(hass, entry())
     with patch(f"custom_components.{DOMAIN}.coordinator.execute_boiler") as execute:
@@ -46,7 +76,10 @@ async def test_prepare_uncertainty_persists_and_never_calls_start(hass):
             await coordinator.async_prepare_profile(AsyncMock())
         restored = WendougeeCoordinator(hass, configured)
         await restored.async_load_control_state()
-        assert restored.profile_start_locked
+        assert restored.profile_preparation_locked
+        assert not restored.profile_start_locked
+        with pytest.raises(HomeAssistantError, match="uncertain"):
+            await restored.async_start_profile()
         prepare.assert_awaited_once()
         start.assert_not_called()
 
