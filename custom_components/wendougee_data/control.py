@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 
 from ._protocol.cleaning import cleaning_duration, start_cleaning
 from ._protocol.control_session import (
+    PROFILE_CHUNK_COMMANDS,
     Command,
     ControlRejected,
     ControlSession,
@@ -30,10 +31,7 @@ async def execute_profile_read_audit(hass, address):
         {
             Command.STATE,
             Command.PROFILE_MODES,
-            Command.ACTIVE_HEAD,
-            Command.ACTIVE_TAIL,
-            Command.BOUND_HEAD,
-            Command.BOUND_TAIL,
+            *PROFILE_CHUNK_COMMANDS,
         }
     )
     transport = HomeAssistantControlTransport(hass, address, commands)

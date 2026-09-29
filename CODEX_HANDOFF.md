@@ -6,6 +6,16 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.6.2 installed, September 29 smaller-read success:** diagnostic reads both
+167-word banks twice using fixed <=16-word chunks; all 334 words/selectors matched,
+idle bracketing. The previous 125-word active_head timed out. Exact size limit and
+firmware/transport cause remain unknown. 294 tests pass; last-word mutation
+fixture proves tail coverage. Same-day full backup f3aba830 retained and 0.6.1
+rollback preserved. Post-audit normal polls healthy, locks clear, profile opt-in
+off, brew schedule armed. No actuation/upload. IMPORTANT: preparation/start still
+use the old 125/42 reader. Next implementation: replace those bank reads with the
+verified chunks and update transport allowlists/tests before attended approval.
+
 **September 29 owner confirmation:** scheduling, both phones' notifications and
 brew-only Siri control are working without reported issues; do not repeatedly
 request commissioning of those paths. Work now targets profile reliability.

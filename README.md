@@ -1,5 +1,11 @@
 # WENDOUGEE DATA S · Home Assistant
 
+**0.6.2 read-only finding:** full active and bound profile banks successfully read
+twice in 16-register chunks, with all 334 words matching. The earlier 125-register
+request timed out. This establishes a working smaller-read path, not the exact
+firmware/transport limit. Control transactions still use the earlier reader and
+remote shot control remains disabled; see [pilot evidence](docs/PROFILE_PILOT.md).
+
 **0.6.1 reliability update:** recipe-preparation uncertainty now has its own
 persistent lock: it blocks remote brewing, not independently guarded boiler
 schedules. Uncertain activation and cleaning remain conservative schedule guards.

@@ -54,6 +54,27 @@ async def test_profile_audit_complete_banks_without_any_control():
     assert result["successful"]
     assert result["active_words"] == result["bound_words"] == 167
     assert all(request[1] in (1, 3) for request in machine.sent)
+    bank_requests = [
+        r for r in machine.sent if r[1] == 3 and int.from_bytes(r[2:4], "big") >= 2048
+    ]
+    assert max(int.from_bytes(r[4:6], "big") for r in bank_requests) <= 16
+    assert result["repeat_matched"]
+
+
+@run_async
+async def test_chunk_audit_rejects_changed_last_word():
+    class ChangingMachine(Machine):
+        async def send(self, request):
+            if request == command_request(Command.BOUND_CHUNK_10):
+                self.bound[-1] += 1
+            await super().send(request)
+
+    machine = ChangingMachine()
+    async with ControlSession(machine) as session:
+        result = await audit_profile_reads(session)
+    assert result["stage"] == "bound_chunk_10"
+    assert result["failure_kind"] == "readback_changed"
+    assert all(r[1] in (1, 3) for r in machine.sent)
 
 
 class Machine:
@@ -112,7 +133,7 @@ class Machine:
             reply = request
         elif fc == 1:
             reply = append_crc(b"\x01\x01\x03" + self.bits.to_bytes(3, "little"))
-        elif int.from_bytes(request[2:4], "big") in (2048, 2173, 2560, 2685):
+        elif 2048 <= int.from_bytes(request[2:4], "big") <= 2726:
             address = int.from_bytes(request[2:4], "big")
             bank, base = (self.active, 2048) if address < 2560 else (self.bound, 2560)
             count = int.from_bytes(request[4:6], "big")

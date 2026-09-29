@@ -45,6 +45,28 @@ class Command(Enum):
     ACTIVE_TAIL = (3, 2173, 42)
     BOUND_HEAD = (3, 2560, 125)
     BOUND_TAIL = (3, 2685, 42)
+    ACTIVE_CHUNK_0 = (3, 2048, 16)
+    ACTIVE_CHUNK_1 = (3, 2064, 16)
+    ACTIVE_CHUNK_2 = (3, 2080, 16)
+    ACTIVE_CHUNK_3 = (3, 2096, 16)
+    ACTIVE_CHUNK_4 = (3, 2112, 16)
+    ACTIVE_CHUNK_5 = (3, 2128, 16)
+    ACTIVE_CHUNK_6 = (3, 2144, 16)
+    ACTIVE_CHUNK_7 = (3, 2160, 16)
+    ACTIVE_CHUNK_8 = (3, 2176, 16)
+    ACTIVE_CHUNK_9 = (3, 2192, 16)
+    ACTIVE_CHUNK_10 = (3, 2208, 7)
+    BOUND_CHUNK_0 = (3, 2560, 16)
+    BOUND_CHUNK_1 = (3, 2576, 16)
+    BOUND_CHUNK_2 = (3, 2592, 16)
+    BOUND_CHUNK_3 = (3, 2608, 16)
+    BOUND_CHUNK_4 = (3, 2624, 16)
+    BOUND_CHUNK_5 = (3, 2640, 16)
+    BOUND_CHUNK_6 = (3, 2656, 16)
+    BOUND_CHUNK_7 = (3, 2672, 16)
+    BOUND_CHUNK_8 = (3, 2688, 16)
+    BOUND_CHUNK_9 = (3, 2704, 16)
+    BOUND_CHUNK_10 = (3, 2720, 7)
     PILOT_HEADER = (16, 2048, (1, 1, 1, 1, 65, 0, 0))
     PILOT_STAGE = (16, 2056, (28, 90, 0, 0, 1, 0))
     STEAM_ON = (6, 6, 0)
@@ -55,6 +77,9 @@ class Command(Enum):
     PROFILE_RELEASE = (5, 150, 0)
     CLEANING_PRESS = (5, 155, 0xFF00)
     CLEANING_RELEASE = (5, 155, 0)
+
+
+PROFILE_CHUNK_COMMANDS = tuple(c for c in Command if "_CHUNK_" in c.name)
 
 
 def command_request(command: Command) -> bytes:
@@ -250,40 +275,48 @@ async def read_profile_bank(session: ControlSession, *, bound: bool) -> tuple[in
 
 
 async def audit_profile_reads(session: ControlSession) -> dict:
-    """One bounded diagnostic, stopping on first failure; no writes or retries."""
-    frames = {}
+    """Compare two complete 16-word-chunk snapshots; never retry a failure."""
     commands = (
         Command.STATE,
         Command.PROFILE_MODES,
-        Command.ACTIVE_HEAD,
-        Command.ACTIVE_TAIL,
-        Command.BOUND_HEAD,
-        Command.BOUND_TAIL,
+        *PROFILE_CHUNK_COMMANDS,
+        Command.STATE,
     )
-    for command in commands:
-        try:
-            frames[command] = await session.transact(command)
-            if (
-                command == Command.STATE
-                and decode_operating_state(frames[command]).state != "idle"
-            ):
-                raise ControlRejected("Machine is not idle")
-        except Exception as error:
-            return {
-                "read_only": True,
-                "successful": False,
-                "stage": command.name.lower(),
-                "failure_kind": failure_kind(error),
-            }
+    first = {}
+    stage = "state"
+    try:
+        for pass_number in range(2):
+            for command in commands:
+                stage = command.name.lower()
+                frame = await session.transact(command)
+                if command == Command.STATE:
+                    if decode_operating_state(frame).state != "idle":
+                        raise ControlRejected("Machine is not idle")
+                elif pass_number == 0:
+                    first[command] = frame
+                elif first[command] != frame:
+                    return {
+                        "read_only": True,
+                        "successful": False,
+                        "stage": stage,
+                        "failure_kind": "readback_changed",
+                    }
+    except Exception as error:
+        return {
+            "read_only": True,
+            "successful": False,
+            "stage": stage,
+            "failure_kind": failure_kind(error),
+        }
     return {
         "read_only": True,
         "successful": True,
         "stage": "complete",
         "failure_kind": None,
-        "active_words": len(_registers(frames[Command.ACTIVE_HEAD]))
-        + len(_registers(frames[Command.ACTIVE_TAIL])),
-        "bound_words": len(_registers(frames[Command.BOUND_HEAD]))
-        + len(_registers(frames[Command.BOUND_TAIL])),
+        "active_words": 167,
+        "bound_words": 167,
+        "chunk_words": 16,
+        "repeat_matched": True,
     }
 
 

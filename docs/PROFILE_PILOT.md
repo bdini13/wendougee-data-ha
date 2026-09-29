@@ -2,6 +2,33 @@
 
 ## Validation status
 
+### September 29: smaller reads verified (0.6.2)
+
+One bounded HA read-only diagnostic succeeded: two complete snapshots of both
+167-register banks in fixed chunks of at most 16 registers, all 334 words and
+selectors matched. Idle checks bracketed both snapshots. The final seven-word
+chunk includes the last register of each bank; nothing is skipped. Each response
+passes the same strict identity, byte-count, length and CRC validation. Raw bank
+contents are not returned or retained by this diagnostic.
+
+The earlier same-bank 125-register request timed out; smaller chunking is a
+verified workaround, not proof of the exact maximum or firmware-versus-proxy
+cause. No larger-size sweep, upload, activation or automatic retry was performed.
+Preparation/start still use the old reader pending a separately tested change;
+do not claim remote brewing is fixed or validated.
+
+Deployment reused the recent completed full backup f3aba830 and retained 0.6.1
+for rollback. Config check/restart passed. Archive SHA-256:
+`cff773c1601338c446c8ea6f1371f9db40a083f1818b7ce6110ef89b0e5c7ad3`.
+294 tests pass (173 protocol + 121 HA), including last-word mutation detection;
+lint/format/compile/JSON/diff checks pass. Post-audit runtime: three successful
+polls, zero failures, idle, locks clear, remote profile control disabled and
+brew schedule still armed for 09:00 local. No boiler settings/history changed.
+
+Next: use the verified chunk sequence for preparation/start's full-bank reads,
+update finite allowlists and regression tests, then obtain fresh owner approval
+for a separate attended upload/start test. Do not weaken readback requirements.
+
 September 29 reliability patch (0.6.1): preparation now persists a separate
 `profile_preparation_locked` flag. Remote start and repeat preparation reject
 either profile lock. Boiler schedules continue to check activation/cleaning and
