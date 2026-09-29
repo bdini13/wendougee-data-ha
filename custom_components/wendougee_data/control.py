@@ -81,8 +81,7 @@ async def execute_profile(hass: HomeAssistant, address):
         Command.PROFILE_MODE,
         Command.PROFILE_PRESS,
         Command.PROFILE_RELEASE,
-        Command.ACTIVE_HEAD,
-        Command.ACTIVE_TAIL,
+        *(c for c in PROFILE_CHUNK_COMMANDS if c.name.startswith("ACTIVE_")),
     }
     transport = HomeAssistantControlTransport(hass, address, commands)
     async with ControlSession(transport) as session:
@@ -95,10 +94,7 @@ async def execute_profile_preparation(hass: HomeAssistant, address, backup):
     """Dedicated finite upload transport with no brew/coil capability."""
     commands = READ_COMMANDS | {
         Command.PROFILE_MODES,
-        Command.ACTIVE_HEAD,
-        Command.ACTIVE_TAIL,
-        Command.BOUND_HEAD,
-        Command.BOUND_TAIL,
+        *PROFILE_CHUNK_COMMANDS,
         Command.PILOT_HEADER,
         Command.PILOT_STAGE,
     }

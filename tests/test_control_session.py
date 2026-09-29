@@ -12,6 +12,7 @@ from wendougee_data.control_session import (
     audit_profile_reads,
     command_request,
     prepare_pilot_profile,
+    read_profile_bank,
     set_boiler,
     start_stored_profile,
 )
@@ -28,6 +29,18 @@ def run_async(test):
         return asyncio.run(test(*args, **kwargs))
 
     return run
+
+
+@run_async
+async def test_control_bank_reader_uses_verified_chunks_and_keeps_last_word():
+    machine = Machine()
+    machine.active[-1] = 123
+    machine.bound[-1] = 456
+    async with ControlSession(machine) as session:
+        assert await read_profile_bank(session, bound=False) == tuple(machine.active)
+        assert await read_profile_bank(session, bound=True) == tuple(machine.bound)
+    assert len(machine.sent) == 22
+    assert all(r[1] == 3 and int.from_bytes(r[4:6], "big") <= 16 for r in machine.sent)
 
 
 @run_async

@@ -1,9 +1,14 @@
 # WENDOUGEE DATA S · Home Assistant
 
+**0.6.3:** preparation/start now use the verified <=16-register full-bank reader
+and finite transport allowlists. Backup, unchanged-bank verification and separate
+activation remain mandatory; remote shot control remains disabled. No live
+upload/start is claimed. [Firmware/USB plan](research/FIRMWARE_USB_PLAN.md).
+
 **0.6.2 read-only finding:** full active and bound profile banks successfully read
 twice in 16-register chunks, with all 334 words matching. The earlier 125-register
 request timed out. This establishes a working smaller-read path, not the exact
-firmware/transport limit. Control transactions still use the earlier reader and
+firmware/transport limit. The control reader was subsequently updated in 0.6.3;
 remote shot control remains disabled; see [pilot evidence](docs/PROFILE_PILOT.md).
 
 **0.6.1 reliability update:** recipe-preparation uncertainty now has its own

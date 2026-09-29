@@ -2,6 +2,23 @@
 
 ## Validation status
 
+### September 29: control reader updated (0.6.3)
+
+Preparation/start now read every bank word through the proven <=16-register
+sequence. Their transport allowlists were updated without allowing any new
+machine writes. Full 167-word comparisons, backup, exact pilot validation and
+separate activation remain intact. 295 tests pass (174 protocol + 121 HA),
+including distinct last-word fixtures for both banks. Lint/format/compile/JSON
+and diff checks passed. No preparation or activation service was invoked.
+
+Installed after checksum/config checks with the same-day full backup f3aba830
+retained and a 0.6.2 component rollback copy. Runtime loaded 0.6.3, idle, normal
+polling healthy, locks clear, profile opt-in disabled, brew schedule armed.
+Archive SHA-256:
+`0419c7327cea94cf6114e33ce381f8e58d587dc14b6959004f6aaef6e498a085`.
+Next hardware step still requires fresh explicit approval for attended preparation
+and separately confirmed start. The historical notes below describe prior builds.
+
 ### September 29: smaller reads verified (0.6.2)
 
 One bounded HA read-only diagnostic succeeded: two complete snapshots of both

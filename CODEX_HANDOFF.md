@@ -6,6 +6,14 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**0.6.3 installed:** preparation/start bank reader and finite allowlists now use
+the proven <=16-word sequence; full verification/backup/guards unchanged. 295 tests
+pass. Checksum/config/restart passed, normal telemetry healthy, profile opt-in off,
+locks clear and brew schedule armed. No live preparation/start called. Same-day
+full backup f3aba830 and 0.6.2 rollback retained. Next attended test requires fresh
+approval. USB manual says charging port; data capability unknown. Offline firmware
+investigation recommended; no firmware obtained/flashed. See research/FIRMWARE_USB_PLAN.md.
+
 **0.6.2 installed, September 29 smaller-read success:** diagnostic reads both
 167-word banks twice using fixed <=16-word chunks; all 334 words/selectors matched,
 idle bracketing. The previous 125-word active_head timed out. Exact size limit and

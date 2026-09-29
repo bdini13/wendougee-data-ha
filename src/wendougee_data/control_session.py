@@ -263,15 +263,13 @@ def _registers(frame: bytes) -> tuple[int, ...]:
 
 
 async def read_profile_bank(session: ControlSession, *, bound: bool) -> tuple[int, ...]:
-    """Read the documented 167-word bank in two legal FC03 chunks."""
-    commands = (
-        (Command.BOUND_HEAD, Command.BOUND_TAIL)
-        if bound
-        else (Command.ACTIVE_HEAD, Command.ACTIVE_TAIL)
-    )
-    return _registers(await session.transact(commands[0])) + _registers(
-        await session.transact(commands[1])
-    )
+    """Read every word using the <=16-word sequence verified on the DATA S."""
+    prefix = "BOUND_" if bound else "ACTIVE_"
+    words = ()
+    for command in PROFILE_CHUNK_COMMANDS:
+        if command.name.startswith(prefix):
+            words += _registers(await session.transact(command))
+    return words
 
 
 async def audit_profile_reads(session: ControlSession) -> dict:
