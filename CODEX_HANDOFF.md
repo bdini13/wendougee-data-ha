@@ -6,6 +6,18 @@ Build a local-first, cloud-independent Home Assistant integration for Bobby's WE
 
 ## Workspace
 
+**September 29 offline firmware/Wi-Fi audit:** acquired private ARM64 Android
+3.1.0 XAPK from APKPure after official-linked 3.1.6 CDN timed out. Offline v2
+RSA/content-digest checks passed for base/split; signer matches mirror, not yet
+vendor-pinned. No installation/execution. App-specific MQTT/Wi-Fi modules and
+host/Bluetooth update routes found. Public vendor broker discovery returned a
+cloud endpoint; no broker connection. BLE firmware metadata requires login;
+host metadata returned 502. Debug YModem helper and old header found, not an image.
+No machine firmware, verified hardware architecture, signature policy, LAN API,
+bootloader unlock or stock restore established. Recovery gates documented in
+research/FIRMWARE_WIFI_AUDIT_2026-09-29.md. Raw artifacts are ignored under
+research/artifacts/private/firmware-audit-20260929/. No HA/hardware changes.
+
 **0.6.3 installed:** preparation/start bank reader and finite allowlists now use
 the proven <=16-word sequence; full verification/backup/guards unchanged. 295 tests
 pass. Checksum/config/restart passed, normal telemetry healthy, profile opt-in off,

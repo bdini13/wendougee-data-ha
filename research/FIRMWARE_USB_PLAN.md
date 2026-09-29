@@ -1,5 +1,9 @@
 # Firmware and USB investigation · September 29, 2026
 
+Follow-up: [offline app, Wi-Fi and recovery audit](FIRMWARE_WIFI_AUDIT_2026-09-29.md)
+records the acquired Android app, public MQTT discovery, firmware-selection
+barriers and recovery prerequisites. No machine firmware image has been obtained.
+
 The DATA S manufacturer manual (retailer-hosted PDF) labels the top connector
 "USB Charging Port" on printed page 1 (PDF page 6). Intended charging use is
 documented; whether data pins are connected remains unknown. No USB enumeration
@@ -20,8 +24,9 @@ Recommended offline investigation:
    handling and USB descriptors. Static strings are clues, not hardware proof.
 4. Validate only bounded read-only hypotheses through HA with owner approval.
 
-No package download, firmware dump, bootloader transition, flashing, enclosure
-opening or USB test was performed in this pass. Existing upstream OTA notes are
+The initial manual-only pass performed no package download, firmware dump,
+bootloader transition, flashing, enclosure opening or USB test. The subsequent
+linked audit downloaded an Android app, not machine firmware. Upstream OTA notes are
 not sufficient authority or DATA-S evidence for entering update mode.
 
 Source (product diagram and OTA page visually inspected):

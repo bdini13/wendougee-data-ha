@@ -1,6 +1,20 @@
 # Roadmap
 
-Last reviewed: 2026-09-27. The goal is a well-understood, local-first WENDOUGEE DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+Last reviewed: 2026-09-29. The goal is a well-understood, local-first WENDOUGEE DATA S integration—not an unqualified promise that every hidden firmware function can or should be remotely controlled.
+
+## Offline firmware and Wi-Fi research · September 29
+
+- [x] Trace vendor-linked Android distribution; privately acquire/hash 3.1.0 mirror for static inspection, without installing it.
+- [x] Identify app-specific MQTT/Wi-Fi and separate host/Bluetooth update components; confirm public vendor broker discovery without connecting to the broker.
+- [x] Inspect the bundled update metadata and YModem helper; distinguish transfer CRC from unknown device-side signature enforcement.
+- [x] Document recovery prerequisites and the limits of HA/profile backups.
+- [ ] Obtain device-matched stock firmware and authenticated update metadata through an authorized source.
+- [ ] Identify hardware, memory layout, boot checks and calibration storage from firmware/service evidence.
+- [ ] Establish stock restoration before considering custom firmware or bootloader changes.
+- [ ] Establish whether DATA S exposes a local Wi-Fi interface; app IoT support alone is not proof.
+
+See the [offline audit](research/FIRMWARE_WIFI_AUDIT_2026-09-29.md). No machine
+commands, provisioning, flashing, app installation or live HA changes occurred.
 
 ## Espresso workspace · 0.5.0
 

@@ -1,5 +1,10 @@
 # WENDOUGEE DATA S · Home Assistant
 
+**Offline firmware/Wi-Fi research:** the Android app has a vendor-cloud MQTT path
+and separate host/Bluetooth updates. A DATA S local Wi-Fi API, stock firmware
+image and bootloader recovery are still unverified. No flashing or provisioning
+was performed. [Findings and recovery gates](research/FIRMWARE_WIFI_AUDIT_2026-09-29.md).
+
 **0.6.3:** preparation/start now use the verified <=16-register full-bank reader
 and finite transport allowlists. Backup, unchanged-bank verification and separate
 activation remain mandatory; remote shot control remains disabled. No live
@@ -338,6 +343,7 @@ HA tests exercise the real framework with simulated Bluetooth and network socket
 | [Offline core](docs/OFFLINE_CORE.md) | Framing, session behavior and failure policy |
 | [Protocol reference](docs/protocol.md) | BLE/Modbus observations and candidates |
 | [Upstream inventory](research/UPSTREAM_SOURCES.md) | Pinned sources and license boundaries |
+| [Firmware, Wi-Fi and recovery audit](research/FIRMWARE_WIFI_AUDIT_2026-09-29.md) | Offline app findings, public cloud-MQTT discovery and unverified recovery gates; no machine firmware or LAN API established |
 | [Autonomous feature audit](research/AUTONOMOUS_AUDIT_2026-09-26.md) | New upstream findings, private replay results and next evidence gaps |
 | [Contributing](CONTRIBUTING.md) | Development checks, CI scope, labels and dashboard deployment |
 | [Contributor/agent handoff](CODEX_HANDOFF.md) | Implementation history and safety constraints |
